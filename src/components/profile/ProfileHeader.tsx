@@ -55,7 +55,7 @@ export const ProfileHeader = ({
     setUsernameCheck('checking');
     usernameDebounceRef.current = setTimeout(async () => {
       const { data } = await supabase
-        .from('profiles').select('id').eq('username', clean).maybeSingle();
+        .from('public_profiles').select('id').eq('username', clean).maybeSingle();
       setUsernameCheck(data ? 'taken' : 'available');
     }, 500);
   };

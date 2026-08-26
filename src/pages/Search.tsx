@@ -1,13 +1,13 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { getRandomAnime, getRecommendedAnimes } from '../services/jikanApi';
-import { searchAniList, type AniListFilters } from '../services/aniListApi';
+import { getRandomAnime, getRecommendedAnimes, searchAniList, type AniListFilters } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
 import { AnimeCard } from '../components/AnimeCard';
 import debounce from 'lodash.debounce';
 import { Dices, RefreshCw, Loader2, FilterX, Filter, X, Plus, Search as SearchIcon, Star, ArrowUpDown, Tv } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const ANIME_FORMATS = [
   { value: 'TV', label: 'TV (Serie)' },
@@ -125,6 +125,8 @@ export const Search = () => {
   const [localFilters, setLocalFilters] = useState({
     formats: [] as string[], status: '', year: '', season: '', studioId: '', studioName: '', genres: [] as string[]
   });
+
+  useDocumentTitle(searchParams.get('q') ? `Buscar: ${searchParams.get('q')}` : 'Buscar');
 
   useEffect(() => { handleLoadRecommendations(); }, []);
 

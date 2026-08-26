@@ -28,35 +28,43 @@ export const FollowersModal = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Two steps instead of an embedded (follower_id → profiles) select:
+    // `profiles` itself only allows reading your own row now, so the
+    // FK-embedded shorthand would return nothing for anyone else. Fetch the
+    // id lists first, then batch-resolve them against the public view.
+    const resolveProfiles = async (ids: string[]): Promise<Map<string, ProfileUser>> => {
+      if (ids.length === 0) return new Map();
+      const { data } = await supabase
+        .from('public_profiles')
+        .select('id, username, avatar_url')
+        .in('id', ids);
+      return new Map((data ?? []).map((p: ProfileUser) => [p.id, p]));
+    };
+
     const fetchBoth = async () => {
       setLoading(true);
       const [followersRes, followingRes] = await Promise.all([
         supabase
           .from('profile_followers')
-          .select('follower:follower_id(id, username, avatar_url)')
+          .select('follower_id')
           .eq('following_id', profileId)
           .order('created_at', { ascending: false }),
         supabase
           .from('profile_followers')
-          .select('following:following_id(id, username, avatar_url)')
+          .select('following_id')
           .eq('follower_id', profileId)
           .order('created_at', { ascending: false }),
       ]);
 
-      if (followersRes.data) {
-        setFollowers(
-          followersRes.data
-            .map((r: { follower: unknown }) => r.follower as ProfileUser)
-            .filter(Boolean),
-        );
-      }
-      if (followingRes.data) {
-        setFollowing(
-          followingRes.data
-            .map((r: { following: unknown }) => r.following as ProfileUser)
-            .filter(Boolean),
-        );
-      }
+      const followerIds = (followersRes.data ?? []).map(r => r.follower_id as string);
+      const followingIds = (followingRes.data ?? []).map(r => r.following_id as string);
+      const [followerProfiles, followingProfiles] = await Promise.all([
+        resolveProfiles(followerIds),
+        resolveProfiles(followingIds),
+      ]);
+
+      setFollowers(followerIds.map(id => followerProfiles.get(id)).filter((p): p is ProfileUser => !!p));
+      setFollowing(followingIds.map(id => followingProfiles.get(id)).filter((p): p is ProfileUser => !!p));
       setLoading(false);
     };
     fetchBoth();

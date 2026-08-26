@@ -32,7 +32,7 @@ export const UsernameSetupModal = () => {
     setCheckState('checking');
     debounceRef.current = setTimeout(async () => {
       const { data } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id')
         .eq('username', value)
         .maybeSingle();

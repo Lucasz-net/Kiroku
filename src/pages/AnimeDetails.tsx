@@ -2,7 +2,10 @@ import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { getAnimeById, getAnimeCharacters, getAnimeStreaming, getMediaImage, JikanError } from '../services/jikanApi';
+import { getAnimeFullByMalId } from '../services/aniListApi';
+import { translateToSpanish } from '../services/translateApi';
 import { getHighResImageUrl } from '../utils/animeUtils';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import type { AnimeFull, Character } from '../types/anime';
 import { supabase } from '../lib/supabase';
 import { AnimeHeroPanel } from '../components/animeDetails/AnimeHeroPanel';
@@ -17,6 +20,15 @@ interface StreamingLink {
   name: string;
   url: string;
 }
+
+// Shared by both data sources (AniList and the Jikan fallback) since they
+// both resolve into the same Character[] shape.
+const sortCharacters = (list: Character[]): Character[] => {
+  const byFav = (a: Character, b: Character) => (b.favorites ?? 0) - (a.favorites ?? 0);
+  const mains = list.filter(c => c.role === 'Main').sort(byFav);
+  const supporting = list.filter(c => c.role === 'Supporting').sort(byFav).slice(0, 15);
+  return [...mains, ...supporting];
+};
 
 export const AnimeDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +51,8 @@ export const AnimeDetails = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { session, savedAnimes, refreshSavedAnimes } = useUserData();
 
+  useDocumentTitle(anime?.title ?? '');
+
   const getAvailableStatuses = () => {
     if (!anime) return [];
     if (anime.status === 'Currently Airing') return ['Mirando', 'Pendiente'];
@@ -49,6 +63,7 @@ export const AnimeDetails = () => {
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
+    const malId = Number(id);
 
     setLoading(true);
     setNotFound(false);
@@ -59,38 +74,80 @@ export const AnimeDetails = () => {
     setRelatedImages({});
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    getAnimeById(id)
-      .then(animeRes => {
+    // Synopses come back in English from both sources. Show them immediately
+    // and swap in a Spanish translation once it lands — never block on it,
+    // and if the (unofficial, keyless) translate endpoint is unreachable the
+    // English text just stays as-is.
+    const translateSynopsisInBackground = (text?: string | null) => {
+      if (!text) return;
+      translateToSpanish(text)
+        .then(translated => {
+          if (cancelled || !translated) return;
+          setAnime(prev => prev ? { ...prev, synopsis: translated } : prev);
+        })
+        .catch(() => { /* keep the original synopsis */ });
+    };
+
+    // Fallback chain — used when AniList has no mapping for this MAL id,
+    // or when the AniList request itself fails.
+    const loadFromJikan = () => {
+      getAnimeById(id)
+        .then(animeRes => {
+          if (cancelled) return;
+          setAnime(animeRes.data);
+          setLoading(false);
+          translateSynopsisInBackground(animeRes.data.synopsis);
+        })
+        .catch(error => {
+          if (cancelled) return;
+          console.error(error);
+          if (error instanceof JikanError && error.status === 404) setNotFound(true);
+          else setLoadError(true);
+          setLoading(false);
+        });
+
+      // Non-critical: failures here must not block the main details from showing.
+      getAnimeCharacters(id)
+        .then(charsRes => { if (!cancelled) setCharacters(sortCharacters(charsRes.data)); })
+        .catch(error => console.error(error));
+
+      getAnimeStreaming(id)
+        .then(streamingRes => { if (!cancelled) setStreaming(streamingRes.data || []); })
+        .catch(error => console.error(error));
+    };
+
+    // AniList is the primary source: one query instead of three, backed by
+    // its own database rather than proxying MAL, so it isn't exposed to
+    // Jikan's "failed to connect to MyAnimeList" outages.
+    getAnimeFullByMalId(malId)
+      .then(bundle => {
         if (cancelled) return;
-        setAnime(animeRes.data);
+        if (!bundle) { loadFromJikan(); return; }
+
+        setAnime(bundle.anime);
+        setCharacters(sortCharacters(bundle.characters));
+        setStreaming(bundle.streaming);
         setLoading(false);
+        translateSynopsisInBackground(bundle.anime.synopsis);
+
+        // MAL/Jikan cover art usually has the title logo baked in; AniList's
+        // doesn't. Try to upgrade the poster to Jikan's version in the
+        // background — if Jikan is unavailable for this title, the AniList
+        // cover we already rendered just stays as-is.
+        getMediaImage('anime', malId)
+          .then(res => {
+            if (cancelled) return;
+            const url = getHighResImageUrl(res.data?.images?.jpg?.large_image_url || res.data?.images?.jpg?.image_url);
+            if (!url) return;
+            setAnime(prev => prev ? { ...prev, images: { jpg: { image_url: url, large_image_url: url } } } : prev);
+          })
+          .catch(() => { /* keep the AniList cover */ });
       })
       .catch(error => {
         if (cancelled) return;
         console.error(error);
-        if (error instanceof JikanError && error.status === 404) setNotFound(true);
-        else setLoadError(true);
-        setLoading(false);
+        loadFromJikan();
       });
-
-    // Characters and streaming are non-critical: failures here (e.g. rate limits)
-    // must not prevent the main anime details from being shown.
-    getAnimeCharacters(id)
-      .then(charsRes => {
-        if (cancelled) return;
-        const byFav = (a: Character, b: Character) => (b.favorites ?? 0) - (a.favorites ?? 0);
-        const mains = charsRes.data.filter(c => c.role === 'Main').sort(byFav);
-        const supporting = charsRes.data.filter(c => c.role === 'Supporting').sort(byFav).slice(0, 15);
-        setCharacters([...mains, ...supporting]);
-      })
-      .catch(error => console.error(error));
-
-    getAnimeStreaming(id)
-      .then(streamingRes => {
-        if (cancelled) return;
-        setStreaming(streamingRes.data || []);
-      })
-      .catch(error => console.error(error));
 
     return () => { cancelled = true; };
   }, [id, retryToken]);

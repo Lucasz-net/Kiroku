@@ -1,7 +1,7 @@
 import { Search, UserCircle, Menu, X } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { searchAnime } from '../services/jikanApi';
+import { searchAniList } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
 import debounce from 'lodash.debounce';
 import { useUserData } from '../contexts/UserDataContext';
@@ -37,7 +37,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
     () => debounce(async (query: string) => {
       if (query.trim()) {
         try {
-          const response = await searchAnime(query, 3);
+          const response = await searchAniList({ q: query, perPage: 3 });
           setInstantResults(response.data);
         } catch (error) { console.error(error); }
       } else { setInstantResults([]); }

@@ -6,6 +6,7 @@ import { MetadataBox } from './MetadataBox';
 import { AnimeSaveControls } from './AnimeSaveControls';
 import { supabase } from '../../lib/supabase';
 import { useUserData } from '../../contexts/UserDataContext';
+import { translateGenre, translateFormat, translateStatus } from '../../utils/translations';
 
 const getRankingBadgeStyle = (rank: number) => {
   switch (rank) {
@@ -213,7 +214,7 @@ export const AnimeHeroPanel = ({
                 key={g.name}
                 className="bg-[#1A1C24] text-zinc-300 border border-[#FF3B3B]/20 text-[10px] px-3 py-1.5 uppercase tracking-widest font-bold rounded-md"
               >
-                {g.name}
+                {translateGenre(g.name)}
               </span>
             ))}
           </div>
@@ -268,8 +269,8 @@ export const AnimeHeroPanel = ({
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
-        <MetadataBox label="Formato" value={anime.type || 'Desconocido'} />
-        <MetadataBox label="Estado" value={anime.status} />
+        <MetadataBox label="Formato" value={anime.type ? translateFormat(anime.type) : 'Desconocido'} />
+        <MetadataBox label="Estado" value={translateStatus(anime.status)} />
         <MetadataBox label="Episodios" value={anime.episodes || 'En emisión'} />
         <MetadataBox label="Año" value={displayYear} />
         <MetadataBox

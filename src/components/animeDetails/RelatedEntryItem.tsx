@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Loader2, Image as ImageIcon } from 'lucide-react';
 import type { AnimeRelationEntry } from '../../types/anime';
+import { translateEntryType } from '../../utils/translations';
 
 interface RelatedEntryItemProps {
   entry: AnimeRelationEntry;
@@ -27,7 +28,7 @@ export const RelatedEntryItem = ({ entry, imageUrl }: RelatedEntryItemProps) => 
         <span className={`text-[11px] font-bold line-clamp-2 leading-snug ${isClickable ? 'text-white group-hover:text-[#FF3B3B] transition-colors' : 'text-zinc-400'}`}>
           {entry.name}
         </span>
-        <span className="text-[9px] uppercase font-bold text-zinc-500 mt-1">Formato: {entry.type}</span>
+        <span className="text-[9px] uppercase font-bold text-zinc-500 mt-1">Formato: {translateEntryType(entry.type)}</span>
       </div>
     </div>
   );

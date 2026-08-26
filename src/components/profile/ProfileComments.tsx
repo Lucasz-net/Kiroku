@@ -49,17 +49,31 @@ export const ProfileComments = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Two steps instead of an embedded (author_id → profiles) select:
+  // `profiles` itself only allows reading your own row now, so comments by
+  // other authors need their profile resolved against the public view.
+  const resolveAuthors = async (ids: string[]) => {
+    if (ids.length === 0) return new Map<string, { username: string; avatar_url: string | null }>();
+    const { data } = await supabase
+      .from('public_profiles')
+      .select('id, username, avatar_url')
+      .in('id', ids);
+    return new Map((data ?? []).map(p => [p.id as string, { username: p.username, avatar_url: p.avatar_url }]));
+  };
+
   useEffect(() => {
     const fetchComments = async () => {
       setLoading(true);
       const { data } = await supabase
         .from('profile_comments')
-        .select('id, content, created_at, author_id, author:author_id(username, avatar_url)')
+        .select('id, content, created_at, author_id')
         .eq('profile_id', profileId)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (data) setComments(data as unknown as ProfileComment[]);
+      const rows = data ?? [];
+      const authors = await resolveAuthors([...new Set(rows.map(r => r.author_id as string))]);
+      setComments(rows.map(r => ({ ...r, author: authors.get(r.author_id as string) ?? null } as ProfileComment)));
       setLoading(false);
     };
     fetchComments();
@@ -76,11 +90,12 @@ export const ProfileComments = ({
           author_id: currentUserId,
           content: text.trim(),
         })
-        .select('id, content, created_at, author_id, author:author_id(username, avatar_url)')
+        .select('id, content, created_at, author_id')
         .single();
 
       if (error) throw error;
-      setComments(prev => [data as unknown as ProfileComment, ...prev]);
+      const authors = await resolveAuthors([currentUserId]);
+      setComments(prev => [{ ...data, author: authors.get(currentUserId) ?? null } as ProfileComment, ...prev]);
       setText('');
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
     } catch {

@@ -1,17 +1,19 @@
 // src/services/aniListApi.ts
-import type { Anime } from '../types/anime';
+import { cachedFetch } from '../utils/queryCache';
+import type { Anime, AnimeFull, Character, AnimeRelationEntry } from '../types/anime';
 
 const ANILIST_URL = 'https://graphql.anilist.co';
 
 export interface AniListFilters {
   q?: string;
-  formats?: string[]; 
+  formats?: string[];
   status?: string;
   season?: string;
   seasonYear?: number;
   genres?: string[];
   page?: number;
   perPage?: number;
+  sort?: string[];
 }
 
 interface AniListVariables {
@@ -22,7 +24,8 @@ interface AniListVariables {
   season?: string;
   seasonYear?: number;
   genres?: string[];
-  formatIn?: string[]; 
+  formatIn?: string[];
+  sort: string[];
 }
 
 interface AniListMedia {
@@ -60,28 +63,29 @@ interface AniListResponse {
 export const searchAniList = async (filters: AniListFilters) => {
   const query = `
     query (
-      $page: Int, 
-      $perPage: Int, 
-      $search: String, 
-      $status: MediaStatus, 
-      $season: MediaSeason, 
+      $page: Int,
+      $perPage: Int,
+      $search: String,
+      $status: MediaStatus,
+      $season: MediaSeason,
       $seasonYear: Int,
       $genres: [String],
-      $formatIn: [MediaFormat]
+      $formatIn: [MediaFormat],
+      $sort: [MediaSort]
     ) {
       Page(page: $page, perPage: $perPage) {
         pageInfo {
           hasNextPage
         }
         media(
-          search: $search, 
-          type: ANIME, 
-          status: $status, 
-          season: $season, 
+          search: $search,
+          type: ANIME,
+          status: $status,
+          season: $season,
           seasonYear: $seasonYear,
           genre_in: $genres,
           format_in: $formatIn,
-          sort: [POPULARITY_DESC, SCORE_DESC],
+          sort: $sort,
           isAdult: false
         ) {
           idMal
@@ -110,6 +114,7 @@ export const searchAniList = async (filters: AniListFilters) => {
   const variables: AniListVariables = {
     page: filters.page || 1,
     perPage: filters.perPage || 40,
+    sort: filters.sort && filters.sort.length > 0 ? filters.sort : ['POPULARITY_DESC', 'SCORE_DESC'],
   };
 
   if (filters.q) variables.search = filters.q;
@@ -178,3 +183,231 @@ export const searchAniList = async (filters: AniListFilters) => {
     hasNextPage: pageData.pageInfo.hasNextPage,
   };
 };
+
+// ── "Top rated" / "Top popular" listings ───────────────────────────────────
+// Backed by AniList instead of Jikan's `/top/anime` — verified against the
+// live APIs that Jikan's top-anime endpoint fails far more often (upstream
+// MAL connectivity errors) than AniList's own Page query, which runs against
+// AniList's own database rather than proxying MAL.
+const cachedTop = (sort: string[], page: number) =>
+  cachedFetch(
+    `anilist:top:${sort.join(',')}:${page}`,
+    () => searchAniList({ page, perPage: 25, sort }),
+    15 * 60 * 1000,
+    true,
+  );
+
+export const getTopRatedAniList = (page = 1) => cachedTop(['SCORE_DESC'], page);
+export const getTopPopularAniList = (page = 1) => cachedTop(['POPULARITY_DESC'], page);
+
+// "Random anime" / "recommended for you" — previously hit Jikan's `/top/anime`
+// (the endpoint that was failing most often); now draws from the same cached
+// top-rated pool used by the ranking pages.
+export const getRandomAnime = async (): Promise<{ data: Anime }> => {
+  const randomPage = Math.floor(Math.random() * 15) + 1;
+  const res = await cachedTop(['SCORE_DESC'], randomPage);
+  const filtered = res.data.filter(a => a.score && a.score > 7);
+  return { data: filtered[Math.floor(Math.random() * filtered.length)] };
+};
+
+export const getRecommendedAnimes = async (): Promise<{ data: Anime[] }> => {
+  const randomPage = Math.floor(Math.random() * 15) + 1;
+  const res = await cachedTop(['SCORE_DESC'], randomPage);
+  const filtered = res.data.filter(a => a.score && a.score > 7);
+  return { data: filtered.sort(() => 0.5 - Math.random()).slice(0, 6) };
+};
+
+// ── Seasonal browsing (Home "Estrenos" + SeasonalPage) ─────────────────────
+// Replaces Jikan's `/seasons/{year}/{season}` — same underlying filter
+// AniList already supports for Search, just parameterized for season browsing.
+export const getSeasonAniList = (year: number, season: string, page = 1, formats?: string[]) =>
+  cachedFetch(
+    `anilist:season:${year}:${season}:${page}:${formats?.join(',') ?? ''}`,
+    () => searchAniList({ season, seasonYear: year, page, perPage: 40, formats, sort: ['POPULARITY_DESC', 'SCORE_DESC'] }),
+    10 * 60 * 1000,
+    true,
+  );
+
+// ── Full anime details (info + characters + relations + trailer + streaming) ──
+// One GraphQL query replaces Jikan's three separate REST calls
+// (/full, /characters, /streaming), looked up by MAL id so the rest of the
+// app (routes, saved_animes rows) keeps working unchanged.
+
+interface AniListMediaFull {
+  idMal: number | null;
+  title: { romaji: string | null; english: string | null };
+  format: string | null;
+  episodes: number | null;
+  duration: number | null;
+  status: string | null;
+  seasonYear: number | null;
+  startDate: { year: number | null; month: number | null; day: number | null } | null;
+  averageScore: number | null;
+  genres: string[] | null;
+  studios: { nodes: { id: number; name: string }[] } | null;
+  description: string | null;
+  coverImage: { large: string | null; extraLarge: string | null } | null;
+  trailer: { id: string | null; site: string | null } | null;
+  rankings: { rank: number; type: string; allTime: boolean }[] | null;
+  relations: {
+    edges: {
+      relationType: string;
+      node: { idMal: number | null; type: string; title: { romaji: string | null; english: string | null }; format: string | null };
+    }[];
+  } | null;
+  characters: {
+    edges: { role: string; node: { id: number; name: { full: string | null } | null; image: { large: string | null } | null; favourites: number | null } }[];
+  } | null;
+  streamingEpisodes: { site: string | null; url: string | null }[] | null;
+}
+
+const FORMAT_LABELS: Record<string, string> = {
+  TV: 'TV', TV_SHORT: 'TV', MOVIE: 'Movie', OVA: 'OVA', ONA: 'ONA', SPECIAL: 'Special', MUSIC: 'Music',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  RELEASING: 'Currently Airing',
+  NOT_YET_RELEASED: 'Not yet aired',
+  FINISHED: 'Finished Airing',
+  CANCELLED: 'Finished Airing',
+  HIATUS: 'Finished Airing',
+};
+
+const titleCaseRelation = (relationType: string) =>
+  relationType.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+
+const roleLabel = (role: string) => (role === 'MAIN' ? 'Main' : role === 'SUPPORTING' ? 'Supporting' : 'Background');
+
+export interface AniListAnimeBundle {
+  anime: AnimeFull;
+  characters: Character[];
+  streaming: { name: string; url: string }[];
+}
+
+function mapAniListFull(media: AniListMediaFull): AniListAnimeBundle | null {
+  if (!media.idMal) return null;
+
+  const ratedRank = media.rankings?.find(r => r.type === 'RATED' && r.allTime)?.rank ?? null;
+  const popularRank = media.rankings?.find(r => r.type === 'POPULAR' && r.allTime)?.rank ?? null;
+
+  const relGroups = new Map<string, AnimeRelationEntry[]>();
+  (media.relations?.edges || []).forEach(edge => {
+    if (!edge.node.idMal) return;
+    const label = titleCaseRelation(edge.relationType);
+    const entry: AnimeRelationEntry = {
+      mal_id: edge.node.idMal,
+      type: edge.node.type.toLowerCase(),
+      name: edge.node.title.romaji || edge.node.title.english || '',
+    };
+    if (!relGroups.has(label)) relGroups.set(label, []);
+    relGroups.get(label)!.push(entry);
+  });
+
+  const anime: AnimeFull = {
+    mal_id: media.idMal,
+    title: media.title.romaji || media.title.english || 'Sin título',
+    title_english: media.title.english,
+    type: media.format ? FORMAT_LABELS[media.format] || media.format : undefined,
+    episodes: media.episodes,
+    score: media.averageScore ? media.averageScore / 10 : null,
+    synopsis: (media.description || 'Sinopsis no disponible en la base de datos.').replace(/<br\s*\/?>/g, '\n').replace(/<[^>]+>/g, ''),
+    duration: media.duration ? `${media.duration} min per ep` : undefined,
+    rank: ratedRank,
+    popularity: popularRank,
+    images: {
+      jpg: {
+        image_url: media.coverImage?.large || '',
+        large_image_url: media.coverImage?.extraLarge || media.coverImage?.large || '',
+      },
+    },
+    aired: {
+      from: media.startDate?.year
+        ? `${media.startDate.year}-${String(media.startDate.month || 1).padStart(2, '0')}-${String(media.startDate.day || 1).padStart(2, '0')}`
+        : '',
+    },
+    year: media.seasonYear ?? (media.startDate?.year ?? null),
+    status: media.status ? STATUS_LABELS[media.status] || media.status : 'Finished Airing',
+    studios: (media.studios?.nodes || []).map(s => ({ mal_id: s.id, name: s.name })),
+    genres: (media.genres || []).map((g, i) => ({ mal_id: i, name: g })),
+    trailer: media.trailer?.site === 'youtube' && media.trailer.id
+      ? {
+          youtube_id: media.trailer.id,
+          url: `https://www.youtube.com/watch?v=${media.trailer.id}`,
+          embed_url: `https://www.youtube.com/embed/${media.trailer.id}`,
+        }
+      : undefined,
+    relations: Array.from(relGroups, ([relation, entry]) => ({ relation, entry })),
+  };
+
+  const characters: Character[] = (media.characters?.edges || []).map(e => ({
+    character: {
+      mal_id: e.node.id,
+      name: e.node.name?.full || '',
+      images: {
+        jpg: {
+          image_url: e.node.image?.large || '',
+          large_image_url: e.node.image?.large || '',
+        },
+      },
+    },
+    role: roleLabel(e.role),
+    favorites: e.node.favourites ?? 0,
+  }));
+
+  const seenSites = new Set<string>();
+  const streaming = (media.streamingEpisodes || [])
+    .filter((ep): ep is { site: string; url: string } => !!ep.site && !!ep.url && !seenSites.has(ep.site) && (seenSites.add(ep.site), true))
+    .map(ep => ({ name: ep.site, url: ep.url }));
+
+  return { anime, characters, streaming };
+}
+
+const ANIME_FULL_QUERY = `
+  query ($id: Int) {
+    Media(idMal: $id, type: ANIME) {
+      idMal
+      title { romaji english }
+      format
+      episodes
+      duration
+      status
+      seasonYear
+      startDate { year month day }
+      averageScore
+      genres
+      studios(isMain: true) { nodes { id name } }
+      description(asHtml: false)
+      coverImage { large extraLarge }
+      trailer { id site }
+      rankings { rank type allTime }
+      relations {
+        edges {
+          relationType
+          node { idMal type title { romaji english } format }
+        }
+      }
+      characters(sort: [ROLE]) {
+        edges { role node { id name { full } image { large } favourites } }
+      }
+      streamingEpisodes { site url }
+    }
+  }
+`;
+
+export const getAnimeFullByMalId = (malId: number): Promise<AniListAnimeBundle | null> =>
+  cachedFetch(
+    `anilist:full:${malId}`,
+    async () => {
+      const response = await fetch(ANILIST_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ query: ANIME_FULL_QUERY, variables: { id: malId } }),
+      });
+      if (!response.ok) throw new Error('Error fetching from AniList');
+      const json = (await response.json()) as { data: { Media: AniListMediaFull | null } };
+      const media = json.data?.Media;
+      return media ? mapAniListFull(media) : null;
+    },
+    30 * 60 * 1000,
+    true,
+  );

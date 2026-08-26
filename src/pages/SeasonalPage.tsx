@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom'; // <-- NUEVO
 import { ChevronLeft, ChevronRight, CalendarDays, Loader2, Plus } from 'lucide-react';
-import { getCurrentSeason, getSeasonAnimes, getSeasonLabel } from '../services/jikanApi';
+import { getCurrentSeason, getSeasonLabel } from '../services/jikanApi';
+import { getSeasonAniList } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
 import { AnimeCard } from '../components/AnimeCard';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const SEASONS = ['winter', 'spring', 'summer', 'fall'] as const;
 type Season = typeof SEASONS[number];
@@ -40,6 +42,13 @@ const TYPE_FILTERS = [
   { label: 'Especial', value: 'special' },
 ];
 
+const TYPE_TO_ANILIST_FORMATS: Record<string, string[]> = {
+  tv: ['TV', 'TV_SHORT'],
+  movie: ['MOVIE'],
+  ova: ['OVA'],
+  special: ['SPECIAL'],
+};
+
 const SkeletonCard = () => (
   <div className="flex flex-col gap-2 animate-pulse">
     <div className="aspect-[3/4] bg-[#1A1C24] rounded-xl border border-[#FF3B3B]/[0.05]" />
@@ -67,6 +76,8 @@ export const SeasonalPage = () => {
   const fetchIdRef  = useRef(0);
   const headerRef   = useRef<HTMLDivElement>(null);
 
+  useDocumentTitle(`${getSeasonLabel(season)} ${year}`);
+
   // Sincroniza los estados internos si los parámetros de la URL cambian externamente
   useEffect(() => {
     const urlYear = searchParams.get('year');
@@ -87,7 +98,7 @@ export const SeasonalPage = () => {
     const id = ++fetchIdRef.current;
     if (p === 1) setLoading(true); else setLoadingMore(true);
     try {
-      const res = await getSeasonAnimes(y, s, p, t || undefined);
+      const res = await getSeasonAniList(y, s, p, TYPE_TO_ANILIST_FORMATS[t]);
       if (id !== fetchIdRef.current) return;
       const items = res?.data ?? [];
       setAnimes(prev => {
@@ -95,7 +106,7 @@ export const SeasonalPage = () => {
         const seen = new Set<number>();
         return combined.filter(a => seen.has(a.mal_id) ? false : (seen.add(a.mal_id), true));
       });
-      setHasMore(res?.pagination?.has_next_page ?? false);
+      setHasMore(res?.hasNextPage ?? false);
     } catch {
       if (id !== fetchIdRef.current) return;
       if (!append) setAnimes([]);

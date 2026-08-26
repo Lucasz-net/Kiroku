@@ -21,6 +21,7 @@ import { StudioBarChart } from '../components/profile/StudioBarChart';
 import { ProfileComments } from '../components/profile/ProfileComments';
 import { FollowersModal } from '../components/profile/FollowersModal';
 import { useSocialProfile } from '../hooks/useSocialProfile';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const NotFound = ({ username }: { username?: string }) => (
   <div className="min-h-screen bg-[#080A0F] flex flex-col items-center justify-center gap-6 px-4">
@@ -53,6 +54,7 @@ export const PublicProfilePage = () => {
   const [followersInitialTab, setFollowersInitialTab] = useState<'followers' | 'following'>('followers');
 
   const currentUserId = session?.user?.id ?? null;
+  useDocumentTitle(username ? `@${username}` : 'Perfil');
 
   useEffect(() => {
     const checkOwner = async () => {
@@ -71,11 +73,13 @@ export const PublicProfilePage = () => {
 
     const fetchProfile = async () => {
       try {
+        // `public_profiles` is a view that deliberately excludes `email` —
+        // viewing someone else's profile has no business seeing their email.
         const { data: profileData } = await supabase
-          .from('profiles').select('*').eq('username', username).single();
+          .from('public_profiles').select('*').eq('username', username).single();
 
         if (!profileData) { setNotFound(true); setLoading(false); return; }
-        setProfile(profileData as UserProfile);
+        setProfile({ ...profileData, email: '' } as UserProfile);
 
         const { data: animesData } = await supabase
           .from('saved_animes').select('*')

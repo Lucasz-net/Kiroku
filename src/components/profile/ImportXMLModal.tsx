@@ -4,7 +4,8 @@ import {
   Loader2, Tv, Play, Clock,
 } from 'lucide-react';
 import { parseMalXml, getMalStatusCounts, readMalListFile, type MalAnimeEntry } from '../../utils/malXmlParser';
-import { getAnimeById } from '../../services/jikanApi';
+import { getAnimeById, getMediaImage } from '../../services/jikanApi';
+import { getAnimeFullByMalId, type AniListAnimeBundle } from '../../services/aniListApi';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import type { JikanFullResponse } from '../../types/anime';
@@ -79,31 +80,60 @@ export const ImportXMLModal = ({
       const entry = toImport[i];
 
       try {
-        const { data } = await getAnimeById(String(entry.malId)) as JikanFullResponse;
+        // AniList first — its own database, not a live proxy to MAL, so a
+        // large import isn't as exposed to Jikan's occasional outages.
+        let bundle: AniListAnimeBundle | null = null;
+        try { bundle = await getAnimeFullByMalId(entry.malId); } catch { bundle = null; }
 
-        const imageUrl =
-          data.images?.webp?.large_image_url ||
-          data.images?.jpg?.large_image_url ||
-          '';
+        let title: string, imageUrl: string, episodesTotal: number | null, score: number | null,
+          year: number | null, genres: string[], studios: string[], duration: string | null;
 
-        const year =
-          data.year ??
-          (data.aired?.from ? new Date(data.aired.from).getFullYear() : null);
+        if (bundle) {
+          const { anime } = bundle;
+          title = anime.title_english || anime.title;
+          imageUrl = anime.images.jpg.large_image_url || anime.images.jpg.image_url || '';
+          episodesTotal = anime.episodes || entry.totalEpisodes || null;
+          score = anime.score ?? null;
+          year = anime.year ?? (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null);
+          genres = anime.genres?.map(g => g.name) ?? [];
+          studios = anime.studios?.map(s => s.name) ?? [];
+          duration = anime.duration || null;
+
+          // Prefer Jikan's cover (usually has the title logo baked in) when
+          // it's reachable; otherwise the AniList cover above stands.
+          try {
+            const jikanImg = await getMediaImage('anime', entry.malId);
+            const jUrl = jikanImg.data?.images?.jpg?.large_image_url || jikanImg.data?.images?.jpg?.image_url;
+            if (jUrl) imageUrl = jUrl;
+          } catch { /* keep AniList cover */ }
+        } else {
+          // AniList has no mapping for this MAL id (or errored) — fall back
+          // to Jikan directly.
+          const { data } = await getAnimeById(String(entry.malId)) as JikanFullResponse;
+          title = data.title_english || data.title;
+          imageUrl = data.images?.webp?.large_image_url || data.images?.jpg?.large_image_url || '';
+          episodesTotal = data.episodes || entry.totalEpisodes || null;
+          score = data.score ?? null;
+          year = data.year ?? (data.aired?.from ? new Date(data.aired.from).getFullYear() : null);
+          genres = data.genres?.map(g => g.name) ?? [];
+          studios = data.studios?.map(s => s.name) ?? [];
+          duration = data.duration || null;
+        }
 
         await supabase.from('saved_animes').insert({
           user_id: userId,
           anime_id: entry.malId,
-          title: data.title_english || data.title,
+          title,
           image_url: imageUrl,
           status: entry.status,
-          episodes_total: data.episodes || entry.totalEpisodes || null,
-          score: data.score ?? null,
+          episodes_total: episodesTotal,
+          score,
           user_score: entry.userScore || null,
           is_favorite: false,
           year,
-          genres: data.genres?.map(g => g.name) ?? [],
-          studios: data.studios?.map(s => s.name) ?? [],
-          duration: data.duration || null,
+          genres,
+          studios,
+          duration,
           progress: entry.watchedEpisodes || null,
         });
 

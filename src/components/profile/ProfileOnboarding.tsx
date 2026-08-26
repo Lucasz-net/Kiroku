@@ -19,7 +19,7 @@ const steps = [
     title: 'Descubre los más populares',
     desc: 'Mira el ranking de los animes mejor valorados y más populares de todos los tiempos.',
     cta: 'Ver el ranking',
-    to: '/ranking/top',
+    to: '/top/rated',
     accent: 'from-amber-500/10 to-transparent',
     border: 'border-amber-500/20',
     btnClass: 'bg-[#11131A] hover:bg-amber-500/10 text-amber-400 border border-amber-500/20',

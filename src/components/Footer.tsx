@@ -1,15 +1,22 @@
+import { Link } from 'react-router-dom';
+
 export const Footer = () => {
   return (
     <footer className="bg-[#0D0F15] border-t border-[#FF3B3B]/20 py-10 mt-auto relative z-10 font-sans">
       <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
 
-        <div className="flex flex-col items-center md:items-start">
+        <div className="flex flex-col items-center md:items-start gap-2">
           <p className="text-zinc-400 text-[20px] font-black uppercase tracking-[0.2em]">
             Kiroku <span className="text-[#FF3B3B] drop-shadow-[0_0_5px_rgba(255,59,59,0.5)]">//</span>
           </p>
-          <p className="text-zinc-600 text-[10px] mt-1 font-bold">
-            Powered by Jikan API • © 2026
+          <p className="text-zinc-600 text-[10px] font-bold">
+            Datos de AniList y MyAnimeList (Jikan) • © {new Date().getFullYear()}
           </p>
+          <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+            <Link to="/privacidad" className="hover:text-[#FF3B3B] transition-colors">Privacidad</Link>
+            <span className="text-zinc-800">·</span>
+            <Link to="/terminos" className="hover:text-[#FF3B3B] transition-colors">Términos</Link>
+          </div>
         </div>
 
         <a

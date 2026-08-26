@@ -1,6 +1,7 @@
 import { Network } from 'lucide-react';
 import type { AnimeRelation } from '../../types/anime';
 import { RelatedEntryItem } from './RelatedEntryItem';
+import { translateRelation } from '../../utils/translations';
 
 interface RelatedContentSectionProps {
   relations: AnimeRelation[];
@@ -21,7 +22,7 @@ export const RelatedContentSection = ({ relations, imageMap }: RelatedContentSec
             className="bg-[#11131A]/90 p-5 rounded-xl border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/30 transition-colors"
           >
             <span className="text-[#FF3B3B] text-[10px] font-bold uppercase tracking-widest block border-b border-[#FF3B3B]/15 pb-2 mb-4">
-              {rel.relation}
+              {translateRelation(rel.relation)}
             </span>
             <div className="flex flex-col gap-3">
               {rel.entry.map(entry => (

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Users } from 'lucide-react';
 import type { Character } from '../../types/anime';
+import { translateRole } from '../../utils/translations';
 
 interface CharactersGridProps {
   characters: Character[];
@@ -67,7 +68,7 @@ const CharacterCard = ({ char }: { char: Character }) => {
       </div>
       <div className="absolute bottom-0 w-full p-3 bg-gradient-to-t from-[#11131A] to-transparent">
         <h4 className="text-white text-xs font-bold truncate mb-1 drop-shadow-md">{char.character.name}</h4>
-        <p className="text-[#FF7777] text-[10px] font-bold">{char.role}</p>
+        <p className="text-[#FF7777] text-[10px] font-bold">{translateRole(char.role)}</p>
       </div>
     </div>
   );

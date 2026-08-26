@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getTopAnimes } from '../services/jikanApi';
+import { getTopRatedAniList, getTopPopularAniList } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
 import { Flame, Star, Loader2, RefreshCw } from 'lucide-react';
 import { RankingRow } from '../components/home/RankingRow';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const MODES = [
   {
@@ -70,12 +71,12 @@ export const RankingPage = () => {
 
   const isPopular   = filter === 'popular';
   const activeMode  = isPopular ? MODES[1] : MODES[0];
-  const jikanFilter = isPopular ? 'bypopularity' : '';
+  useDocumentTitle(activeMode.label);
 
   const fetchRankings = useCallback(async (page: number, append = false) => {
     if (page === 1) setLoading(true); else setLoadingMore(true);
     try {
-      const res = await getTopAnimes(25, jikanFilter, page);
+      const res = await (isPopular ? getTopPopularAniList(page) : getTopRatedAniList(page));
       const newAnimes = res?.data || [];
       const totalLen = (append ? animesLenRef.current : 0) + newAnimes.length;
       animesLenRef.current = totalLen;
@@ -91,7 +92,7 @@ export const RankingPage = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [jikanFilter]);
+  }, [isPopular]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -100,7 +101,7 @@ export const RankingPage = () => {
     setHasMore(true);
     fetchRankings(1, false);
     window.scrollTo(0, 0);
-  }, [filter, jikanFilter, fetchRankings]);
+  }, [filter, isPopular, fetchRankings]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;

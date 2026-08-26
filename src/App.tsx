@@ -18,6 +18,9 @@ const RankingPage = lazy(() => import('./pages/RankingPage').then(m => ({ defaul
 const SeasonalPage = lazy(() => import('./pages/SeasonalPage').then(m => ({ default: m.SeasonalPage })));
 const WatchlistPage = lazy(() => import('./pages/WatchlistPage').then(m => ({ default: m.WatchlistPage })));
 const PublicProfilePage = lazy(() => import('./pages/PublicProfilePage').then(m => ({ default: m.PublicProfilePage })));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
+const TermsPage = lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
 
 const PageLoader = () => (
   <div className="flex justify-center items-center min-h-[60vh]">
@@ -73,6 +76,9 @@ const AnimatedRoutes = () => {
           <Route path="/seasonal"     element={<SeasonalPage />} />
           <Route path="/watchlist"    element={<WatchlistPage />} />
           <Route path="/u/:username"  element={<PublicProfilePage />} />
+          <Route path="/privacidad"   element={<PrivacyPolicyPage />} />
+          <Route path="/terminos"     element={<TermsPage />} />
+          <Route path="*"             element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </div>

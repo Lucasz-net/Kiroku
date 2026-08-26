@@ -76,17 +76,18 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         let loginEmail = identifier;
 
         if (!identifier.includes('@')) {
-          const { data, error: searchError } = await supabase
-            .from('profiles')
-            .select('email')
-            .eq('username', identifier)
-            .maybeSingle();
+          // Narrow RPC (returns only the email string) instead of selecting
+          // from `profiles` directly — the table itself only allows a user
+          // to read their own row, so an anonymous login attempt needs this
+          // dedicated lookup rather than a plain SELECT.
+          const { data: foundEmail, error: searchError } = await supabase
+            .rpc('get_email_for_login', { p_username: identifier });
 
-          if (searchError || !data || !data.email) {
+          if (searchError || !foundEmail) {
             throw new Error('Usuario no encontrado.');
           }
 
-          loginEmail = data.email;
+          loginEmail = foundEmail;
         }
 
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -100,7 +101,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
       } else {
         const { data: existingUser } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('id')
           .eq('username', username)
           .maybeSingle();
@@ -225,7 +226,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-100 text-zinc-900 font-bold py-3 rounded-xl transition-all text-sm mb-5"
+              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-100 text-zinc-900 font-bold py-3 rounded-xl border border-transparent transition-all duration-200 text-sm mb-5 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,59,59,0.2)] hover:border-[#FF3B3B]/30 active:scale-[0.98]"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>

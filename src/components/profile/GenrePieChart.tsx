@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
+import { translateGenre } from '../../utils/translations';
 
 const COLORS      = ['#FF3B3B', '#FF8800', '#FBBF24', '#F472B6', '#A855F7'];
 const RANK_COLORS = ['#FF3B3B', '#FF8800', '#FBBF24', '#F472B6', '#A855F7'];
@@ -164,7 +165,7 @@ export const GenrePieChart = ({ genres }: Props) => {
                       transition: 'color 150ms ease-out',
                     }}
                   >
-                    {s.label}
+                    {translateGenre(s.label)}
                   </span>
                   <span className="text-xs font-black tabular-nums shrink-0" style={{ color: s.color }}>
                     {s.pct}%

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getUpcomingAnimes, getTopAnimes, getCurrentSeason } from '../services/jikanApi';
+import { getCurrentSeason } from '../services/jikanApi';
+import { getTopRatedAniList, getTopPopularAniList, getSeasonAniList } from '../services/aniListApi';
 import { getCachedSync } from '../utils/queryCache';
 import type { Anime } from '../types/anime';
 import gsap from 'gsap';
@@ -16,22 +17,22 @@ export const Home = () => {
 
   // Initialise from localStorage-backed cache so data shows on first render
   const [upcoming,   setUpcoming]   = useState<Anime[]>(
-    () => getCachedSync<{ data: Anime[] }>(`season:${year}:${season}`, 10 * 60 * 1000)?.data ?? []
+    () => getCachedSync<{ data: Anime[] }>(`anilist:season:${year}:${season}:1:`, 10 * 60 * 1000)?.data ?? []
   );
   const [topRated,   setTopRated]   = useState<Anime[]>(
-    () => getCachedSync<{ data: Anime[] }>('top:10::1', 15 * 60 * 1000)?.data ?? []
+    () => (getCachedSync<{ data: Anime[] }>('anilist:top:SCORE_DESC:1', 15 * 60 * 1000)?.data ?? []).slice(0, 10)
   );
   const [topPopular, setTopPopular] = useState<Anime[]>(
-    () => getCachedSync<{ data: Anime[] }>('top:10:bypopularity:1', 15 * 60 * 1000)?.data ?? []
+    () => (getCachedSync<{ data: Anime[] }>('anilist:top:POPULARITY_DESC:1', 15 * 60 * 1000)?.data ?? []).slice(0, 10)
   );
   const [errors, setErrors] = useState({ upcoming: false, topRated: false, topPopular: false });
   const mainRef = useRef<HTMLDivElement>(null);
 
   const loadHomeData = useCallback(async () => {
     const [upcomingRes, topRatedRes, topPopularRes] = await Promise.all([
-      getUpcomingAnimes().catch(() => null),
-      getTopAnimes(10).catch(() => null),
-      getTopAnimes(10, 'bypopularity').catch(() => null),
+      getSeasonAniList(year, season, 1).catch(() => null),
+      getTopRatedAniList(1).catch(() => null),
+      getTopPopularAniList(1).catch(() => null),
     ]);
 
     setErrors({ upcoming: !upcomingRes, topRated: !topRatedRes, topPopular: !topPopularRes });
@@ -40,9 +41,9 @@ export const Home = () => {
       const seen = new Set<number>();
       setUpcoming(upcomingRes.data.filter(a => seen.has(a.mal_id) ? false : (seen.add(a.mal_id), true)));
     }
-    if (topRatedRes?.data)   setTopRated(topRatedRes.data);
-    if (topPopularRes?.data) setTopPopular(topPopularRes.data);
-  }, []);
+    if (topRatedRes?.data)   setTopRated(topRatedRes.data.slice(0, 10));
+    if (topPopularRes?.data) setTopPopular(topPopularRes.data.slice(0, 10));
+  }, [year, season]);
 
   useEffect(() => {
     let cancelled = false;

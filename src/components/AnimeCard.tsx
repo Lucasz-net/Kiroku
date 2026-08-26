@@ -4,6 +4,8 @@ import type { Anime } from '../types/anime';
 import { Calendar, BookmarkCheck, Eye, Clock } from 'lucide-react';
 import { getHighResImageUrl } from '../utils/animeUtils';
 import { useUserData } from '../contexts/UserDataContext';
+import { useJikanCover } from '../hooks/useJikanCover';
+import { translateGenre } from '../utils/translations';
 
 interface AnimeCardProps {
   anime: Anime;
@@ -20,6 +22,8 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
   const { getSavedStatus } = useUserData();
   const savedStatus = getSavedStatus(anime.mal_id);
   const statusCfg = savedStatus ? STATUS_CONFIG[savedStatus] : null;
+  const baseImage = getHighResImageUrl(anime.images.jpg.large_image_url || anime.images.jpg.image_url);
+  const displayImage = useJikanCover(anime.mal_id, baseImage);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -43,7 +47,7 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
         )}
 
         <img
-          src={getHighResImageUrl(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}
+          src={displayImage}
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = anime.images.jpg.large_image_url || anime.images.jpg.image_url;
@@ -78,7 +82,7 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
             <div className="flex flex-wrap gap-1 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-75">
               {anime.genres.slice(0, 3).map(g => (
                 <span key={g.mal_id} className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#FF3B3B]/20 text-[#FF9B9B] border border-[#FF3B3B]/30">
-                  {g.name}
+                  {translateGenre(g.name)}
                 </span>
               ))}
             </div>

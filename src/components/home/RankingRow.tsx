@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import type { Anime } from '../../types/anime';
 import { getHighResImageUrl } from '../../utils/animeUtils';
+import { useJikanCover } from '../../hooks/useJikanCover';
+import { translateGenre } from '../../utils/translations';
 
 const getRankStyle = (index: number) => {
   switch (index) {
@@ -11,7 +13,11 @@ const getRankStyle = (index: number) => {
   }
 };
 
-export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) => (
+export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) => {
+  const baseImage = getHighResImageUrl(anime.images.jpg.large_image_url || anime.images.jpg.image_url);
+  const displayImage = useJikanCover(anime.mal_id, baseImage);
+
+  return (
   <Link
     to={`/anime/${anime.mal_id}`}
     className="ranking-row group flex bg-[#0D0F15] rounded-xl border border-[#FF3B3B]/[0.07] hover:border-[#FF3B3B]/30 hover:bg-[#11131A] transition-all duration-300 overflow-hidden"
@@ -22,7 +28,7 @@ export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) =>
 
     <div className="w-28 md:w-40 h-40 md:h-52 overflow-hidden shrink-0 relative">
       <img
-        src={getHighResImageUrl(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}
+        src={displayImage}
         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = anime.images.jpg.image_url; }}
         alt={anime.title}
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
@@ -39,7 +45,7 @@ export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) =>
             key={genre.mal_id}
             className="text-[11px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md bg-[#11131A] text-zinc-600 border border-[#FF3B3B]/[0.07]"
           >
-            {genre.name}
+            {translateGenre(genre.name)}
           </span>
         ))}
       </div>
@@ -54,4 +60,5 @@ export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) =>
       </div>
     </div>
   </Link>
-);
+  );
+};

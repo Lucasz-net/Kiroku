@@ -22,6 +22,7 @@ import { ProfileComments } from '../components/profile/ProfileComments';
 import { ImportXMLModal } from '../components/profile/ImportXMLModal';
 import { FollowersModal } from '../components/profile/FollowersModal';
 import { useSocialProfile } from '../hooks/useSocialProfile';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export const Profile = () => {
 
@@ -41,6 +42,7 @@ export const Profile = () => {
   const counterRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   const social = useSocialProfile(profile?.id ?? null, profile?.id ?? null);
+  useDocumentTitle(profile?.username ? `@${profile.username}` : 'Mi Perfil');
 
   useEffect(() => {
     const fetchUserData = async () => {

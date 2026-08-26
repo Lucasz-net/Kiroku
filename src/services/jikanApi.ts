@@ -1,5 +1,5 @@
 import { cachedFetch } from '../utils/queryCache';
-import type { JikanResponse, JikanFullResponse, AnimeCharactersResponse, Anime } from '../types/anime';
+import type { JikanResponse, JikanFullResponse, AnimeCharactersResponse } from '../types/anime';
 
 const BASE_URL = 'https://api.jikan.moe/v4';
 
@@ -94,26 +94,6 @@ export const getCurrentSeason = () => {
   return            { year, season: 'fall',   label: 'Otoño' };
 };
 
-export const getUpcomingAnimes = (): Promise<JikanResponse> => {
-  const { year, season } = getCurrentSeason();
-  return cachedFetch(
-    `season:${year}:${season}`,
-    () => jikanGet(`${BASE_URL}/seasons/${year}/${season}`),
-    10 * 60 * 1000,
-    true,
-  );
-};
-
-export const getTopAnimes = (limit = 25, filter = '', page = 1): Promise<JikanResponse> => {
-  const url = `${BASE_URL}/top/anime?limit=${limit}&page=${page}${filter ? `&filter=${filter}` : ''}`;
-  return cachedFetch(
-    `top:${limit}:${filter}:${page}`,
-    () => jikanGet(url),
-    15 * 60 * 1000,
-    true,
-  );
-};
-
 export const getAnimeById = (id: string): Promise<JikanFullResponse> =>
   cachedFetch(`anime:${id}`, () => jikanGet(`${BASE_URL}/anime/${id}/full`), 30 * 60 * 1000);
 
@@ -127,37 +107,6 @@ export const getAnimeStreaming = (id: string): Promise<{ data: { name: string; u
     60 * 60 * 1000,
     true,
   );
-
-export const searchAnime = (query: string, limit = 10): Promise<JikanResponse> =>
-  cachedFetch(
-    `search:${query}:${limit}`,
-    () => jikanGet(`${BASE_URL}/anime?q=${query}&limit=${limit}`),
-    3 * 60 * 1000,
-  );
-
-export const getRandomAnime = async (): Promise<{ data: Anime }> => {
-  const randomPage = Math.floor(Math.random() * 15) + 1;
-  const json = await cachedFetch<JikanResponse>(
-    `top:25::${randomPage}`,
-    () => jikanGet(`${BASE_URL}/top/anime?page=${randomPage}`),
-    15 * 60 * 1000,
-    true,
-  );
-  const filtered = json.data.filter(a => a.score && a.score > 7);
-  return { data: filtered[Math.floor(Math.random() * filtered.length)] };
-};
-
-export const getRecommendedAnimes = async (): Promise<{ data: Anime[] }> => {
-  const randomPage = Math.floor(Math.random() * 15) + 1;
-  const json = await cachedFetch<JikanResponse>(
-    `top:25::${randomPage}`,
-    () => jikanGet(`${BASE_URL}/top/anime?page=${randomPage}`),
-    15 * 60 * 1000,
-    true,
-  );
-  const filtered = json.data.filter(a => a.score && a.score > 7);
-  return { data: filtered.sort(() => 0.5 - Math.random()).slice(0, 6) };
-};
 
 export const getAnimeByStudio = (studioId: string) =>
   cachedFetch(
@@ -195,17 +144,6 @@ export const advancedSearchAnime = (filters: AdvancedSearchFilters) => {
     `adv:${params.toString()}`,
     () => jikanGet(`${BASE_URL}/anime?${params.toString()}`),
     5 * 60 * 1000,
-  );
-};
-
-export const getSeasonAnimes = (year: number, season: string, page = 1, filter?: string): Promise<JikanResponse> => {
-  let url = `${BASE_URL}/seasons/${year}/${season}?page=${page}&sfw=true`;
-  if (filter) url += `&filter=${filter}`;
-  return cachedFetch(
-    `season:${year}:${season}:${page}:${filter ?? ''}`,
-    () => jikanGet(url),
-    10 * 60 * 1000,
-    true,
   );
 };
 

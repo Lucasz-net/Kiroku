@@ -8,6 +8,8 @@ import {
   Star, LayoutGrid, AlignJustify, ArrowUpDown, X, type LucideIcon,
 } from 'lucide-react';
 import type { SavedAnime } from '../types/profile';
+import { translateGenre } from '../utils/translations';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const TABS = [
   { id: 'Todos',      icon: List,          label: 'Todos' },
@@ -86,6 +88,7 @@ export const WatchlistPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const sortRef   = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  useDocumentTitle('Mi Watchlist');
 
   // Anima el título cuando la página termina de cargar (se repite en cada visita)
   useGSAP(() => {
@@ -348,7 +351,7 @@ export const WatchlistPage = () => {
                         : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-white'
                     }`}
                   >
-                    {genre}
+                    {translateGenre(genre)}
                   </button>
                 ))}
               </div>
@@ -403,7 +406,7 @@ export const WatchlistPage = () => {
                               ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/30 text-[#FF7777]'
                               : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-600'
                           }`}>
-                            {g}
+                            {translateGenre(g)}
                           </span>
                         ))}
                       </div>
