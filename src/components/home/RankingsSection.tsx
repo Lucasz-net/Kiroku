@@ -1,12 +1,27 @@
 import { Link } from 'react-router-dom';
-import { Star, Flame } from 'lucide-react';
+import { Star, Flame, RefreshCw } from 'lucide-react';
 import type { Anime } from '../../types/anime';
 import { RankingRow } from './RankingRow';
 
 interface RankingsSectionProps {
   topRated: Anime[];
   topPopular: Anime[];
+  topRatedError?: boolean;
+  topPopularError?: boolean;
+  onRetry?: () => void;
 }
+
+const ErrorState = ({ onRetry }: { onRetry?: () => void }) => (
+  <div className="flex flex-col items-center gap-3 py-10 text-center">
+    <p className="text-zinc-500 text-sm font-bold">No se pudo cargar el ranking.</p>
+    <button
+      onClick={onRetry}
+      className="flex items-center gap-2 px-5 py-2 border border-[#FF3B3B]/20 bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"
+    >
+      <RefreshCw size={13} /> Reintentar
+    </button>
+  </div>
+);
 
 const SkeletonRow = () => (
   <div className="flex bg-[#0D0F15] rounded-xl border border-[#FF3B3B]/[0.07] overflow-hidden animate-pulse">
@@ -23,7 +38,7 @@ const SkeletonRow = () => (
   </div>
 );
 
-export const RankingsSection = ({ topRated, topPopular }: RankingsSectionProps) => (
+export const RankingsSection = ({ topRated, topPopular, topRatedError, topPopularError, onRetry }: RankingsSectionProps) => (
   <section className="rankings-section reveal-section relative z-30 bg-[#0D0F15] -mt-[120px] pt-24 pb-32 px-4">
     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/10 to-transparent" />
 
@@ -44,7 +59,9 @@ export const RankingsSection = ({ topRated, topPopular }: RankingsSectionProps) 
           <div className="flex flex-col gap-3">
             {topRated.length > 0
               ? topRated.map((anime, index) => <RankingRow key={anime.mal_id} anime={anime} index={index} />)
-              : [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+              : topRatedError
+                ? <ErrorState onRetry={onRetry} />
+                : [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
             }
           </div>
 
@@ -72,7 +89,9 @@ export const RankingsSection = ({ topRated, topPopular }: RankingsSectionProps) 
           <div className="flex flex-col gap-3">
             {topPopular.length > 0
               ? topPopular.map((anime, index) => <RankingRow key={anime.mal_id} anime={anime} index={index} />)
-              : [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+              : topPopularError
+                ? <ErrorState onRetry={onRetry} />
+                : [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
             }
           </div>
 

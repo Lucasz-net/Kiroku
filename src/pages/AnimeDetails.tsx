@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
-import { getAnimeById, getAnimeCharacters, getAnimeStreaming, JikanError } from '../services/jikanApi';
+import { getAnimeById, getAnimeCharacters, getAnimeStreaming, getMediaImage, JikanError } from '../services/jikanApi';
 import { getHighResImageUrl } from '../utils/animeUtils';
 import type { AnimeFull, Character } from '../types/anime';
 import { supabase } from '../lib/supabase';
@@ -116,36 +116,25 @@ export const AnimeDetails = () => {
     const entries = anime.relations
       .filter(rel => rel.relation.toLowerCase() !== 'adaptation')
       .flatMap(rel => rel.entry)
-      .filter(e => e.type === 'anime' || e.type === 'manga');
+      .filter((e): e is typeof e & { type: 'anime' | 'manga' } => e.type === 'anime' || e.type === 'manga');
     if (entries.length === 0) return;
     let cancelled = false;
-    const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
-    const run = async () => {
-      for (const entry of entries) {
-        if (cancelled) break;
-        try {
-          let res = await fetch(`https://api.jikan.moe/v4/${entry.type}/${entry.mal_id}`);
-          if (res.status === 429) {
-            await delay(1500);
-            if (cancelled) break;
-            res = await fetch(`https://api.jikan.moe/v4/${entry.type}/${entry.mal_id}`);
-          }
-          if (res.ok) {
-            const data = await res.json();
-            const url = getHighResImageUrl(
-              data.data?.images?.jpg?.large_image_url || data.data?.images?.jpg?.image_url
-            );
-            if (!cancelled) setRelatedImages(prev => ({ ...prev, [entry.mal_id]: url || null }));
-          } else {
-            if (!cancelled) setRelatedImages(prev => ({ ...prev, [entry.mal_id]: null }));
-          }
-        } catch {
+
+    // Fired in parallel, but getMediaImage funnels every request through the
+    // shared Jikan queue (throttled + cached), so this no longer needs its
+    // own manual pacing/backoff.
+    entries.forEach(entry => {
+      getMediaImage(entry.type, entry.mal_id)
+        .then(res => {
+          if (cancelled) return;
+          const url = getHighResImageUrl(res.data?.images?.jpg?.large_image_url || res.data?.images?.jpg?.image_url);
+          setRelatedImages(prev => ({ ...prev, [entry.mal_id]: url || null }));
+        })
+        .catch(() => {
           if (!cancelled) setRelatedImages(prev => ({ ...prev, [entry.mal_id]: null }));
-        }
-        await delay(350);
-      }
-    };
-    run();
+        });
+    });
+
     return () => { cancelled = true; };
   }, [anime]);
 

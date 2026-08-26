@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getTopAnimes } from '../services/jikanApi';
 import type { Anime } from '../types/anime';
-import { Flame, Star, Loader2 } from 'lucide-react';
+import { Flame, Star, Loader2, RefreshCw } from 'lucide-react';
 import { RankingRow } from '../components/home/RankingRow';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -48,6 +48,7 @@ export const RankingPage = () => {
   const [loading, setLoading]         = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore]         = useState(true);
+  const [loadError, setLoadError]     = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const headerRef   = useRef<HTMLDivElement>(null);
   const animesLenRef = useRef(0);
@@ -80,11 +81,12 @@ export const RankingPage = () => {
       animesLenRef.current = totalLen;
       setAnimes(prev => append ? [...prev, ...newAnimes] : newAnimes);
       setHasMore(newAnimes.length === 25 && totalLen < 100);
+      setLoadError(false);
     } catch (error) {
       console.error(error);
-      setAnimes([]);
-      animesLenRef.current = 0;
+      if (!append) { setAnimes([]); animesLenRef.current = 0; }
       setHasMore(false);
+      setLoadError(true);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -184,6 +186,18 @@ export const RankingPage = () => {
                 ))
             }
           </div>
+
+          {!loading && loadError && animes.length === 0 && (
+            <div className="flex flex-col items-center gap-3 py-16 text-center">
+              <p className="text-zinc-400 text-sm font-bold">No se pudo cargar el ranking. Puede que Jikan (la API de datos) esté temporalmente caído.</p>
+              <button
+                onClick={() => fetchRankings(1, false)}
+                className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"
+              >
+                <RefreshCw size={13} /> Reintentar
+              </button>
+            </div>
+          )}
 
           <div ref={sentinelRef} className="h-1" />
 

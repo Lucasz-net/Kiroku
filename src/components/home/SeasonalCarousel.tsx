@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Tv, ChevronRight, Calendar, ArrowRight } from 'lucide-react';
+import { Tv, ChevronRight, Calendar, ArrowRight, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Anime } from '../../types/anime';
 import { AnimeCard } from '../AnimeCard';
@@ -7,6 +7,8 @@ import { getCurrentSeason } from '../../services/jikanApi';
 
 interface SeasonalCarouselProps {
   upcoming: Anime[];
+  hasError?: boolean;
+  onRetry?: () => void;
 }
 
 const SkeletonAnimeCard = () => (
@@ -36,7 +38,7 @@ const getNextSeasonInfo = (year: number, season: string) => {
   return { year, season: nextSeason, label: labels[nextSeason] };
 };
 
-export const SeasonalCarousel = ({ upcoming }: SeasonalCarouselProps) => {
+export const SeasonalCarousel = ({ upcoming, hasError, onRetry }: SeasonalCarouselProps) => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
   const isHovered = useRef(false);
@@ -132,7 +134,17 @@ export const SeasonalCarousel = ({ upcoming }: SeasonalCarouselProps) => {
             onMouseLeave={handleMouseLeave}
             className={`flex gap-5 overflow-x-auto px-6 md:px-8 pb-6 pt-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden select-none ${!isLoading && isDraggingUI ? 'cursor-grabbing' : !isLoading ? 'cursor-grab' : ''}`}
           >
-            {isLoading
+            {hasError ? (
+              <div className="flex flex-col items-center gap-3 py-10 w-full text-center">
+                <p className="text-zinc-500 text-sm font-bold">No se pudieron cargar los estrenos.</p>
+                <button
+                  onClick={onRetry}
+                  className="flex items-center gap-2 px-5 py-2 border border-[#FF3B3B]/20 bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"
+                >
+                  <RefreshCw size={13} /> Reintentar
+                </button>
+              </div>
+            ) : isLoading
               ? [...Array(8)].map((_, i) => <SkeletonAnimeCard key={i} />)
               : [...upcoming, ...upcoming].map((anime, index) => (
                   <div

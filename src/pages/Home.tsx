@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getUpcomingAnimes, getTopAnimes, getCurrentSeason } from '../services/jikanApi';
 import { getCachedSync } from '../utils/queryCache';
 import type { Anime } from '../types/anime';
@@ -24,29 +24,31 @@ export const Home = () => {
   const [topPopular, setTopPopular] = useState<Anime[]>(
     () => getCachedSync<{ data: Anime[] }>('top:10:bypopularity:1', 15 * 60 * 1000)?.data ?? []
   );
+  const [errors, setErrors] = useState({ upcoming: false, topRated: false, topPopular: false });
   const mainRef = useRef<HTMLDivElement>(null);
+
+  const loadHomeData = useCallback(async () => {
+    const [upcomingRes, topRatedRes, topPopularRes] = await Promise.all([
+      getUpcomingAnimes().catch(() => null),
+      getTopAnimes(10).catch(() => null),
+      getTopAnimes(10, 'bypopularity').catch(() => null),
+    ]);
+
+    setErrors({ upcoming: !upcomingRes, topRated: !topRatedRes, topPopular: !topPopularRes });
+
+    if (upcomingRes?.data) {
+      const seen = new Set<number>();
+      setUpcoming(upcomingRes.data.filter(a => seen.has(a.mal_id) ? false : (seen.add(a.mal_id), true)));
+    }
+    if (topRatedRes?.data)   setTopRated(topRatedRes.data);
+    if (topPopularRes?.data) setTopPopular(topPopularRes.data);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-
-    (async () => {
-      const [upcomingRes, topRatedRes, topPopularRes] = await Promise.all([
-        getUpcomingAnimes().catch(() => null),
-        getTopAnimes(10).catch(() => null),
-        getTopAnimes(10, 'bypopularity').catch(() => null),
-      ]);
-      if (cancelled) return;
-
-      if (upcomingRes?.data) {
-        const seen = new Set<number>();
-        setUpcoming(upcomingRes.data.filter(a => seen.has(a.mal_id) ? false : (seen.add(a.mal_id), true)));
-      }
-      if (topRatedRes?.data)   setTopRated(topRatedRes.data);
-      if (topPopularRes?.data) setTopPopular(topPopularRes.data);
-    })();
-
+    (async () => { if (!cancelled) await loadHomeData(); })();
     return () => { cancelled = true; };
-  }, []);
+  }, [loadHomeData]);
 
   useGSAP(() => {
     ['.estrenos-section', '.rankings-section'].forEach((sel) => {
@@ -95,8 +97,14 @@ export const Home = () => {
   return (
     <div ref={mainRef} className="block font-sans bg-[#0D0F15] overflow-hidden relative w-full">
       <HeroSection />
-      <SeasonalCarousel upcoming={upcoming} />
-      <RankingsSection topRated={topRated} topPopular={topPopular} />
+      <SeasonalCarousel upcoming={upcoming} hasError={errors.upcoming && upcoming.length === 0} onRetry={loadHomeData} />
+      <RankingsSection
+        topRated={topRated}
+        topPopular={topPopular}
+        topRatedError={errors.topRated && topRated.length === 0}
+        topPopularError={errors.topPopular && topPopular.length === 0}
+        onRetry={loadHomeData}
+      />
     </div>
   );
 };

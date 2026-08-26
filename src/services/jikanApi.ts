@@ -14,16 +14,58 @@ export class JikanError extends Error {
   }
 }
 
-// Retry on 429 (rate limit) and 5xx (Jikan is often briefly unavailable) with
-// exponential backoff before propagating the error to the caller.
-async function jikanFetch(url: string): Promise<Response> {
-  const delays = [900, 1800, 3600, 7200];
-  for (let i = 0; i < delays.length; i++) {
+const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
+
+// Jikan's public API has essentially no tolerance for concurrent bursts —
+// a single anime-details page fires 3 requests at once (full data,
+// characters, streaming) and Home fires 3 more (upcoming, top-rated,
+// top-popular). Verified against the live API: 3 of 5 simultaneous requests
+// came back 429, with no Retry-After header. Left uncoordinated, each of
+// those requests retries on its own schedule and they keep re-colliding.
+// Routing every call through this single-lane queue means the app only ever
+// has one Jikan request in flight, paced to stay under the rate limit, so
+// bursts turn into a short queue instead of a wall of 429s.
+const MIN_GAP_MS = 380;
+let queue: Promise<void> = Promise.resolve();
+let cooldownUntil = 0;
+
+function enqueue<T>(task: () => Promise<T>): Promise<T> {
+  const result = queue.then(async () => {
+    const wait = cooldownUntil - Date.now();
+    if (wait > 0) await sleep(wait);
+    return task();
+  });
+  // Keep the queue alive regardless of outcome, paced by MIN_GAP_MS so the
+  // *next* request never lands right on top of this one.
+  queue = result.then(() => undefined, () => undefined).then(() => sleep(MIN_GAP_MS));
+  return result;
+}
+
+// Two retries beyond the first attempt. 429 also pauses the whole queue
+// briefly (Jikan gives no Retry-After header, so a fixed cooldown is the
+// only signal we have) — 5xx (e.g. the "Jikan failed to connect to
+// MyAnimeList" 504 seen in practice) only backs off the individual request.
+async function fetchWithRetry(url: string): Promise<Response> {
+  const RETRY_DELAYS = [600, 1400];
+  for (let attempt = 0; ; attempt++) {
     const res = await fetch(url);
-    if (res.status !== 429 && res.status < 500) return res;
-    await new Promise(r => setTimeout(r, delays[i]));
+    if (res.status === 429) {
+      cooldownUntil = Date.now() + 1500;
+      if (attempt >= RETRY_DELAYS.length) return res;
+      await sleep(1500);
+      continue;
+    }
+    if (res.status >= 500) {
+      if (attempt >= RETRY_DELAYS.length) return res;
+      await sleep(RETRY_DELAYS[attempt]);
+      continue;
+    }
+    return res;
   }
-  return fetch(url);
+}
+
+function jikanFetch(url: string): Promise<Response> {
+  return enqueue(() => fetchWithRetry(url));
 }
 
 async function jikanGet<T>(url: string): Promise<T> {
@@ -31,6 +73,17 @@ async function jikanGet<T>(url: string): Promise<T> {
   if (!res.ok) throw new JikanError(res.status);
   return res.json() as Promise<T>;
 }
+
+// Lightweight media lookup (image only) used for related-content thumbnails.
+// Goes through the same queue + cache as every other Jikan call instead of
+// a raw, unthrottled fetch.
+export const getMediaImage = (type: 'anime' | 'manga', id: number) =>
+  cachedFetch<{ data: { images?: { jpg?: { image_url?: string; large_image_url?: string } } } }>(
+    `media:${type}:${id}`,
+    () => jikanGet(`${BASE_URL}/${type}/${id}`),
+    60 * 60 * 1000,
+    true,
+  );
 
 export const getCurrentSeason = () => {
   const month = new Date().getMonth() + 1;
