@@ -1,4 +1,4 @@
-import { proxyJson, type MalReq, type MalRes } from '../_lib/mal';
+import { proxyJson, type MalReq, type MalRes } from '../_lib/mal.js';
 
 // GET /api/mal/anime?id=<malId>
 // Single-title rank/score/popularity lookup, used by AnimeDetails to patch

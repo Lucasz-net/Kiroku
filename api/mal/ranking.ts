@@ -1,4 +1,4 @@
-import { proxyJson, type MalReq, type MalRes } from '../_lib/mal';
+import { proxyJson, type MalReq, type MalRes } from '../_lib/mal.js';
 
 // GET /api/mal/ranking?ranking_type=all|bypopularity&limit=25&offset=0
 // Backs Home's "Top Rated"/"Top Popular" and the full Ranking page — see
