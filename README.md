@@ -3,7 +3,7 @@
 # KIROKU.
 
 <p align="center">
-  <img src="./public/Rei.gif" alt="Kiroku Anime Platform Demo" width="800" />
+  <img src="./public/Rei.gif" alt="Kiroku Anime Platform Demo" width="400" />
 </p>
 
 **Plataforma web minimalista para el descubrimiento, tracking y análisis estadístico de animes.**
