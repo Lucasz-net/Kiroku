@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+<div align="center">
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# KIROKU.
 
-Currently, two official plugins are available:
+<p align="center">
+  <img src="./public/Rei.gif" alt="Kiroku Anime Platform Demo" width="800" />
+</p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Plataforma web minimalista para el descubrimiento, tracking y análisis estadístico de animes.**
 
-## React Compiler
+[![React](https://img.shields.io/badge/React-18-0D0F15?style=flat-square&logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-0D0F15?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-0D0F15?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
+[![GSAP](https://img.shields.io/badge/GSAP-Animations-FF3B3B?style=flat-square&logo=greensock)](https://greensock.com/gsap/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-0D0F15?style=flat-square&logo=supabase)](https://supabase.com/)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+</div>
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### **CARACTERÍSTICAS**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+* **Búsqueda Avanzada:** Filtrado instantáneo por múltiples formatos, temporadas, años y géneros.
+* **Watchlist & Progreso:** Gestión de estados (*Mirando*, *Completado*, *Pendiente*, *Favoritos*) con conteo exacto de episodios.
+* **Puntuación Decimal:** Sistema interactivo de estrellas con soporte para medios puntos (`0.5` a `10`).
+* **Estadísticas de Perfil:** Métricas en tiempo real de episodios, horas vistas, días totales, estudios y géneros favoritos.
+* **Exploración Estacional:** Navegación por temporadas pasadas, actuales y próximos estrenos.
+* **Detalles Completos:** Sinopsis, plataformas de streaming disponibles, personajes, tráilers y contenido relacionado.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### **STACK TÉCNICO**
+
+* **Frontend:** React + Vite, TypeScript, Tailwind CSS, Lucide Icons.
+* **Animaciones:** GSAP + ScrollTrigger.
+* **Backend & Auth:** Supabase (PostgreSQL).
+* **APIs:** AniList (GraphQL) + Jikan API v4 (REST).
+
+---
+
+### **INSTALACIÓN Y EJECUCIÓN**
+
+1. **Clonar el repositorio:**
+```bash
+git clone [https://github.com/tu-usuario/kiroku.git]
+cd kiroku
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. **Instalar dependencias:**
+```bash
+npm install
+```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+3. **Variables de entorno:**
+Crea un archivo `.env` en la raíz del proyecto:
+```env
+VITE_SUPABASE_URL=[https://tu-proyecto.supabase.co](https://tu-proyecto.supabase.co)
+VITE_SUPABASE_ANON_KEY=tu-anon-key-de-supabase
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+4. **Configuración en Supabase (SQL):**
+Asegúrate de que la columna de puntuación permita decimales:
+```sql
+ALTER TABLE saved_animes
+ALTER COLUMN user_score TYPE NUMERIC;
+```
+
+5. **Iniciar en local:**
+```bash
+npm run dev
 ```
