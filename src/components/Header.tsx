@@ -11,10 +11,11 @@ interface HeaderProps {
 }
 
 const NAV_LINKS = [
-  { to: '/',            label: 'Inicio',   isActive: (p: string) => p === '/' },
-  { to: '/search',      label: 'Buscar',   isActive: (p: string) => p.startsWith('/search') },
-  { to: '/top/rated',   label: 'Ranking',  isActive: (p: string) => p.startsWith('/top') },
-  { to: '/watchlist',   label: 'Mi Lista', isActive: (p: string) => p.startsWith('/watchlist'), authRequired: true },
+  { to: '/',            label: 'Inicio',    isActive: (p: string) => p === '/' },
+  { to: '/search',      label: 'Buscar',    isActive: (p: string) => p.startsWith('/search') },
+  { to: '/top/rated',   label: 'Ranking',   isActive: (p: string) => p.startsWith('/top') },
+  { to: '/seasonal',    label: 'Temporada', isActive: (p: string) => p.startsWith('/seasonal') },
+  { to: '/watchlist',   label: 'Mi Lista',  isActive: (p: string) => p.startsWith('/watchlist'), authRequired: true },
 ] as const;
 
 export const Header = ({ onOpenLogin }: HeaderProps) => {

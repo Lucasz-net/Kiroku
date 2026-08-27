@@ -184,11 +184,11 @@ export const searchAniList = async (filters: AniListFilters) => {
   };
 };
 
-// ── "Top rated" / "Top popular" listings ───────────────────────────────────
-// Backed by AniList instead of Jikan's `/top/anime` — verified against the
-// live APIs that Jikan's top-anime endpoint fails far more often (upstream
-// MAL connectivity errors) than AniList's own Page query, which runs against
-// AniList's own database rather than proxying MAL.
+// Backing pool for "random anime" / "recommended for you" only — the actual
+// Top Rated / Top Popular rankings shown to users come from MyAnimeList's
+// official API (see getTopRatedAnime/getTopPopularAnime in malApi.ts), so
+// the rank numbers always match MyAnimeList. This just needs a decent pool
+// of well-scored titles to sample from, so AniList's own sort is fine here.
 const cachedTop = (sort: string[], page: number) =>
   cachedFetch(
     `anilist:top:${sort.join(',')}:${page}`,
@@ -197,12 +197,9 @@ const cachedTop = (sort: string[], page: number) =>
     true,
   );
 
-export const getTopRatedAniList = (page = 1) => cachedTop(['SCORE_DESC'], page);
-export const getTopPopularAniList = (page = 1) => cachedTop(['POPULARITY_DESC'], page);
-
 // "Random anime" / "recommended for you" — previously hit Jikan's `/top/anime`
-// (the endpoint that was failing most often); now draws from the same cached
-// top-rated pool used by the ranking pages.
+// (the endpoint that was failing most often); draws from this AniList pool
+// instead of the Jikan-backed ranking pages.
 export const getRandomAnime = async (): Promise<{ data: Anime }> => {
   const randomPage = Math.floor(Math.random() * 15) + 1;
   const res = await cachedTop(['SCORE_DESC'], randomPage);
@@ -248,7 +245,6 @@ interface AniListMediaFull {
   description: string | null;
   coverImage: { large: string | null; extraLarge: string | null } | null;
   trailer: { id: string | null; site: string | null } | null;
-  rankings: { rank: number; type: string; allTime: boolean }[] | null;
   relations: {
     edges: {
       relationType: string;
@@ -287,9 +283,6 @@ export interface AniListAnimeBundle {
 function mapAniListFull(media: AniListMediaFull): AniListAnimeBundle | null {
   if (!media.idMal) return null;
 
-  const ratedRank = media.rankings?.find(r => r.type === 'RATED' && r.allTime)?.rank ?? null;
-  const popularRank = media.rankings?.find(r => r.type === 'POPULAR' && r.allTime)?.rank ?? null;
-
   const relGroups = new Map<string, AnimeRelationEntry[]>();
   (media.relations?.edges || []).forEach(edge => {
     if (!edge.node.idMal) return;
@@ -312,8 +305,13 @@ function mapAniListFull(media: AniListMediaFull): AniListAnimeBundle | null {
     score: media.averageScore ? media.averageScore / 10 : null,
     synopsis: (media.description || 'Sinopsis no disponible en la base de datos.').replace(/<br\s*\/?>/g, '\n').replace(/<[^>]+>/g, ''),
     duration: media.duration ? `${media.duration} min per ep` : undefined,
-    rank: ratedRank,
-    popularity: popularRank,
+    // Rank/popularity/score always come from MyAnimeList's official API (see
+    // getAnimeRanking in malApi.ts), never from AniList's own numbers —
+    // mixing sources produced duplicate "#1" badges and mismatched scores
+    // depending on which source happened to answer for a given title.
+    // Filled in by AnimeDetails after this bundle loads.
+    rank: null,
+    popularity: null,
     images: {
       jpg: {
         image_url: media.coverImage?.large || '',
@@ -379,7 +377,6 @@ const ANIME_FULL_QUERY = `
       description(asHtml: false)
       coverImage { large extraLarge }
       trailer { id site }
-      rankings { rank type allTime }
       relations {
         edges {
           relationType

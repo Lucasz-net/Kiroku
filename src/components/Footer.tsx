@@ -20,7 +20,7 @@ export const Footer = () => {
         </div>
 
         <a
-          href="https://github.com/Lucasz-py"
+          href="https://github.com/Lucasz-net"
           target="_blank"
           rel="noopener noreferrer"
           className="group flex items-center gap-3 px-6 py-3 bg-[#11131A] border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 transition-all duration-300 shadow-sm hover:shadow-[0_0_15px_rgba(255,59,59,0.15)] rounded-lg"
@@ -32,7 +32,7 @@ export const Footer = () => {
 
           <div className="flex flex-col items-start leading-none">
             <span className="text-zinc-600 text-[9px] font-bold uppercase tracking-widest mb-1">Desarrollado por</span>
-            <span className="text-zinc-300 text-[12px] font-black group-hover:text-[#FF3B3B] transition-colors">Lucasz-py</span>
+            <span className="text-zinc-300 text-[12px] font-black group-hover:text-[#FF3B3B] transition-colors">Lucasz-net</span>
           </div>
         </a>
 

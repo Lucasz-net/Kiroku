@@ -1,25 +1,60 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import type { IncomingMessage, ServerResponse } from 'http'
+
+// `vite dev` doesn't run the /api serverless functions Vercel uses in
+// production, so this mirrors them locally: it loads the same handler
+// modules (api/mal/*.ts) through Vite's own SSR module loader and wires
+// them up as dev-server middleware, instead of requiring `vercel dev` or
+// duplicating the proxy logic.
+function malDevProxy(): Plugin {
+  return {
+    name: 'mal-api-dev-proxy',
+    configureServer(server) {
+      server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next) => {
+        if (!req.url?.startsWith('/api/mal/')) return next();
+        const modulePath = req.url.startsWith('/api/mal/anime') ? '/api/mal/anime.ts' : '/api/mal/ranking.ts';
+        try {
+          const mod = await server.ssrLoadModule(modulePath);
+          await mod.default(req, res);
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+        }
+      });
+    },
+  };
+}
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-  ],
-  server: {
-    headers: {
-      // Desactiva toda forma de caché en el servidor de desarrollo.
-      // Evita que F5 sirva módulos JS/CSS desactualizados.
-      'Cache-Control': 'no-store',
+export default defineConfig(({ mode }) => {
+  // Empty prefix = load every var from .env into `env`, not just VITE_*
+  // ones, so MAL_CLIENT_ID (deliberately unprefixed, server-only) reaches
+  // the dev proxy above the same way it reaches the Vercel function.
+  const env = loadEnv(mode, process.cwd(), '');
+  if (env.MAL_CLIENT_ID) process.env.MAL_CLIENT_ID = env.MAL_CLIENT_ID;
+
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+      malDevProxy(),
+    ],
+    server: {
+      headers: {
+        // Desactiva toda forma de caché en el servidor de desarrollo.
+        // Evita que F5 sirva módulos JS/CSS desactualizados.
+        'Cache-Control': 'no-store',
+      },
     },
-  },
-  preview: {
-    headers: {
-      // Lo mismo para `npm run preview` (build local).
-      // Para producción real, el servidor de hosting gestiona estas cabeceras.
-      'Cache-Control': 'no-store',
+    preview: {
+      headers: {
+        // Lo mismo para `npm run preview` (build local).
+        // Para producción real, el servidor de hosting gestiona estas cabeceras.
+        'Cache-Control': 'no-store',
+      },
     },
-  },
+  };
 })

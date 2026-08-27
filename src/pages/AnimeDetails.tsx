@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { getAnimeById, getAnimeCharacters, getAnimeStreaming, getMediaImage, JikanError } from '../services/jikanApi';
+import { getAnimeRanking } from '../services/malApi';
 import { getAnimeFullByMalId } from '../services/aniListApi';
 import { translateToSpanish } from '../services/translateApi';
 import { getHighResImageUrl } from '../utils/animeUtils';
@@ -167,6 +168,28 @@ export const AnimeDetails = () => {
     setIsFavorite(saved?.is_favorite ?? false);
     setProgress(saved?.progress ?? 0);
   }, [anime, savedAnimes]);
+
+  // Rank/Popularity/Score badges must show MyAnimeList's own official
+  // numbers (api/mal/*, backed by MAL's client-ID-authenticated API v2),
+  // same as the Home page and full Ranking page — regardless of whether
+  // this page's primary source was AniList or the Jikan fallback. Score
+  // falls back to whatever the primary source already set if MAL has none
+  // (e.g. an unreleased title) rather than blanking it out.
+  useEffect(() => {
+    if (!anime) return;
+    const malId = anime.mal_id;
+    let cancelled = false;
+    getAnimeRanking(malId)
+      .then(({ rank, popularity, score }) => {
+        if (cancelled) return;
+        setAnime(prev => (prev && prev.mal_id === malId) ? { ...prev, rank, popularity, score: score ?? prev.score } : prev);
+      })
+      .catch(() => { /* leave badges hidden/whatever was already there */ });
+    return () => { cancelled = true; };
+    // Deliberately keyed on mal_id, not `anime` — this effect's own setAnime
+    // calls change `anime`, which would otherwise retrigger it in a loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anime?.mal_id]);
 
   useEffect(() => {
     if (!anime?.relations) return;

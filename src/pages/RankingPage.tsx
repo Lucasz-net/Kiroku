@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getTopRatedAniList, getTopPopularAniList } from '../services/aniListApi';
+import { getTopRatedAnime, getTopPopularAnime } from '../services/malApi';
 import type { Anime } from '../types/anime';
 import { Flame, Star, Loader2, RefreshCw } from 'lucide-react';
 import { RankingRow } from '../components/home/RankingRow';
@@ -76,7 +76,7 @@ export const RankingPage = () => {
   const fetchRankings = useCallback(async (page: number, append = false) => {
     if (page === 1) setLoading(true); else setLoadingMore(true);
     try {
-      const res = await (isPopular ? getTopPopularAniList(page) : getTopRatedAniList(page));
+      const res = await (isPopular ? getTopPopularAnime(page) : getTopRatedAnime(page));
       const newAnimes = res?.data || [];
       const totalLen = (append ? animesLenRef.current : 0) + newAnimes.length;
       animesLenRef.current = totalLen;
@@ -190,7 +190,7 @@ export const RankingPage = () => {
 
           {!loading && loadError && animes.length === 0 && (
             <div className="flex flex-col items-center gap-3 py-16 text-center">
-              <p className="text-zinc-400 text-sm font-bold">No se pudo cargar el ranking. Puede que Jikan (la API de datos) esté temporalmente caído.</p>
+              <p className="text-zinc-400 text-sm font-bold">No se pudo cargar el ranking. Puede que la API de MyAnimeList esté temporalmente caída.</p>
               <button
                 onClick={() => fetchRankings(1, false)}
                 className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"

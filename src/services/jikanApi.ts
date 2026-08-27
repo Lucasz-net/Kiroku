@@ -108,6 +108,11 @@ export const getAnimeStreaming = (id: string): Promise<{ data: { name: string; u
     true,
   );
 
+// Rank/popularity/score (Home, RankingPage, AnimeDetails badges) now come
+// from MyAnimeList's official API — see src/services/malApi.ts — not from
+// here. Jikan is still used below for anime details fallback, characters,
+// streaming, and studio/search lookups.
+
 export const getAnimeByStudio = (studioId: string) =>
   cachedFetch(
     `studio:${studioId}`,

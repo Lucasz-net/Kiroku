@@ -14,7 +14,7 @@ export const PrivacyPolicyPage = () => {
       <div className="container mx-auto max-w-3xl">
         <p className="text-xs font-bold uppercase tracking-widest text-[#FF3B3B]/60 mb-3">Legal</p>
         <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">Política de Privacidad</h1>
-        <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-12">Última actualización: [completar fecha]</p>
+        <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-12">Última actualización: 27/08/2026</p>
 
         <Section title="1. Qué datos recopilamos">
           <p>Cuando creás una cuenta en Kiroku, recopilamos:</p>
@@ -66,7 +66,7 @@ export const PrivacyPolicyPage = () => {
           <p>
             Podés editar o eliminar tu biografía, avatar, banner, comentarios y elementos de tu lista en
             cualquier momento desde tu perfil. Si querés corregir, exportar o eliminar por completo tu
-            cuenta y todos tus datos, escribinos a <strong className="text-zinc-300">[completar email de contacto]</strong>.
+            cuenta y todos tus datos, escribinos a <strong className="text-zinc-300">lucasszdev@gmail.com</strong>.
           </p>
         </Section>
 
@@ -88,7 +88,7 @@ export const PrivacyPolicyPage = () => {
         <Section title="9. Contacto">
           <p>
             Para cualquier consulta sobre privacidad o tus datos, escribinos a{' '}
-            <strong className="text-zinc-300">[completar email de contacto]</strong>.
+            <strong className="text-zinc-300">lucasszdev@gmail.com</strong>.
           </p>
         </Section>
       </div>

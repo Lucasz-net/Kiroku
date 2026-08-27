@@ -14,7 +14,7 @@ export const TermsPage = () => {
       <div className="container mx-auto max-w-3xl">
         <p className="text-xs font-bold uppercase tracking-widest text-[#FF3B3B]/60 mb-3">Legal</p>
         <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">Términos de Servicio</h1>
-        <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-12">Última actualización: [completar fecha]</p>
+        <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-12">Última actualización: 27/08/2026</p>
 
         <Section title="1. Aceptación">
           <p>
@@ -91,7 +91,7 @@ export const TermsPage = () => {
         <Section title="9. Contacto">
           <p>
             Para cualquier consulta sobre estos términos, escribinos a{' '}
-            <strong className="text-zinc-300">[completar email de contacto]</strong>.
+            <strong className="text-zinc-300">lucasszdev@gmail.com</strong>.
           </p>
         </Section>
       </div>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCurrentSeason } from '../services/jikanApi';
-import { getTopRatedAniList, getTopPopularAniList, getSeasonAniList } from '../services/aniListApi';
+import { getTopRatedAnime, getTopPopularAnime } from '../services/malApi';
+import { getSeasonAniList } from '../services/aniListApi';
 import { getCachedSync } from '../utils/queryCache';
 import type { Anime } from '../types/anime';
 import gsap from 'gsap';
@@ -20,10 +21,10 @@ export const Home = () => {
     () => getCachedSync<{ data: Anime[] }>(`anilist:season:${year}:${season}:1:`, 10 * 60 * 1000)?.data ?? []
   );
   const [topRated,   setTopRated]   = useState<Anime[]>(
-    () => (getCachedSync<{ data: Anime[] }>('anilist:top:SCORE_DESC:1', 15 * 60 * 1000)?.data ?? []).slice(0, 10)
+    () => (getCachedSync<{ data: Anime[] }>('mal:top:all:1', 15 * 60 * 1000)?.data ?? []).slice(0, 10)
   );
   const [topPopular, setTopPopular] = useState<Anime[]>(
-    () => (getCachedSync<{ data: Anime[] }>('anilist:top:POPULARITY_DESC:1', 15 * 60 * 1000)?.data ?? []).slice(0, 10)
+    () => (getCachedSync<{ data: Anime[] }>('mal:top:bypopularity:1', 15 * 60 * 1000)?.data ?? []).slice(0, 10)
   );
   const [errors, setErrors] = useState({ upcoming: false, topRated: false, topPopular: false });
   const mainRef = useRef<HTMLDivElement>(null);
@@ -31,8 +32,8 @@ export const Home = () => {
   const loadHomeData = useCallback(async () => {
     const [upcomingRes, topRatedRes, topPopularRes] = await Promise.all([
       getSeasonAniList(year, season, 1).catch(() => null),
-      getTopRatedAniList(1).catch(() => null),
-      getTopPopularAniList(1).catch(() => null),
+      getTopRatedAnime(1).catch(() => null),
+      getTopPopularAnime(1).catch(() => null),
     ]);
 
     setErrors({ upcoming: !upcomingRes, topRated: !topRatedRes, topPopular: !topPopularRes });
