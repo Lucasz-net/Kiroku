@@ -18,6 +18,7 @@ const RankingPage = lazy(() => import('./pages/RankingPage').then(m => ({ defaul
 const SeasonalPage = lazy(() => import('./pages/SeasonalPage').then(m => ({ default: m.SeasonalPage })));
 const WatchlistPage = lazy(() => import('./pages/WatchlistPage').then(m => ({ default: m.WatchlistPage })));
 const PublicProfilePage = lazy(() => import('./pages/PublicProfilePage').then(m => ({ default: m.PublicProfilePage })));
+const Top10Page = lazy(() => import('./pages/Top10Page').then(m => ({ default: m.Top10Page })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
@@ -77,6 +78,7 @@ const AnimatedRoutes = () => {
           <Route path="/seasonal"     element={<SeasonalPage />} />
           <Route path="/watchlist"    element={<WatchlistPage />} />
           <Route path="/u/:username"  element={<PublicProfilePage />} />
+          <Route path="/top10/:username" element={<Top10Page />} />
           <Route path="/restablecer-contrasena" element={<ResetPasswordPage />} />
           <Route path="/privacidad"   element={<PrivacyPolicyPage />} />
           <Route path="/terminos"     element={<TermsPage />} />

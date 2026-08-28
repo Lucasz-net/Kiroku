@@ -7,7 +7,7 @@ import { useUserData } from '../contexts/UserDataContext';
 import { supabase } from '../lib/supabase';
 import {
   Loader2, Tv, CheckCircle, Heart, Hourglass,
-  CalendarDays, Timer, Play, Clock, Activity, ArrowLeft,
+  Activity, ArrowLeft,
   Users, UserCheck, UserPlus, UserMinus, Lock,
 } from 'lucide-react';
 import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
@@ -20,7 +20,9 @@ import { GenrePieChart } from '../components/profile/GenrePieChart';
 import { StudioBarChart } from '../components/profile/StudioBarChart';
 import { ProfileComments } from '../components/profile/ProfileComments';
 import { FollowersModal } from '../components/profile/FollowersModal';
+import { Top10Section } from '../components/profile/Top10Section';
 import { useSocialProfile } from '../hooks/useSocialProfile';
+import { useTop10 } from '../hooks/useTop10';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const NotFound = ({ username }: { username?: string }) => (
@@ -97,6 +99,7 @@ export const PublicProfilePage = () => {
   }, [ownerChecked, ownUsername, username]);
 
   const social = useSocialProfile(profile?.id ?? null, currentUserId);
+  const top10 = useTop10(profile?.id ?? null);
 
   const stats: UserStats = useMemo(() => {
     let episodes = 0, minutes = 0, completed = 0, favorites = 0, pending = 0, watching = 0;
@@ -319,6 +322,16 @@ export const PublicProfilePage = () => {
           </div>
         ) : (
           <>
+            {/* Mi Top 10 + Métricas */}
+            <div className="mb-8">
+              <Top10Section
+                entries={top10.entries}
+                username={profile.username}
+                isOwner={false}
+                metrics={{ minutes: stats.minutes, days: stats.days, watching: stats.watching, pending: stats.pending }}
+              />
+            </div>
+
             {/* Hero stat bar */}
             <div className="profile-section grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
               {heroStats.map((stat, i) => (
@@ -344,26 +357,6 @@ export const PublicProfilePage = () => {
             {/* Main grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4 flex flex-col gap-5">
-                <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
-                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
-                    <Activity size={14} className="text-[#FF3B3B]/50" /> Métricas detalladas
-                  </p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {([
-                      { label: 'Total en minutos', value: stats.minutes.toLocaleString(), icon: Timer        },
-                      { label: 'Total en días',    value: stats.days,                     icon: CalendarDays },
-                      { label: 'Mirando',          value: stats.watching,                 icon: Play         },
-                      { label: 'Pendientes',       value: stats.pending,                  icon: Clock        },
-                    ] as const).map(({ label, value, icon: Icon }) => (
-                      <div key={label} className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4">
-                        <Icon size={16} className="text-[#FF3B3B]/50 mb-3" />
-                        <span className="block text-2xl font-black text-white tracking-tight leading-none mb-2 tabular-nums">{value}</span>
-                        <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <GenrePieChart genres={stats.topGenres} />
                 <StudioBarChart studios={stats.topStudios} />
                 <div className="profile-section"><ActivityFeed animes={animes} /></div>

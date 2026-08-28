@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import {
   Tv, CheckCircle, Heart, Hourglass,
-  CalendarDays, Timer, Play, Clock, Activity,
 } from 'lucide-react';
 import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
 import { toWebP } from '../utils/imageUtils';
@@ -22,7 +21,10 @@ import { ProfileComments } from '../components/profile/ProfileComments';
 import { ImportXMLModal } from '../components/profile/ImportXMLModal';
 import { FollowersModal } from '../components/profile/FollowersModal';
 import { DeleteAccountModal } from '../components/profile/DeleteAccountModal';
+import { Top10Section } from '../components/profile/Top10Section';
+import { Top10EditorModal } from '../components/profile/Top10EditorModal';
 import { useSocialProfile } from '../hooks/useSocialProfile';
+import { useTop10 } from '../hooks/useTop10';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export const Profile = () => {
@@ -37,6 +39,7 @@ export const Profile = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTop10Editor, setShowTop10Editor] = useState(false);
   const [followersInitialTab, setFollowersInitialTab] = useState<'followers' | 'following'>('followers');
   const navigate = useNavigate();
 
@@ -44,6 +47,7 @@ export const Profile = () => {
   const counterRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   const social = useSocialProfile(profile?.id ?? null, profile?.id ?? null);
+  const top10 = useTop10(profile?.id ?? null);
   useDocumentTitle(profile?.username ? `@${profile.username}` : 'Mi Perfil');
 
   useEffect(() => {
@@ -317,46 +321,23 @@ export const Profile = () => {
           </div>
         )}
 
+        {/* ── MI TOP 10 + MÉTRICAS ──────────────────────────────────────── */}
+        {animes.length > 0 && (
+          <div className="mb-8">
+            <Top10Section
+              entries={top10.entries}
+              username={profile.username}
+              isOwner
+              onEditClick={() => setShowTop10Editor(true)}
+              metrics={{ minutes: stats.minutes, days: stats.days, watching: stats.watching, pending: stats.pending }}
+            />
+          </div>
+        )}
+
         {/* ── MAIN GRID ──────────────────────────────────────────────── */}
         <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${animes.length === 0 ? 'hidden' : ''}`}>
 
           <div className="lg:col-span-4 flex flex-col gap-5">
-            <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
-                <Activity size={14} className="text-[#FF3B3B]/50" /> Métricas detalladas
-              </p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {([
-                  { label: 'Total en minutos', value: stats.minutes.toLocaleString(), icon: Timer       },
-                  { label: 'Total en días',    value: stats.days,                     icon: CalendarDays },
-                  { label: 'Mirando',    value: stats.watching,                 icon: Play         },
-                  { label: 'Pendientes', value: stats.pending,                  icon: Clock        },
-                ] as const).map(({ label, value, icon: Icon }) => (
-                  <div
-                    key={label}
-                    className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4 cursor-default"
-                    style={{ transition: spring }}
-                    onMouseEnter={e => {
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.transform = 'scale(1.04)';
-                      el.style.borderColor = 'rgba(255,59,59,0.2)';
-                    }}
-                    onMouseLeave={e => {
-                      const el = e.currentTarget as HTMLElement;
-                      el.style.transform = '';
-                      el.style.borderColor = '';
-                    }}
-                  >
-                    <Icon size={16} className="text-[#FF3B3B]/50 mb-3" />
-                    <span className="block text-2xl font-black text-white tracking-tight leading-none mb-2 tabular-nums">
-                      {value}
-                    </span>
-                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <GenrePieChart genres={stats.topGenres} />
             <StudioBarChart studios={stats.topStudios} />
             <ActivityFeed animes={animes} />
@@ -417,6 +398,15 @@ export const Profile = () => {
         <DeleteAccountModal
           username={profile.username}
           onClose={() => setShowDeleteModal(false)}
+        />
+      )}
+
+      {showTop10Editor && (
+        <Top10EditorModal
+          animes={animes}
+          initialEntries={top10.entries}
+          onClose={() => setShowTop10Editor(false)}
+          onSave={top10.save}
         />
       )}
     </div>

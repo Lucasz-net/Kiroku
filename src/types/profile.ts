@@ -77,3 +77,12 @@ export interface SocialCounts {
   followingCount: number;
   likesCount: number;
 }
+
+export interface Top10Entry {
+  id?: string;
+  user_id?: string;
+  rank: number;
+  anime_id: number;
+  title: string;
+  image_url: string;
+}
