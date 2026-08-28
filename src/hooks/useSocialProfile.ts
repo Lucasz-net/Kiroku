@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 
 export interface SocialStats {
@@ -28,6 +29,8 @@ export function useSocialProfile(
     isLiked: false,
     loading: true,
   });
+  const followPendingRef = useRef(false);
+  const likePendingRef = useRef(false);
 
   const fetchStats = useCallback(async () => {
     if (!profileId) {
@@ -85,7 +88,8 @@ export function useSocialProfile(
   }, [fetchStats]);
 
   const toggleFollow = async () => {
-    if (!profileId || !currentUserId) return;
+    if (!profileId || !currentUserId || followPendingRef.current) return;
+    followPendingRef.current = true;
     const wasFollowing = stats.isFollowing;
 
     setStats(prev => ({
@@ -96,21 +100,32 @@ export function useSocialProfile(
         : prev.followersCount + 1,
     }));
 
-    if (wasFollowing) {
-      await supabase
-        .from('profile_followers')
-        .delete()
-        .eq('follower_id', currentUserId)
-        .eq('following_id', profileId);
-    } else {
-      await supabase
-        .from('profile_followers')
-        .insert({ follower_id: currentUserId, following_id: profileId });
+    const { error } = wasFollowing
+      ? await supabase
+          .from('profile_followers')
+          .delete()
+          .eq('follower_id', currentUserId)
+          .eq('following_id', profileId)
+      : await supabase
+          .from('profile_followers')
+          .insert({ follower_id: currentUserId, following_id: profileId });
+
+    if (error) {
+      setStats(prev => ({
+        ...prev,
+        isFollowing: wasFollowing,
+        followersCount: wasFollowing
+          ? prev.followersCount + 1
+          : prev.followersCount - 1,
+      }));
+      toast.error(wasFollowing ? 'Error al dejar de seguir.' : 'Error al seguir.');
     }
+    followPendingRef.current = false;
   };
 
   const toggleLike = async () => {
-    if (!profileId || !currentUserId) return;
+    if (!profileId || !currentUserId || likePendingRef.current) return;
+    likePendingRef.current = true;
     const wasLiked = stats.isLiked;
 
     setStats(prev => ({
@@ -119,17 +134,25 @@ export function useSocialProfile(
       likesCount: wasLiked ? prev.likesCount - 1 : prev.likesCount + 1,
     }));
 
-    if (wasLiked) {
-      await supabase
-        .from('profile_likes')
-        .delete()
-        .eq('user_id', currentUserId)
-        .eq('profile_id', profileId);
-    } else {
-      await supabase
-        .from('profile_likes')
-        .insert({ user_id: currentUserId, profile_id: profileId });
+    const { error } = wasLiked
+      ? await supabase
+          .from('profile_likes')
+          .delete()
+          .eq('user_id', currentUserId)
+          .eq('profile_id', profileId)
+      : await supabase
+          .from('profile_likes')
+          .insert({ user_id: currentUserId, profile_id: profileId });
+
+    if (error) {
+      setStats(prev => ({
+        ...prev,
+        isLiked: wasLiked,
+        likesCount: wasLiked ? prev.likesCount + 1 : prev.likesCount - 1,
+      }));
+      toast.error(wasLiked ? 'Error al quitar el like.' : 'Error al dar like.');
     }
+    likePendingRef.current = false;
   };
 
   return { ...stats, toggleFollow, toggleLike, refetch: fetchStats };

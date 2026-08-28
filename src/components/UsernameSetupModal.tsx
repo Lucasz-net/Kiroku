@@ -31,12 +31,9 @@ export const UsernameSetupModal = () => {
 
     setCheckState('checking');
     debounceRef.current = setTimeout(async () => {
-      const { data } = await supabase
-        .from('public_profiles')
-        .select('id')
-        .eq('username', value)
-        .maybeSingle();
-      setCheckState(data ? 'taken' : 'available');
+      const { data: available } = await supabase
+        .rpc('username_available', { p_username: value });
+      setCheckState(available === false ? 'taken' : 'available');
     }, 500);
 
     return () => {
@@ -132,7 +129,7 @@ export const UsernameSetupModal = () => {
             )}
 
             <p className="text-[10px] text-zinc-700 mt-2">
-              Letras, números, _ y -. Entre 3 y 20 caracteres. Distingue mayúsculas.
+              Letras, números, _ y -. Entre 3 y 20 caracteres.
             </p>
           </div>
 

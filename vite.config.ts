@@ -28,6 +28,26 @@ function malDevProxy(): Plugin {
   };
 }
 
+// Same reasoning as malDevProxy above, for the /api/account/* endpoints.
+function accountDevProxy(): Plugin {
+  return {
+    name: 'account-api-dev-proxy',
+    configureServer(server) {
+      server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next) => {
+        if (req.url !== '/api/account/delete') return next();
+        try {
+          const mod = await server.ssrLoadModule('/api/account/delete.ts');
+          await mod.default(req, res);
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+        }
+      });
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Empty prefix = load every var from .env into `env`, not just VITE_*
@@ -35,12 +55,16 @@ export default defineConfig(({ mode }) => {
   // the dev proxy above the same way it reaches the Vercel function.
   const env = loadEnv(mode, process.cwd(), '');
   if (env.MAL_CLIENT_ID) process.env.MAL_CLIENT_ID = env.MAL_CLIENT_ID;
+  // Same reasoning, for api/account/delete.ts's service-role client.
+  if (env.SUPABASE_SERVICE_ROLE_KEY) process.env.SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (env.VITE_SUPABASE_URL) process.env.VITE_SUPABASE_URL = env.VITE_SUPABASE_URL;
 
   return {
     plugins: [
       react(),
       tailwindcss(),
       malDevProxy(),
+      accountDevProxy(),
     ],
     server: {
       headers: {

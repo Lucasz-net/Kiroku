@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import {
   Loader2, Tv, CheckCircle, Heart, Hourglass,
   CalendarDays, Timer, Play, Clock, Activity, ArrowLeft,
-  Users, UserCheck, UserPlus, UserMinus,
+  Users, UserCheck, UserPlus, UserMinus, Lock,
 } from 'lucide-react';
 import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
 import { parseDurationToMinutes } from '../utils/animeUtils';
@@ -175,6 +175,9 @@ export const PublicProfilePage = () => {
   if (notFound || !profile) return <NotFound username={username} />;
 
   const isOwner = false;
+  // While social.loading is true we don't yet know isFollowing, so hold off
+  // deciding — otherwise a follower would flash the locked view for a beat.
+  const isLocked = !!profile.is_private && !social.loading && !social.isFollowing;
 
   return (
     <div ref={pageRef} className="min-h-screen bg-[#080A0F] font-sans">
@@ -206,56 +209,63 @@ export const PublicProfilePage = () => {
             {/* Info */}
             <div className="flex-1 text-center md:text-left pt-2 md:pt-4">
               <p className="text-xs font-bold uppercase tracking-widest text-[#FF3B3B]/60 mb-1 flex items-center justify-center md:justify-start gap-1.5">
-                <Activity size={11} /> Perfil público
+                {profile.is_private ? <Lock size={11} /> : <Activity size={11} />}
+                {profile.is_private ? 'Perfil privado' : 'Perfil público'}
               </p>
               <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
                 {profile.username}
               </h1>
-              {profile.bio && (
+              {!isLocked && profile.bio && (
                 <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl bg-[#0D0F15]/60 backdrop-blur-sm p-4 rounded-lg border-l-2 border-[#FF3B3B]/30 mb-4">
                   {profile.bio}
                 </p>
               )}
 
               {/* Social counts */}
-              <div className="flex items-center gap-4 justify-center md:justify-start">
-                <button
-                  onClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
-                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
-                >
-                  <Users size={13} className="text-[#FF3B3B]/40" />
-                  <span className="text-white font-black">{social.followersCount}</span>
-                  Seguidores
-                </button>
-                <span className="text-zinc-700">·</span>
-                <button
-                  onClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
-                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
-                >
-                  <UserCheck size={13} className="text-[#FF3B3B]/40" />
-                  <span className="text-white font-black">{social.followingCount}</span>
-                  Siguiendo
-                </button>
-                <span className="text-zinc-700">·</span>
-                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500">
-                  <Heart size={13} className="text-[#FF3B3B]/40" />
-                  <span className="text-white font-black">{social.likesCount}</span>
-                  Me gustas
-                </span>
-              </div>
+              {!isLocked && (
+                <div className="flex items-center gap-4 justify-center md:justify-start">
+                  <button
+                    onClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                  >
+                    <Users size={13} className="text-[#FF3B3B]/40" />
+                    <span className="text-white font-black">{social.followersCount}</span>
+                    Seguidores
+                  </button>
+                  <span className="text-zinc-700">·</span>
+                  <button
+                    onClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                  >
+                    <UserCheck size={13} className="text-[#FF3B3B]/40" />
+                    <span className="text-white font-black">{social.followingCount}</span>
+                    Siguiendo
+                  </button>
+                  <span className="text-zinc-700">·</span>
+                  <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500">
+                    <Heart size={13} className="text-[#FF3B3B]/40" />
+                    <span className="text-white font-black">{social.likesCount}</span>
+                    Me gustas
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Right actions */}
             <div className="shrink-0 flex flex-col gap-2">
               {/* Quick totals */}
-              <div className="bg-[#0D0F15]/80 border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
-                <span className="block text-2xl font-black text-white tabular-nums">{animes.length}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">en lista</span>
-              </div>
-              <div className="bg-[#0D0F15]/80 border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
-                <span className="block text-2xl font-black text-white tabular-nums">{unlockedAchievements.length}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">logros</span>
-              </div>
+              {!isLocked && (
+                <>
+                  <div className="bg-[#0D0F15]/80 border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
+                    <span className="block text-2xl font-black text-white tabular-nums">{animes.length}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">en lista</span>
+                  </div>
+                  <div className="bg-[#0D0F15]/80 border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
+                    <span className="block text-2xl font-black text-white tabular-nums">{unlockedAchievements.length}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">logros</span>
+                  </div>
+                </>
+              )}
 
               {/* Follow button */}
               {currentUserId && (
@@ -277,7 +287,7 @@ export const PublicProfilePage = () => {
               )}
 
               {/* Like button */}
-              {currentUserId && (
+              {currentUserId && !isLocked && (
                 <button
                   onClick={social.toggleLike}
                   disabled={social.loading}
@@ -295,70 +305,86 @@ export const PublicProfilePage = () => {
           </div>
         </div>
 
-        {/* Hero stat bar */}
-        <div className="profile-section grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-          {heroStats.map((stat, i) => (
-            <div
-              key={stat.label}
-              className="relative bg-[#11131A] border border-[#FF3B3B]/10 rounded-xl px-5 py-4 overflow-hidden flex items-center gap-4"
-            >
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent" />
-              <stat.icon size={22} className="text-[#FF3B3B]/40 shrink-0" />
-              <div className="min-w-0">
-                <p className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-1 truncate">{stat.label}</p>
-                <span
-                  ref={el => { counterRefs.current[i] = el; }}
-                  className="block text-3xl xl:text-4xl font-black text-white tracking-tight leading-none tabular-nums"
-                >
-                  0
-                </span>
-              </div>
+        {isLocked ? (
+          <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl px-8 py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#0D0F15] border border-[#FF3B3B]/20 flex items-center justify-center">
+              <Lock size={22} className="text-[#FF3B3B]/60" />
             </div>
-          ))}
-        </div>
-
-        {/* Main grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-4 flex flex-col gap-5">
-            <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
-              <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
-                <Activity size={14} className="text-[#FF3B3B]/50" /> Métricas detalladas
+            <div>
+              <h2 className="text-lg font-black text-white mb-1">Este perfil es privado</h2>
+              <p className="text-zinc-500 text-sm max-w-sm">
+                Seguí a @{profile.username} para ver su actividad, estadísticas, listas y comentarios.
               </p>
-              <div className="grid grid-cols-2 gap-2.5">
-                {([
-                  { label: 'Total en minutos', value: stats.minutes.toLocaleString(), icon: Timer        },
-                  { label: 'Total en días',    value: stats.days,                     icon: CalendarDays },
-                  { label: 'Mirando',          value: stats.watching,                 icon: Play         },
-                  { label: 'Pendientes',       value: stats.pending,                  icon: Clock        },
-                ] as const).map(({ label, value, icon: Icon }) => (
-                  <div key={label} className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4">
-                    <Icon size={16} className="text-[#FF3B3B]/50 mb-3" />
-                    <span className="block text-2xl font-black text-white tracking-tight leading-none mb-2 tabular-nums">{value}</span>
-                    <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">{label}</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Hero stat bar */}
+            <div className="profile-section grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+              {heroStats.map((stat, i) => (
+                <div
+                  key={stat.label}
+                  className="relative bg-[#11131A] border border-[#FF3B3B]/10 rounded-xl px-5 py-4 overflow-hidden flex items-center gap-4"
+                >
+                  <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent" />
+                  <stat.icon size={22} className="text-[#FF3B3B]/40 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-1 truncate">{stat.label}</p>
+                    <span
+                      ref={el => { counterRefs.current[i] = el; }}
+                      className="block text-3xl xl:text-4xl font-black text-white tracking-tight leading-none tabular-nums"
+                    >
+                      0
+                    </span>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
+
+            {/* Main grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-4 flex flex-col gap-5">
+                <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+                  <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
+                    <Activity size={14} className="text-[#FF3B3B]/50" /> Métricas detalladas
+                  </p>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {([
+                      { label: 'Total en minutos', value: stats.minutes.toLocaleString(), icon: Timer        },
+                      { label: 'Total en días',    value: stats.days,                     icon: CalendarDays },
+                      { label: 'Mirando',          value: stats.watching,                 icon: Play         },
+                      { label: 'Pendientes',       value: stats.pending,                  icon: Clock        },
+                    ] as const).map(({ label, value, icon: Icon }) => (
+                      <div key={label} className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4">
+                        <Icon size={16} className="text-[#FF3B3B]/50 mb-3" />
+                        <span className="block text-2xl font-black text-white tracking-tight leading-none mb-2 tabular-nums">{value}</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <GenrePieChart genres={stats.topGenres} />
+                <StudioBarChart studios={stats.topStudios} />
+                <div className="profile-section"><ActivityFeed animes={animes} /></div>
+                <div className="profile-section"><AchievementGallery unlockedAchievements={unlockedAchievements} /></div>
+              </div>
+
+              <div className="profile-section lg:col-span-8">
+                <AnimeGrid animes={animes} />
               </div>
             </div>
 
-            <GenrePieChart genres={stats.topGenres} />
-            <StudioBarChart studios={stats.topStudios} />
-            <div className="profile-section"><ActivityFeed animes={animes} /></div>
-            <div className="profile-section"><AchievementGallery unlockedAchievements={unlockedAchievements} /></div>
-          </div>
-
-          <div className="profile-section lg:col-span-8">
-            <AnimeGrid animes={animes} />
-          </div>
-        </div>
-
-        {/* Comments */}
-        <div className="mt-8">
-          <ProfileComments
-            profileId={profile.id}
-            currentUserId={currentUserId}
-            isOwner={isOwner}
-          />
-        </div>
+            {/* Comments */}
+            <div className="mt-8">
+              <ProfileComments
+                profileId={profile.id}
+                currentUserId={currentUserId}
+                isOwner={isOwner}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {showFollowersModal && (

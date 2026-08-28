@@ -37,13 +37,18 @@ function relativeTime(dateStr: string): string {
   });
 }
 
+const PAGE_SIZE = 20;
+
 export const ProfileComments = ({
   profileId,
   currentUserId,
   isOwner,
 }: ProfileCommentsProps) => {
   const [comments, setComments] = useState<ProfileComment[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -61,23 +66,46 @@ export const ProfileComments = ({
     return new Map((data ?? []).map(p => [p.id as string, { username: p.username, avatar_url: p.avatar_url }]));
   };
 
-  useEffect(() => {
-    const fetchComments = async () => {
-      setLoading(true);
-      const { data } = await supabase
-        .from('profile_comments')
-        .select('id, content, created_at, author_id')
-        .eq('profile_id', profileId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+  const fetchPage = async (offset: number) => {
+    const { data } = await supabase
+      .from('profile_comments')
+      .select('id, content, created_at, author_id')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
 
-      const rows = data ?? [];
-      const authors = await resolveAuthors([...new Set(rows.map(r => r.author_id as string))]);
-      setComments(rows.map(r => ({ ...r, author: authors.get(r.author_id as string) ?? null } as ProfileComment)));
+    const rows = data ?? [];
+    const authors = await resolveAuthors([...new Set(rows.map(r => r.author_id as string))]);
+    return rows.map(r => ({ ...r, author: authors.get(r.author_id as string) ?? null } as ProfileComment));
+  };
+
+  useEffect(() => {
+    const fetchInitial = async () => {
+      setLoading(true);
+      const [{ count }, items] = await Promise.all([
+        supabase
+          .from('profile_comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('profile_id', profileId),
+        fetchPage(0),
+      ]);
+      setComments(items);
+      setTotalCount(count ?? 0);
+      setHasMore(items.length < (count ?? 0));
       setLoading(false);
     };
-    fetchComments();
+    fetchInitial();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileId]);
+
+  const handleLoadMore = async () => {
+    setLoadingMore(true);
+    const items = await fetchPage(comments.length);
+    const merged = [...comments, ...items];
+    setComments(merged);
+    setHasMore(merged.length < totalCount);
+    setLoadingMore(false);
+  };
 
   const handleSubmit = async () => {
     if (!currentUserId || !text.trim()) return;
@@ -96,6 +124,7 @@ export const ProfileComments = ({
       if (error) throw error;
       const authors = await resolveAuthors([currentUserId]);
       setComments(prev => [{ ...data, author: authors.get(currentUserId) ?? null } as ProfileComment, ...prev]);
+      setTotalCount(prev => prev + 1);
       setText('');
       if (textareaRef.current) textareaRef.current.style.height = 'auto';
     } catch {
@@ -114,6 +143,7 @@ export const ProfileComments = ({
 
     if (!error) {
       setComments(prev => prev.filter(c => c.id !== id));
+      setTotalCount(prev => prev - 1);
     } else {
       toast.error('Error al eliminar el comentario.');
     }
@@ -137,7 +167,7 @@ export const ProfileComments = ({
         </h3>
         {!loading && (
           <span className="ml-auto text-xs font-bold text-zinc-600">
-            {comments.length}
+            {totalCount}
           </span>
         )}
       </div>
@@ -257,6 +287,19 @@ export const ProfileComments = ({
             );
           })}
         </ul>
+      )}
+
+      {!loading && hasMore && (
+        <div className="py-4 flex justify-center border-t border-[#FF3B3B]/5">
+          <button
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors disabled:opacity-50"
+          >
+            {loadingMore && <Loader2 size={13} className="animate-spin" />}
+            Cargar más
+          </button>
+        </div>
       )}
     </section>
   );

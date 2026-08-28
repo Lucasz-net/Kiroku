@@ -7,6 +7,7 @@ export interface UserProfile {
   avatar_url: string | null;
   banner_url: string | null;
   bio: string | null;
+  is_private?: boolean;
 }
 
 export interface SavedAnime {

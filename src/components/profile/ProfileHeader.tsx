@@ -1,7 +1,7 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import {
   Loader2, Camera, Edit2, X, LogOut, Share2, Check,
-  ImagePlus, Users, UserCheck, Heart, Upload, AtSign,
+  ImagePlus, Users, UserCheck, Heart, Upload, AtSign, Lock, Unlock,
 } from 'lucide-react';
 import type { UserProfile, SocialCounts } from '../../types/profile';
 import { supabase } from '../../lib/supabase';
@@ -28,6 +28,7 @@ interface ProfileHeaderProps {
   onFollowersClick?: () => void;
   onFollowingClick?: () => void;
   onImportClick?: () => void;
+  onPrivacyToggle?: (isPrivate: boolean) => void;
 }
 
 export const ProfileHeader = ({
@@ -36,15 +37,24 @@ export const ProfileHeader = ({
   onBioChange, onEditBio, onBioSave, onBioCancel,
   onAvatarUpload, onBannerUpload, onSignOut,
   onUsernameUpdate,
-  onFollowersClick, onFollowingClick, onImportClick,
+  onFollowersClick, onFollowingClick, onImportClick, onPrivacyToggle,
 }: ProfileHeaderProps) => {
   const [copied, setCopied] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState(profile.username);
   const [usernameCheck, setUsernameCheck] = useState<UsernameCheck>('idle');
   const [savingUsername, setSavingUsername] = useState(false);
+  const [togglingPrivacy, setTogglingPrivacy] = useState(false);
   const { applyUsername } = useUserData();
   const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handlePrivacyToggle = async () => {
+    const next = !profile.is_private;
+    setTogglingPrivacy(true);
+    const { error } = await supabase.from('profiles').update({ is_private: next }).eq('id', profile.id);
+    if (!error) onPrivacyToggle?.(next);
+    setTogglingPrivacy(false);
+  };
 
   const handleUsernameChange = (val: string) => {
     const clean = val.replace(/\s/g, '');
@@ -54,9 +64,9 @@ export const ProfileHeader = ({
     if (!USERNAME_RE.test(clean)) { setUsernameCheck('invalid'); return; }
     setUsernameCheck('checking');
     usernameDebounceRef.current = setTimeout(async () => {
-      const { data } = await supabase
-        .from('public_profiles').select('id').eq('username', clean).maybeSingle();
-      setUsernameCheck(data ? 'taken' : 'available');
+      const { data: available } = await supabase
+        .rpc('username_available', { p_username: clean });
+      setUsernameCheck(available === false ? 'taken' : 'available');
     }, 500);
   };
 
@@ -204,6 +214,21 @@ export const ProfileHeader = ({
                 <Upload size={11} /> Importar lista
               </button>
             )}
+            <button
+              onClick={handlePrivacyToggle}
+              disabled={togglingPrivacy}
+              title={profile.is_private ? 'Tu perfil es privado — solo tus seguidores ven tu actividad' : 'Tu perfil es público — cualquiera puede ver tu actividad'}
+              className="flex items-center gap-1 text-[10px] font-bold text-zinc-600 hover:text-[#FF3B3B] uppercase tracking-widest transition-colors disabled:opacity-50"
+            >
+              {togglingPrivacy ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : profile.is_private ? (
+                <Lock size={11} />
+              ) : (
+                <Unlock size={11} />
+              )}
+              {profile.is_private ? 'Perfil privado' : 'Perfil público'}
+            </button>
           </div>
 
           <div className="bg-[#0D0F15]/60 backdrop-blur-sm p-5 rounded-lg border-l-2 border-[#FF3B3B]/30 hover:border-[#FF3B3B]/70 transition-colors mb-4">

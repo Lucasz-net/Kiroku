@@ -45,6 +45,7 @@ const InputField = ({
 
 export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
 
   const [identifier, setIdentifier] = useState('');
   const [username, setUsername] = useState('');
@@ -56,6 +57,42 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const [message, setMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+
+    try {
+      let resetEmail = identifier;
+
+      if (!identifier.includes('@')) {
+        const { data: foundEmail, error: searchError } = await supabase
+          .rpc('get_email_for_login', { p_username: identifier });
+
+        if (searchError || !foundEmail) {
+          throw new Error('Usuario no encontrado.');
+        }
+
+        resetEmail = foundEmail;
+      }
+
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/restablecer-contrasena`,
+      });
+
+      if (resetError) throw resetError;
+
+      setMessage('Si el usuario o correo existe, te enviamos un enlace para restablecer tu contraseña.');
+    } catch (err: unknown) {
+      // No revelar si el usuario/correo existe o no (evita enumeración de cuentas).
+      setMessage('Si el usuario o correo existe, te enviamos un enlace para restablecer tu contraseña.');
+      void err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     setError(null);
@@ -100,13 +137,10 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         onClose();
 
       } else {
-        const { data: existingUser } = await supabase
-          .from('public_profiles')
-          .select('id')
-          .eq('username', username)
-          .maybeSingle();
+        const { data: usernameAvailable } = await supabase
+          .rpc('username_available', { p_username: username });
 
-        if (existingUser) {
+        if (usernameAvailable === false) {
           throw new Error('Este nombre de usuario ya está en uso. Por favor, elige otro.');
         }
 
@@ -140,12 +174,26 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
+    setIsForgotPassword(false);
     setError(null);
     setMessage(null);
     setIdentifier('');
     setUsername('');
     setEmail('');
     setPassword('');
+  };
+
+  const openForgotPassword = () => {
+    setIsForgotPassword(true);
+    setError(null);
+    setMessage(null);
+    setPassword('');
+  };
+
+  const closeForgotPassword = () => {
+    setIsForgotPassword(false);
+    setError(null);
+    setMessage(null);
   };
 
   return (
@@ -184,31 +232,32 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
               </button>
             </div>
 
-            {/* Tab switcher */}
-            <div className="bg-[#0D0F15] border border-[#FF3B3B]/10 rounded-xl p-1 flex mb-7">
-              <button
-                type="button"
-                onClick={() => !isLogin && toggleMode()}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                  isLogin
-                    ? 'bg-[#FF3B3B]/10 text-white border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                Iniciar Sesión
-              </button>
-              <button
-                type="button"
-                onClick={() => isLogin && toggleMode()}
-                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
-                  !isLogin
-                    ? 'bg-[#FF3B3B]/10 text-white border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                Registrarse
-              </button>
-            </div>
+            {!isForgotPassword && (
+              <div className="bg-[#0D0F15] border border-[#FF3B3B]/10 rounded-xl p-1 flex mb-7">
+                <button
+                  type="button"
+                  onClick={() => !isLogin && toggleMode()}
+                  className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                    isLogin
+                      ? 'bg-[#FF3B3B]/10 text-white border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  Iniciar Sesión
+                </button>
+                <button
+                  type="button"
+                  onClick={() => isLogin && toggleMode()}
+                  className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
+                    !isLogin
+                      ? 'bg-[#FF3B3B]/10 text-white border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
+                      : 'text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  Registrarse
+                </button>
+              </div>
+            )}
 
             {/* Mensajes de error/éxito */}
             {error && (
@@ -222,29 +271,11 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
               </div>
             )}
 
-            {/* Google OAuth */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-100 text-zinc-900 font-bold py-3 rounded-xl border border-transparent transition-all duration-200 text-sm mb-5 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,59,59,0.2)] hover:border-[#FF3B3B]/30 active:scale-[0.98]"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
-                <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
-                <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
-                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
-              </svg>
-              Continuar con Google
-            </button>
-
-            <div className="flex items-center gap-3 mb-1">
-              <div className="flex-1 h-px bg-[#FF3B3B]/10" />
-              <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">o</span>
-              <div className="flex-1 h-px bg-[#FF3B3B]/10" />
-            </div>
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {isLogin ? (
+            {isForgotPassword ? (
+              <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+                <p className="text-zinc-500 text-sm -mt-1 mb-1">
+                  Ingresá tu usuario o correo electrónico y te mandamos un enlace para restablecer tu contraseña.
+                </p>
                 <InputField
                   icon={AtSign}
                   label="Usuario o Correo Electrónico"
@@ -254,61 +285,117 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                   placeholder=""
                   required
                 />
-              ) : (
-                <>
-                  <InputField
-                    icon={User}
-                    label="Nombre de Usuario"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="@user"
-                    required
-                  />
-                  <InputField
-                    icon={Mail}
-                    label="Correo Electrónico"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
-                    required
-                  />
-                </>
-              )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-white font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
+                >
+                  {loading && <Loader2 size={16} className="animate-spin" />}
+                  Enviar Enlace
+                </button>
+                <button
+                  type="button"
+                  onClick={closeForgotPassword}
+                  className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors font-bold uppercase tracking-wider text-center"
+                >
+                  Volver a iniciar sesión
+                </button>
+              </form>
+            ) : (
+              <>
+                {/* Google OAuth */}
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-100 text-zinc-900 font-bold py-3 rounded-xl border border-transparent transition-all duration-200 text-sm mb-5 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,59,59,0.2)] hover:border-[#FF3B3B]/30 active:scale-[0.98]"
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
+                    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
+                  </svg>
+                  Continuar con Google
+                </button>
 
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Contraseña</label>
-                  {isLogin && (
-                    <button type="button" className="text-[11px] text-[#FF7777]/70 hover:text-[#FF7777] transition-colors font-bold uppercase tracking-wider">
-                      ¿Olvidaste tu contraseña?
-                    </button>
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="flex-1 h-px bg-[#FF3B3B]/10" />
+                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">o</span>
+                  <div className="flex-1 h-px bg-[#FF3B3B]/10" />
+                </div>
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  {isLogin ? (
+                    <InputField
+                      icon={AtSign}
+                      label="Usuario o Correo Electrónico"
+                      type="text"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder=""
+                      required
+                    />
+                  ) : (
+                    <>
+                      <InputField
+                        icon={User}
+                        label="Nombre de Usuario"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        placeholder="@user"
+                        required
+                      />
+                      <InputField
+                        icon={Mail}
+                        label="Correo Electrónico"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="tu@email.com"
+                        required
+                      />
+                    </>
                   )}
-                </div>
-                <div className="relative">
-                  <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                    minLength={6}
-                    className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
-                  />
-                </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-white font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
-              >
-                {loading && <Loader2 size={16} className="animate-spin" />}
-                {isLogin ? 'Entrar' : 'Crear Cuenta'}
-              </button>
-            </form>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Contraseña</label>
+                      {isLogin && (
+                        <button
+                          type="button"
+                          onClick={openForgotPassword}
+                          className="text-[11px] text-[#FF7777]/70 hover:text-[#FF7777] transition-colors font-bold uppercase tracking-wider"
+                        >
+                          ¿Olvidaste tu contraseña?
+                        </button>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={6}
+                        className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-white font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
+                  >
+                    {loading && <Loader2 size={16} className="animate-spin" />}
+                    {isLogin ? 'Entrar' : 'Crear Cuenta'}
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </div>

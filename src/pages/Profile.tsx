@@ -21,6 +21,7 @@ import { StudioBarChart } from '../components/profile/StudioBarChart';
 import { ProfileComments } from '../components/profile/ProfileComments';
 import { ImportXMLModal } from '../components/profile/ImportXMLModal';
 import { FollowersModal } from '../components/profile/FollowersModal';
+import { DeleteAccountModal } from '../components/profile/DeleteAccountModal';
 import { useSocialProfile } from '../hooks/useSocialProfile';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
@@ -35,6 +36,7 @@ export const Profile = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [followersInitialTab, setFollowersInitialTab] = useState<'followers' | 'following'>('followers');
   const navigate = useNavigate();
 
@@ -264,6 +266,7 @@ export const Profile = () => {
             onBannerUpload={handleBannerUpload}
             onSignOut={handleSignOut}
             onUsernameUpdate={u => setProfile(prev => prev ? { ...prev, username: u } : prev)}
+            onPrivacyToggle={v => setProfile(prev => prev ? { ...prev, is_private: v } : prev)}
             onFollowersClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
             onFollowingClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
             onImportClick={() => setShowImportModal(true)}
@@ -375,6 +378,20 @@ export const Profile = () => {
             isOwner={true}
           />
         </div>
+
+        {/* ── DANGER ZONE ────────────────────────────────────────────── */}
+        <div className="mt-8 bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-sm font-black text-white mb-1">Eliminar cuenta</p>
+            <p className="text-xs text-zinc-500">Borra tu cuenta y todos tus datos de forma permanente.</p>
+          </div>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="px-4 py-2.5 bg-[#0D0F15] border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-[#FF7777] hover:text-[#FF3B3B] font-black text-xs uppercase tracking-widest rounded-xl transition-colors shrink-0"
+          >
+            Eliminar cuenta
+          </button>
+        </div>
       </div>
 
       {/* ── MODALS ─────────────────────────────────────────────────── */}
@@ -393,6 +410,13 @@ export const Profile = () => {
           profileUsername={profile.username}
           initialTab={followersInitialTab}
           onClose={() => setShowFollowersModal(false)}
+        />
+      )}
+
+      {showDeleteModal && (
+        <DeleteAccountModal
+          username={profile.username}
+          onClose={() => setShowDeleteModal(false)}
         />
       )}
     </div>
