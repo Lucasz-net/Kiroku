@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Heart, Loader2, Images, Check, ImageDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { X, Heart, Loader2, Images, Check, ImageDown, ExternalLink } from 'lucide-react';
 import type { Character, CharacterDetail } from '../../types/anime';
 import { getCharacterDetailMal } from '../../services/malApi';
 import { translateToSpanish } from '../../services/translateApi';
@@ -8,6 +9,9 @@ import { translateRole } from '../../utils/translations';
 
 interface CharacterDetailModalProps {
   character: Character;
+  /** Anime de origen: la ficha del personaje lo necesita para poder guardarlo. */
+  animeId: number;
+  animeTitle: string;
   isFavorite: boolean;
   canFavorite: boolean;
   /** Imagen que el perfil muestra hoy para este personaje, si ya es favorito. */
@@ -21,7 +25,7 @@ interface CharacterDetailModalProps {
 const GALLERY_LIMIT = 12;
 
 export const CharacterDetailModal = ({
-  character, isFavorite, canFavorite, savedImage, onToggleFavorite, onUpdateImage, onClose,
+  character, animeId, animeTitle, isFavorite, canFavorite, savedImage, onToggleFavorite, onUpdateImage, onClose,
 }: CharacterDetailModalProps) => {
   const [detail, setDetail] = useState<CharacterDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -190,6 +194,15 @@ export const CharacterDetailModal = ({
                       {detail.favorites.toLocaleString('es-ES')} favoritos
                     </span>
                   )}
+                  {/* El panel no tiene URL propia; esto lleva a la página que sí
+                      se puede compartir. */}
+                  <Link
+                    to={`/personaje/${c.mal_id}?anime=${animeId}&titulo=${encodeURIComponent(animeTitle)}`}
+                    onClick={onClose}
+                    className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-[#FF3B3B] transition-colors"
+                  >
+                    <ExternalLink size={11} /> Ver ficha
+                  </Link>
                 </div>
               </div>
 

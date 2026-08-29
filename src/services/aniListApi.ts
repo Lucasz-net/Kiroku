@@ -319,11 +319,127 @@ export const getRandomAnime = async (): Promise<{ data: Anime }> => {
   return { data: filtered[Math.floor(Math.random() * filtered.length)] };
 };
 
-export const getRecommendedAnimes = async (): Promise<{ data: Anime[] }> => {
+// ── Calendario de emisión ──────────────────────────────────────────────────
+// "El episodio 8 sale el jueves" es la razón por la que alguien abre un
+// tracker de anime todos los días, y hasta ahora la app no lo decía en
+// ningún lado. AniList ya expone `nextAiringEpisode` con la fecha exacta, y
+// `idMal_in` permite pedir todos los animes en emisión de la lista de una
+// sola consulta en vez de una por título.
+
+export interface AiringEntry {
+  mal_id: number;
+  title: string;
+  image_url: string;
+  episode: number;
+  /** Momento exacto de emisión, en milisegundos. */
+  airingAt: number;
+}
+
+interface AniListAiringResponse {
+  data: {
+    Page: {
+      media: {
+        idMal: number | null;
+        title: { romaji: string | null; english: string | null };
+        coverImage: { large: string | null } | null;
+        nextAiringEpisode: { episode: number; airingAt: number } | null;
+      }[];
+    };
+  };
+}
+
+const AIRING_QUERY = `
+  query ($ids: [Int]) {
+    Page(page: 1, perPage: 50) {
+      media(idMal_in: $ids, type: ANIME, status: RELEASING) {
+        idMal
+        title { romaji english }
+        coverImage { large }
+        nextAiringEpisode { episode airingAt }
+      }
+    }
+  }
+`;
+
+export const getAiringSchedule = async (malIds: number[]): Promise<AiringEntry[]> => {
+  if (malIds.length === 0) return [];
+
+  // AniList tope la página en 50; con listas grandes se pide de a tandas.
+  const chunks: number[][] = [];
+  for (let i = 0; i < malIds.length; i += 50) chunks.push(malIds.slice(i, i + 50));
+
+  const results = await Promise.all(chunks.map(async ids => {
+    const response = await fetch(ANILIST_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ query: AIRING_QUERY, variables: { ids } }),
+    });
+    if (!response.ok) return [];
+    const json = (await response.json()) as AniListAiringResponse;
+    return json.data?.Page?.media ?? [];
+  }));
+
+  return results
+    .flat()
+    .filter(m => m.idMal && m.nextAiringEpisode)
+    .map((m): AiringEntry => ({
+      mal_id: m.idMal as number,
+      title: m.title.romaji || m.title.english || 'Sin título',
+      image_url: m.coverImage?.large || '',
+      episode: m.nextAiringEpisode!.episode,
+      airingAt: m.nextAiringEpisode!.airingAt * 1000,
+    }))
+    .sort((a, b) => a.airingAt - b.airingAt);
+};
+
+export interface RecommendationInput {
+  /** Géneros más frecuentes en la lista del usuario, en nombres de AniList. */
+  genres?: string[];
+  /** Ids que ya tiene guardados: no tiene sentido recomendárselos. */
+  excludeMalIds?: number[];
+}
+
+/**
+ * Recomendaciones.
+ *
+ * Antes tomaba una página al azar de AniList con puntuación mayor a 7 y la
+ * barajaba: el resultado era idéntico para todo el mundo y no miraba la lista
+ * de nadie. Ahora, si el usuario tiene animes guardados, se consulta por sus
+ * géneros más frecuentes y se descarta lo que ya tiene. Sin lista guardada
+ * (visitante sin cuenta o cuenta nueva) se cae al pozo genérico de siempre,
+ * que para descubrir sigue estando bien.
+ */
+export const getRecommendedAnimes = async (
+  input: RecommendationInput = {},
+): Promise<{ data: Anime[]; personalized: boolean }> => {
+  const { genres = [], excludeMalIds = [] } = input;
+  const exclude = new Set(excludeMalIds);
+  const pick = (list: Anime[]) =>
+    list
+      .filter(a => a.score && a.score > 7 && !exclude.has(a.mal_id))
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 6);
+
+  if (genres.length > 0) {
+    // Hasta 3 géneros: con más, AniList exige que los cumplan todos y el
+    // resultado se vacía. Se rota la página para que no sea siempre lo mismo.
+    const topGenres = genres.slice(0, 3);
+    const page = Math.floor(Math.random() * 3) + 1;
+    const res = await cachedFetch(
+      `anilist:recs:${topGenres.join(',')}:${page}`,
+      () => searchAniList({ genres: topGenres, page, perPage: 50, sort: ['POPULARITY_DESC'] }),
+      15 * 60 * 1000,
+      true,
+    );
+    const personalized = pick(res.data);
+    if (personalized.length > 0) return { data: personalized, personalized: true };
+    // Sin resultados utilizables (géneros muy raros, o ya lo vio todo):
+    // mejor mostrar algo genérico que una sección vacía.
+  }
+
   const randomPage = Math.floor(Math.random() * 15) + 1;
   const res = await cachedTop(['SCORE_DESC'], randomPage);
-  const filtered = res.data.filter(a => a.score && a.score > 7);
-  return { data: filtered.sort(() => 0.5 - Math.random()).slice(0, 6) };
+  return { data: pick(res.data), personalized: false };
 };
 
 // ── Seasonal browsing (Home "Estrenos" + SeasonalPage) ─────────────────────

@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import type { FavoriteCharacter } from '../types/profile';
+
+/** Tope por perfil. El que manda es el trigger homónimo en la base. */
+export const FAVORITE_CHARACTERS_LIMIT = 12;
 
 // `character_id` es siempre un id de personaje de MyAnimeList: tanto Jikan
 // (espejo de MAL) como la API oficial devuelven ese mismo espacio de ids, así
@@ -76,6 +80,13 @@ export function useFavoriteCharacters(userId: string | null) {
       return;
     }
 
+    // El tope real lo impone un trigger en la base; esto evita el viaje de
+    // ida y vuelta y da un mensaje claro en vez del error crudo de Postgres.
+    if (entries.length >= FAVORITE_CHARACTERS_LIMIT) {
+      toast.error(`Llegaste al máximo de ${FAVORITE_CHARACTERS_LIMIT} personajes favoritos. Quitá uno para agregar otro.`);
+      return;
+    }
+
     const optimistic: FavoriteCharacter = { ...character, user_id: userId };
     setEntries(prev => [optimistic, ...prev]);
     const { data, error } = await supabase
@@ -83,9 +94,21 @@ export function useFavoriteCharacters(userId: string | null) {
       .insert({ user_id: userId, ...character })
       .select('*')
       .single();
-    if (error) setEntries(prev => prev.filter(e => e !== optimistic));
-    else setEntries(prev => prev.map(e => (e === optimistic ? (data as FavoriteCharacter) : e)));
+    if (error) {
+      setEntries(prev => prev.filter(e => e !== optimistic));
+      toast.error(
+        error.message.includes('máximo')
+          ? error.message
+          : 'No se pudo guardar el personaje.',
+      );
+    } else {
+      setEntries(prev => prev.map(e => (e === optimistic ? (data as FavoriteCharacter) : e)));
+    }
   };
 
-  return { entries, loading, isFavorited, savedImage, toggleFavorite, updateImage };
+  return {
+    entries, loading, isFavorited, savedImage, toggleFavorite, updateImage,
+    limit: FAVORITE_CHARACTERS_LIMIT,
+    isFull: entries.length >= FAVORITE_CHARACTERS_LIMIT,
+  };
 }

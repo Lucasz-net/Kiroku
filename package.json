@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@sentry/react": "^10.72.0",
     "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.2.2",
     "@types/lodash.debounce": "^4.0.9",
+    "@vercel/analytics": "^2.0.1",
     "gsap": "^3.14.2",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^1.7.0",

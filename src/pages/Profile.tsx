@@ -12,6 +12,7 @@ import type { UserProfile, UserStats } from '../types/profile';
 import { toWebP } from '../utils/imageUtils';
 import { ACHIEVEMENTS } from '../constants/profile';
 import { computeUserStats } from '../utils/animeUtils';
+import { buildMalXml, buildKirokuJson, downloadFile, exportFilename } from '../utils/exportList';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { AchievementGallery } from '../components/profile/AchievementGallery';
 import { AnimeGrid } from '../components/profile/AnimeGrid';
@@ -199,6 +200,19 @@ export const Profile = () => {
 
   const handleImportComplete = refreshSavedAnimes;
 
+  const handleExport = (format: 'xml' | 'json') => {
+    if (!profile) return;
+    const content = format === 'xml'
+      ? buildMalXml(animes, profile.username)
+      : buildKirokuJson(animes, profile.username);
+    downloadFile(
+      exportFilename(profile.username, format),
+      content,
+      format === 'xml' ? 'application/xml' : 'application/json',
+    );
+    toast.success(`Lista exportada (${animes.length} anime${animes.length !== 1 ? 's' : ''}).`);
+  };
+
   const stats: UserStats = useMemo(() => computeUserStats(animes), [animes]);
 
   const unlockedAchievements = ACHIEVEMENTS.filter(ach => ach.req(stats));
@@ -292,6 +306,7 @@ export const Profile = () => {
             onFollowersClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
             onFollowingClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
             onImportClick={() => setShowImportModal(true)}
+            onExport={handleExport}
             onSearchUsersClick={() => setShowUserSearch(true)}
           />
         </div>
@@ -342,7 +357,12 @@ export const Profile = () => {
         {/* ── ONBOARDING ─────────────────────────────────────────────── */}
         {animes.length === 0 && (
           <div className="profile-section mb-6">
-            <ProfileOnboarding username={profile.username} onImportClick={() => setShowImportModal(true)} />
+            <ProfileOnboarding
+              username={profile.username}
+              userId={profile.id}
+              onImportClick={() => setShowImportModal(true)}
+              onQuickStart={refreshSavedAnimes}
+            />
           </div>
         )}
 

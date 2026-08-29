@@ -62,8 +62,13 @@ describe('FavoriteCharactersSection', () => {
     expect(screen.queryByText('Ver menos')).not.toBeInTheDocument();
   });
 
-  it('links each character back to the anime it belongs to', () => {
+  // Ahora cada favorito lleva a la ficha propia del personaje; el anime de
+  // origen viaja como query param porque la API de MAL no lo devuelve.
+  it('links each character to its own shareable page, carrying the source anime', () => {
     renderSection(makeCharacters(1));
-    expect(screen.getByRole('link')).toHaveAttribute('href', '/anime/100');
+    expect(screen.getByRole('link')).toHaveAttribute(
+      'href',
+      '/personaje/1?anime=100&titulo=Anime%201',
+    );
   });
 });

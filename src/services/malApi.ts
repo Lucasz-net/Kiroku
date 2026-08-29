@@ -181,6 +181,44 @@ export const getCharacterDetailMal = (characterId: number): Promise<CharacterDet
     true,
   );
 
+/**
+ * Ficha completa para la página propia del personaje (/personaje/:id).
+ *
+ * `getCharacterDetailMal` alcanza para el panel, que ya tiene nombre y
+ * retrato de la tarjeta que lo abrió; una URL compartible, en cambio, tiene
+ * que poder construir todo desde cero.
+ */
+export interface CharacterProfile extends CharacterDetail {
+  mal_id: number;
+  name: string;
+  image_url: string;
+}
+
+export const getCharacterProfileMal = (characterId: number): Promise<CharacterProfile | null> =>
+  cachedFetch(
+    `mal:charprofile:${characterId}`,
+    async () => {
+      const node = await malGet<MalCharacterNode>(`/characters?id=${characterId}`);
+      if (!node) return null;
+      const portrait = node.main_picture?.large || node.main_picture?.medium || '';
+      return {
+        mal_id: node.id ?? characterId,
+        name: malCharacterName(node),
+        image_url: portrait,
+        description: cleanCharacterBio(node.biography),
+        nicknames: node.alternative_name
+          ? node.alternative_name.split(',').map(n => n.trim()).filter(Boolean)
+          : [],
+        favorites: node.num_favorites ?? null,
+        pictures: (node.pictures || [])
+          .map(p => p.large || p.medium || '')
+          .filter(url => url && url !== portrait),
+      };
+    },
+    30 * 60 * 1000,
+    true,
+  );
+
 // Single-title rank/score/popularity lookup for AnimeDetails — patches
 // those three fields with MyAnimeList's own numbers after the page's
 // primary source (AniList or Jikan) has already loaded everything else.

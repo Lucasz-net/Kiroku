@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Search, Trophy, CalendarDays, BookOpen, ArrowRight, Upload, Sparkles } from 'lucide-react';
+import { QuickStartPicker } from './QuickStartPicker';
 
 const steps = [
   {
@@ -61,7 +62,15 @@ const HowItWorksCard = () => (
   </div>
 );
 
-export const ProfileOnboarding = ({ username, onImportClick }: { username: string; onImportClick?: () => void }) => (
+interface ProfileOnboardingProps {
+  username: string;
+  /** Necesario para el selector rápido, que guarda directo en la lista. */
+  userId: string;
+  onImportClick?: () => void;
+  onQuickStart: () => void | Promise<void>;
+}
+
+export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStart }: ProfileOnboardingProps) => (
   <div className="flex flex-col gap-6">
 
     {/* Bienvenida */}
@@ -76,6 +85,10 @@ export const ProfileOnboarding = ({ username, onImportClick }: { username: strin
         Tu lista está vacía. Empieza agregando animes para llevar el control de lo que ves y desbloquear estadísticas y logros.
       </p>
     </div>
+
+    {/* Lo primero, porque es lo que menos cuesta: cinco clics y el perfil
+        deja de estar vacío. Importar sigue siendo mejor si ya tenés lista. */}
+    <QuickStartPicker userId={userId} onSaved={onQuickStart} />
 
     {/* Importar desde MyAnimeList — destacado */}
     {onImportClick && (

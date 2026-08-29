@@ -62,6 +62,8 @@ export const CharactersGrid = ({ characters, animeId, animeTitle, currentUserId 
       {selected && (
         <CharacterDetailModal
           character={selected}
+          animeId={animeId}
+          animeTitle={animeTitle}
           isFavorite={isFavorited(selected.character.mal_id)}
           canFavorite={!!currentUserId}
           savedImage={savedImage(selected.character.mal_id)}

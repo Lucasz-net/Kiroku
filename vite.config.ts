@@ -35,15 +35,18 @@ function malDevProxy(): Plugin {
   };
 }
 
-// Same reasoning as malDevProxy above, for the /api/account/* and /api/auth/*
-// endpoints. These take POST bodies, which the Vercel runtime pre-parses into
+// Same reasoning as malDevProxy above, for the rest of the /api endpoints.
+// The POST ones take bodies, which the Vercel runtime pre-parses into
 // `req.body` and the dev server doesn't — the handlers read either shape (see
 // readJsonBody in api/_lib/auth.ts), so the raw stream is passed through
 // untouched here.
-const POST_ROUTES: Record<string, string> = {
+const SERVERLESS_ROUTES: Record<string, string> = {
   '/api/account/delete':      '/api/account/delete.ts',
   '/api/auth/login':          '/api/auth/login.ts',
   '/api/auth/reset-password': '/api/auth/reset-password.ts',
+  // En producción sólo lo alcanzan los bots (ver las reescrituras de
+  // vercel.json); acá se puede abrir a mano para ver la vista previa.
+  '/api/og':                  '/api/og.ts',
 };
 
 function serverlessDevProxy(): Plugin {
@@ -52,7 +55,7 @@ function serverlessDevProxy(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next) => {
         const path = req.url?.split('?')[0] ?? '';
-        const modulePath = POST_ROUTES[path];
+        const modulePath = SERVERLESS_ROUTES[path];
         if (!modulePath) return next();
         try {
           const mod = await server.ssrLoadModule(modulePath);

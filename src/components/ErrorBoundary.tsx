@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { reportError } from '../lib/monitoring';
 
 interface Props {
   children: ReactNode;
@@ -18,6 +19,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('Uncaught render error:', error, info.componentStack);
+    // Además de la consola del usuario, que nadie mira: sin esto un error de
+    // render en producción no deja rastro en ningún lado.
+    reportError(error, { componentStack: info.componentStack });
   }
 
   render() {

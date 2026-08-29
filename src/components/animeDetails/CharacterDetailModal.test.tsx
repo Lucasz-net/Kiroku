@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { CharacterDetailModal } from './CharacterDetailModal';
 import type { Character } from '../../types/anime';
 
@@ -36,8 +37,10 @@ const setup = (props: Partial<Parameters<typeof CharacterDetailModal>[0]> = {}) 
   const onToggleFavorite = vi.fn();
   const onUpdateImage = vi.fn();
   render(
-    <CharacterDetailModal
+    <MemoryRouter><CharacterDetailModal
       character={character}
+      animeId={100}
+      animeTitle="Sousou no Frieren"
       isFavorite={false}
       canFavorite
       savedImage={null}
@@ -45,7 +48,7 @@ const setup = (props: Partial<Parameters<typeof CharacterDetailModal>[0]> = {}) 
       onUpdateImage={onUpdateImage}
       onClose={vi.fn()}
       {...props}
-    />,
+    /></MemoryRouter>,
   );
   return { onToggleFavorite, onUpdateImage };
 };

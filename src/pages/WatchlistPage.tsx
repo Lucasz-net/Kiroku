@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { SavedAnimeCover } from '../components/SavedAnimeCover';
+import { UpcomingEpisodes } from '../components/UpcomingEpisodes';
 import { prefersReducedMotion } from '../utils/motion';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -241,6 +242,10 @@ export const WatchlistPage = () => {
             Watchlist
           </h1>
         </div>
+
+        {/* Lo primero que se ve: qué sale y cuándo, de lo que estás mirando.
+            Se oculta sola si nada de la lista está en emisión. */}
+        <UpcomingEpisodes animes={animes} />
 
         {/* Tabs */}
         <div className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden mb-4">

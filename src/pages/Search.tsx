@@ -9,6 +9,8 @@ import { Dices, RefreshCw, Loader2, FilterX, Filter, X, Plus, Search as SearchIc
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useUserData } from '../contexts/UserDataContext';
+import { translateGenre } from '../utils/translations';
 
 const ANIME_FORMATS = [
   { value: 'TV', label: 'TV (Serie)' },
@@ -144,7 +146,9 @@ export const Search = () => {
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const { savedAnimes } = useUserData();
   const [recommendations, setRecommendations] = useState<Anime[]>([]);
+  const [recsPersonalized, setRecsPersonalized] = useState(false);
   const [loadingRecs, setLoadingRecs] = useState(true);
   const [randomAnime, setRandomAnime] = useState<Anime | null>(null);
   const [loadingRandom, setLoadingRandom] = useState(false);
@@ -164,7 +168,6 @@ export const Search = () => {
 
   useDocumentTitle(searchParams.get('q') ? `Buscar: ${searchParams.get('q')}` : 'Buscar');
 
-  useEffect(() => { handleLoadRecommendations(); }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -174,11 +177,29 @@ export const Search = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLoadRecommendations = async () => {
+  // Géneros más frecuentes en la lista propia. Se guardan tal como los
+  // devuelve AniList, así que ya sirven como filtro sin traducir.
+  const myTopGenres = useMemo(() => {
+    const counts = new Map<string, number>();
+    savedAnimes.forEach(a => a.genres?.forEach(g => counts.set(g, (counts.get(g) ?? 0) + 1)));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+  }, [savedAnimes]);
+
+  const handleLoadRecommendations = useCallback(async () => {
     setLoadingRecs(true);
-    try { const response = await getRecommendedAnimes(); setRecommendations(response.data); }
-    catch (error) { console.error(error); } finally { setLoadingRecs(false); }
-  };
+    try {
+      const response = await getRecommendedAnimes({
+        genres: myTopGenres,
+        excludeMalIds: savedAnimes.map(a => a.anime_id),
+      });
+      setRecommendations(response.data);
+      setRecsPersonalized(response.personalized);
+    } catch (error) { console.error(error); } finally { setLoadingRecs(false); }
+  }, [myTopGenres, savedAnimes]);
+
+  // Se recalculan cuando cambia la lista del usuario: si acaba de guardar algo,
+  // la próxima tanda ya lo tiene en cuenta.
+  useEffect(() => { handleLoadRecommendations(); }, [handleLoadRecommendations]);
 
   const handlePickRandomAnime = async () => {
     setLoadingRandom(true); setRandomAnime(null);
@@ -615,9 +636,17 @@ export const Search = () => {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2 flex items-center gap-2">
-                    <Star size={13} className="text-[#FF3B3B]/50" /> Selección
+                    <Star size={13} className="text-[#FF3B3B]/50" />
+                    {recsPersonalized ? 'Según tu lista' : 'Selección'}
                   </p>
-                  <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">Recomendados</h2>
+                  <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                    {recsPersonalized ? 'Para vos' : 'Recomendados'}
+                  </h2>
+                  {recsPersonalized && myTopGenres.length > 0 && (
+                    <p className="text-[11px] text-zinc-600 font-bold mt-1.5">
+                      Porque ves {myTopGenres.slice(0, 3).map(translateGenre).join(', ').toLowerCase()}
+                    </p>
+                  )}
                 </div>
                 <button onClick={handleLoadRecommendations} disabled={loadingRecs}
                   className="flex items-center gap-2 px-4 py-2.5 border border-[#FF3B3B]/10 bg-[#0D0F15] text-zinc-500 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/30 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-40 rounded-xl">

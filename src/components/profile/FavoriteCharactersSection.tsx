@@ -32,7 +32,7 @@ export const FavoriteCharactersSection = ({ characters }: FavoriteCharactersSect
             {visible.map(char => (
               <Link
                 key={char.character_id}
-                to={`/anime/${char.anime_id}`}
+                to={`/personaje/${char.character_id}?anime=${char.anime_id}&titulo=${encodeURIComponent(char.anime_title)}`}
                 title={`${char.name} — ${char.anime_title}`}
                 className="group flex flex-col gap-2"
               >

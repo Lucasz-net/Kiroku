@@ -1,8 +1,8 @@
-import { useState, useRef, type ChangeEvent } from 'react';
+import { useEffect, useState, useRef, type ChangeEvent } from 'react';
 import {
   Loader2, Camera, Edit2, X, LogOut, Share2, Check,
   ImagePlus, Users, UserCheck, Heart, Upload, AtSign, Lock, Unlock, Search,
-  MessageSquare, MessageSquareOff,
+  MessageSquare, MessageSquareOff, Download,
 } from 'lucide-react';
 import type { UserProfile, SocialCounts } from '../../types/profile';
 import { supabase } from '../../lib/supabase';
@@ -29,6 +29,7 @@ interface ProfileHeaderProps {
   onFollowersClick?: () => void;
   onFollowingClick?: () => void;
   onImportClick?: () => void;
+  onExport?: (format: 'xml' | 'json') => void;
   onPrivacyToggle?: (isPrivate: boolean) => void;
   onCommentsToggle?: (enabled: boolean) => void;
   onSearchUsersClick?: () => void;
@@ -40,9 +41,21 @@ export const ProfileHeader = ({
   onBioChange, onEditBio, onBioSave, onBioCancel,
   onAvatarUpload, onBannerUpload, onSignOut,
   onUsernameUpdate,
-  onFollowersClick, onFollowingClick, onImportClick, onPrivacyToggle, onCommentsToggle,
+  onFollowersClick, onFollowingClick, onImportClick, onExport, onPrivacyToggle, onCommentsToggle,
   onSearchUsersClick,
 }: ProfileHeaderProps) => {
+  const [exportOpen, setExportOpen] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    const close = (e: MouseEvent) => {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [exportOpen]);
+
   const [copied, setCopied] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState(profile.username);
@@ -228,6 +241,39 @@ export const ProfileHeader = ({
               >
                 <Upload size={11} /> Importar lista
               </button>
+            )}
+            {onExport && (
+              <div className="relative" ref={exportRef}>
+                <button
+                  onClick={() => setExportOpen(v => !v)}
+                  aria-expanded={exportOpen}
+                  className="flex items-center gap-1 text-[10px] font-bold text-zinc-600 hover:text-[#FF3B3B] uppercase tracking-widest transition-colors"
+                >
+                  <Download size={11} /> Exportar lista
+                </button>
+                {exportOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-[#0D0F15] border border-[#FF3B3B]/25 rounded-xl shadow-[0_16px_50px_rgba(0,0,0,0.7)] overflow-hidden z-30 normal-case">
+                    <button
+                      onClick={() => { onExport('xml'); setExportOpen(false); }}
+                      className="w-full text-left px-4 py-3 hover:bg-[#11131A] transition-colors border-b border-[#FF3B3B]/[0.07]"
+                    >
+                      <span className="block text-xs font-black text-white tracking-normal">XML de MyAnimeList</span>
+                      <span className="block text-[10px] text-zinc-600 tracking-normal font-medium mt-0.5">
+                        Para llevártela a MAL, AniList u otra app
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => { onExport('json'); setExportOpen(false); }}
+                      className="w-full text-left px-4 py-3 hover:bg-[#11131A] transition-colors"
+                    >
+                      <span className="block text-xs font-black text-white tracking-normal">JSON completo</span>
+                      <span className="block text-[10px] text-zinc-600 tracking-normal font-medium mt-0.5">
+                        Respaldo con favoritos, géneros y portadas
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
             <button
               onClick={handlePrivacyToggle}

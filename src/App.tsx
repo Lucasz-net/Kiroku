@@ -4,6 +4,7 @@ import { scrollBehavior } from './utils/motion';
 import { useUserData } from './contexts/UserDataContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import { Analytics } from '@vercel/analytics/react';
 import { Loader2 } from 'lucide-react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -22,6 +23,8 @@ const WatchlistPage = lazy(() => import('./pages/WatchlistPage').then(m => ({ de
 const PublicProfilePage = lazy(() => import('./pages/PublicProfilePage').then(m => ({ default: m.PublicProfilePage })));
 const Top10Page = lazy(() => import('./pages/Top10Page').then(m => ({ default: m.Top10Page })));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
+const CharacterPage = lazy(() => import('./pages/CharacterPage').then(m => ({ default: m.CharacterPage })));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
 const TermsPage = lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
@@ -79,6 +82,8 @@ const AnimatedRoutes = () => {
           <Route path="/top/:filter"  element={<RankingPage />} />
           <Route path="/seasonal"     element={<SeasonalPage />} />
           <Route path="/watchlist"    element={<WatchlistPage />} />
+          <Route path="/notificaciones" element={<NotificationsPage />} />
+          <Route path="/personaje/:id" element={<CharacterPage />} />
           <Route path="/u/:username"  element={<PublicProfilePage />} />
           <Route path="/top10/:username" element={<Top10Page />} />
           <Route path="/restablecer-contrasena" element={<ResetPasswordPage />} />
@@ -105,6 +110,9 @@ const AppContent = () => {
       <BottomNav onOpenLogin={openLogin} />
       <LoginModal isOpen={isLoginOpen} onClose={closeLogin} />
       {authReady && needsUsernameSetup && <UsernameSetupModal />}
+      {/* Analítica de Vercel: se sirve desde el propio dominio, así que no
+          agrega orígenes externos ni cookies de terceros. */}
+      <Analytics />
       <Toaster
         position="bottom-right"
         toastOptions={{

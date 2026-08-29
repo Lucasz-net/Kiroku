@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { supabase } from '../lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 import type { SavedAnime } from '../types/profile';
+import { setMonitoringUser } from '../lib/monitoring';
 
 interface UserDataContextType {
   session: Session | null;
@@ -79,6 +80,10 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
     setNeedsUsernameSetup(data ? !data.username_confirmed : false);
     setAuthReady(true);
   }, []);
+
+  // Los errores quedan asociados al id del usuario (solo el id) para poder
+  // responderle si escribe. Ver src/lib/monitoring.ts.
+  useEffect(() => { setMonitoringUser(session?.user?.id ?? null); }, [session]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {

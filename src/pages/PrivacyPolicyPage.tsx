@@ -14,7 +14,7 @@ export const PrivacyPolicyPage = () => {
       <div className="container mx-auto max-w-3xl">
         <p className="text-xs font-bold uppercase tracking-widest text-[#FF3B3B]/60 mb-3">Legal</p>
         <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">Política de Privacidad</h1>
-        <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-12">Última actualización: 27/08/2026</p>
+        <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-12">Última actualización: 29/08/2026</p>
 
         <Section title="1. Qué datos recopilamos">
           <p>Cuando creás una cuenta en Kiroku, recopilamos:</p>
@@ -23,7 +23,8 @@ export const PrivacyPolicyPage = () => {
             <li>Si iniciás sesión con Google, tu nombre y foto de perfil de Google (solo para completar tu perfil inicial).</li>
             <li>Contenido que subís vos mismo: foto de perfil, banner, biografía, comentarios en perfiles.</li>
             <li>Tu lista de anime: qué animes guardaste, estado (viendo/pendiente/completado), progreso de episodios, puntuaciones y favoritos.</li>
-            <li>Relaciones sociales dentro de la app: a quién seguís, quién te sigue, qué perfiles marcaste con "me gusta".</li>
+            <li>Relaciones sociales dentro de la app: a quién seguís, quién te sigue, solicitudes de seguimiento pendientes, y qué perfiles marcaste con "me gusta".</li>
+            <li>La última vez que abriste tus notificaciones, para saber cuáles son nuevas.</li>
           </ul>
           <p>No recopilamos datos de pago ni información financiera — Kiroku no procesa pagos.</p>
         </Section>
@@ -43,6 +44,16 @@ export const PrivacyPolicyPage = () => {
             en tu perfil (<code className="text-zinc-300 bg-[#11131A] px-1.5 py-0.5 rounded text-xs">kiroku-anime.vercel.app/u/tu-usuario</code>),
             incluso para visitantes sin cuenta. Tu email nunca se muestra públicamente ni se comparte con otros usuarios.
           </p>
+          <p>
+            Si activás el perfil privado, tu actividad, estadísticas, listas y comentarios pasan a verlos
+            solo las cuentas que aceptaste como seguidores. Tu nombre de usuario y tu avatar siguen siendo
+            visibles para cualquiera.
+          </p>
+          <p>
+            Tu foto de perfil y tu banner se guardan en un bucket de almacenamiento público: quien tenga la
+            URL exacta del archivo puede abrirlo aunque tu perfil sea privado. Al cambiar la imagen, la
+            anterior se elimina; al borrar tu cuenta, ambas se eliminan también.
+          </p>
         </Section>
 
         <Section title="4. Servicios de terceros que usamos">
@@ -51,6 +62,8 @@ export const PrivacyPolicyPage = () => {
             <li><strong className="text-zinc-300">Google (OAuth)</strong> — si elegís iniciar sesión con Google, Google procesa esa autenticación según su propia política de privacidad.</li>
             <li><strong className="text-zinc-300">AniList y Jikan (MyAnimeList)</strong> — proveen la información pública de los animes (títulos, imágenes, sinopsis, personajes). No reciben datos personales tuyos.</li>
             <li><strong className="text-zinc-300">Google Translate</strong> — usamos su servicio público para traducir sinopsis de animes al español; solo se envía el texto de la sinopsis, nunca datos personales.</li>
+            <li><strong className="text-zinc-300">Vercel</strong> — aloja la app y nos da estadísticas de uso agregadas (páginas vistas, país aproximado). No usa cookies ni identifica a personas.</li>
+            <li><strong className="text-zinc-300">Sentry</strong> — si algo falla, recibe el error técnico junto con el identificador interno de tu cuenta para poder ayudarte si escribís. Nunca recibe tu email ni tu nombre de usuario.</li>
           </ul>
         </Section>
 
@@ -65,16 +78,31 @@ export const PrivacyPolicyPage = () => {
         <Section title="6. Tus derechos">
           <p>
             Podés editar o eliminar tu biografía, avatar, banner, comentarios y elementos de tu lista en
-            cualquier momento desde tu perfil. Si querés corregir, exportar o eliminar por completo tu
-            cuenta y todos tus datos, escribinos a <strong className="text-zinc-300">lucasszdev@gmail.com</strong>.
+            cualquier momento desde tu perfil.
+          </p>
+          <p>
+            <strong className="text-zinc-300">Exportar:</strong> desde tu perfil, en "Exportar lista", podés
+            descargar todo tu historial en XML compatible con MyAnimeList o en JSON. No hace falta pedirlo.
+          </p>
+          <p>
+            <strong className="text-zinc-300">Eliminar:</strong> desde tu perfil, en "Eliminar cuenta", se
+            borra de forma permanente e inmediata tu perfil, tu lista, tus imágenes, tus seguidores y los
+            comentarios que dejaste en otros perfiles. No queda copia ni versión anonimizada.
+          </p>
+          <p>
+            Para cualquier otra consulta sobre tus datos, escribinos a <strong className="text-zinc-300">lucasszdev@gmail.com</strong>.
           </p>
         </Section>
 
         <Section title="7. Seguridad">
           <p>
-            Tus datos se almacenan con controles de acceso a nivel de fila (Row Level Security) —
-            solo vos podés leer o modificar tu propia información privada. Aun así, ningún sistema es
-            100% infalible; si notás algo que parezca un problema de seguridad, avisanos.
+            Tus datos se almacenan con controles de acceso a nivel de fila (Row Level Security): tu email
+            y tu configuración solo los podés leer vos, y solo vos podés modificar tu perfil. Las
+            contraseñas las gestiona Supabase Auth y nunca las vemos.
+          </p>
+          <p>
+            La excepción son las imágenes de perfil, explicada en el punto 3. Ningún sistema es 100%
+            infalible; si notás algo que parezca un problema de seguridad, avisanos.
           </p>
         </Section>
 

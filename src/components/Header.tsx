@@ -5,6 +5,7 @@ import { searchAniList } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
 import debounce from 'lodash.debounce';
 import { useUserData } from '../contexts/UserDataContext';
+import { NotificationBell } from './notifications/NotificationBell';
 
 interface HeaderProps {
   onOpenLogin: () => void;
@@ -155,6 +156,9 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
 
         {/* ── Right: Profile / Login + mobile toggle ── */}
         <div className="ml-auto flex items-center gap-2 md:gap-3 shrink-0">
+          {/* Entre el buscador y el perfil. Se oculta sola si no hay sesión. */}
+          <NotificationBell />
+
           {session ? (
             <Link
               to={username ? `/u/${username}` : '/profile'}
