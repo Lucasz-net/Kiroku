@@ -7,7 +7,15 @@ import { getHighResImageUrl } from '../utils/animeUtils';
 // image for that reason, but never block rendering on it — the caller's
 // `fallbackUrl` (AniList, or whatever was already available) shows immediately
 // and this silently upgrades the src if/when Jikan's request succeeds.
-export function useJikanCover(malId: number, fallbackUrl: string): string {
+/**
+ * @param enabled Poner en false mientras la tarjeta no esté a la vista.
+ *   Cada llamada es una petición a Jikan y todas comparten una única cola
+ *   serializada de ~380 ms: una búsqueda de 40 resultados encolaba unos 15
+ *   segundos de peticiones solo para mejorar portadas, compitiendo con las
+ *   que sí importan. Gatearlo por visibilidad deja ese costo en las pocas
+ *   tarjetas que la persona realmente mira.
+ */
+export function useJikanCover(malId: number, fallbackUrl: string, enabled = true): string {
   const [state, setState] = useState({ malId, url: fallbackUrl });
 
   // Reset synchronously during render when the card switches anime, instead
@@ -17,7 +25,7 @@ export function useJikanCover(malId: number, fallbackUrl: string): string {
   }
 
   useEffect(() => {
-    if (!malId) return;
+    if (!malId || !enabled) return;
     let cancelled = false;
 
     getMediaImage('anime', malId)
@@ -31,7 +39,7 @@ export function useJikanCover(malId: number, fallbackUrl: string): string {
       .catch(() => { /* keep fallbackUrl */ });
 
     return () => { cancelled = true; };
-  }, [malId]);
+  }, [malId, enabled]);
 
   return state.url;
 }

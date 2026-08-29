@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { SavedAnimeCover } from '../SavedAnimeCover';
 import { Link } from 'react-router-dom';
 import { Heart, Trash2, ChevronLeft, ChevronRight, Search, Star, BookmarkCheck, Eye, Clock, ArrowUpDown } from 'lucide-react';
 import type { SavedAnime } from '../../types/profile';
@@ -197,11 +198,12 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
                   return (
                     <div key={anime.id} className="group relative bg-[#11131A] overflow-hidden rounded-lg border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-all duration-300">
                       <Link to={`/anime/${anime.anime_id}`} className="block relative aspect-[3/4] overflow-hidden">
-                        <img
-                          src={anime.image_url}
-                          alt={anime.title}
-                          loading="lazy"
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
+                        <SavedAnimeCover
+                          animeId={anime.anime_id}
+                          title={anime.title}
+                          imageUrl={anime.image_url}
+                          rowId={anime.id}
+                          className="w-full h-full overflow-hidden transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent opacity-90" />
                         <div className="absolute bottom-0 left-0 w-full p-3">

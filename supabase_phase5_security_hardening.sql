@@ -11,9 +11,9 @@
 -- de desplegar los endpoints nuevos — leé ese archivo antes de tocarlo.
 --
 -- Nota de esquema: las funciones auxiliares viven en `private`, no en
--- `public`. Los .sql de fases anteriores dicen `public.can_view_profile`
--- pero la producción usa `private.can_view_profile` desde hace tiempo;
--- este archivo sigue lo que hay en vivo.
+-- `public`. Los .sql de fases anteriores decían `public.can_view_profile`
+-- aunque la producción usa `private.` desde hace tiempo — ya están
+-- corregidos, así que todos los archivos siguen lo que hay en vivo.
 
 
 -- ── S-2. Validación del lado del servidor ────────────────────────────

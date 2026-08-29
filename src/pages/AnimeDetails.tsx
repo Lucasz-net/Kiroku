@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { scrollBehavior } from '../utils/motion';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
 import { getAnimeById, getAnimeStreaming, getMediaImage, JikanError } from '../services/jikanApi';
@@ -51,7 +52,7 @@ export const AnimeDetails = () => {
   const [relatedImages, setRelatedImages] = useState<Record<number, string | null>>({});
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { session, savedAnimes, refreshSavedAnimes } = useUserData();
+  const { session, savedAnimes, refreshSavedAnimes, openLogin } = useUserData();
 
   useDocumentTitle(anime?.title ?? '');
 
@@ -74,7 +75,7 @@ export const AnimeDetails = () => {
     setCharacters([]);
     setStreaming([]);
     setRelatedImages({});
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
 
     // Synopses come back in English from both sources. Show them immediately
     // and swap in a Spanish translation once it lands — never block on it,
@@ -270,7 +271,8 @@ export const AnimeDetails = () => {
   };
 
   const handleToggleFavorite = async () => {
-    if (!session || !anime || !savedStatus) return;
+    if (!session) { openLogin(); return; }
+    if (!anime || !savedStatus) return;
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
     await supabase.from('saved_animes').update({ is_favorite: newFavoriteState }).eq('user_id', session.user.id).eq('anime_id', anime.mal_id);
@@ -317,9 +319,6 @@ export const AnimeDetails = () => {
   );
 
   const filteredRelations = anime.relations?.filter(rel => rel.relation.toLowerCase() !== 'adaptation') || [];
-  const filteredStreaming = streaming.filter(s =>
-    s.name.toLowerCase().includes('netflix') || s.name.toLowerCase().includes('crunchyroll')
-  );
   const displayYear = anime.year || (anime.aired?.from ? anime.aired.from.substring(0, 4) : 'TBA');
 
   return (
@@ -337,7 +336,13 @@ export const AnimeDetails = () => {
           progress={progress}
           availableStatuses={getAvailableStatuses()}
           dropdownRef={dropdownRef}
-          onToggleDropdown={() => setIsDropdownOpen(!isDropdownOpen)}
+          // Sin sesión, abrir el desplegable no lleva a ningún lado: elegir un
+          // estado terminaba en un `return` silencioso. Se ofrece iniciar
+          // sesión, que es lo que la persona necesita en ese momento.
+          onToggleDropdown={() => {
+            if (!session) { openLogin(); return; }
+            setIsDropdownOpen(!isDropdownOpen);
+          }}
           onToggleFavorite={handleToggleFavorite}
           onStatusSelect={handleStatusSelect}
           onSaveWithProgress={handleSaveAnime}
@@ -353,7 +358,10 @@ export const AnimeDetails = () => {
         />
 
         <RelatedContentSection relations={filteredRelations} imageMap={relatedImages} />
-        <StreamingSection streaming={filteredStreaming} />
+        {/* Todas las plataformas: antes se filtraba a Netflix y Crunchyroll y se
+            tiraba el resto, dejando la sección vacía en títulos que sí tienen
+            dónde verse (HIDIVE, Prime Video, Disney+, Bilibili). */}
+        <StreamingSection streaming={streaming} />
         <TrailerSection trailer={anime.trailer} title={anime.title} />
         <CharactersGrid
           characters={characters}

@@ -16,6 +16,15 @@ interface UserDataContextType {
   refreshSavedAnimes: () => Promise<void>;
   refreshUsername: () => Promise<void>;
   applyUsername: (newUsername: string) => void;
+  /**
+   * El modal de login vive acá y no en App para que cualquier pantalla
+   * pueda pedirlo. Sin esto, apretar "Agregar a mi lista" sin sesión no
+   * hacía absolutamente nada: ni error, ni invitación a registrarse, justo
+   * en el momento en que un visitante decide si se crea una cuenta.
+   */
+  isLoginOpen: boolean;
+  openLogin: () => void;
+  closeLogin: () => void;
 }
 
 const UserDataContext = createContext<UserDataContextType>({
@@ -31,6 +40,9 @@ const UserDataContext = createContext<UserDataContextType>({
   refreshSavedAnimes: async () => {},
   refreshUsername: async () => {},
   applyUsername: () => {},
+  isLoginOpen: false,
+  openLogin: () => {},
+  closeLogin: () => {},
 });
 
 // eslint-disable-next-line react-refresh/only-export-components -- hook lives alongside its provider/context
@@ -43,6 +55,10 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
   const [authReady, setAuthReady] = useState(false);
   const [needsUsernameSetup, setNeedsUsernameSetup] = useState(false);
   const [savedAnimes, setSavedAnimes] = useState<SavedAnime[]>([]);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  const openLogin = useCallback(() => setIsLoginOpen(true), []);
+  const closeLogin = useCallback(() => setIsLoginOpen(false), []);
 
   const fetchSaved = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -126,6 +142,7 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
       session, username, avatarUrl, authReady, needsUsernameSetup,
       savedAnimes, getSavedStatus, isFavorited, getUserScore,
       refreshSavedAnimes, refreshUsername, applyUsername,
+      isLoginOpen, openLogin, closeLogin,
     }}>
       {children}
     </UserDataContext.Provider>

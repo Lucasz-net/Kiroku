@@ -24,10 +24,28 @@ export interface MalAnimeEntry {
   status: 'Completado' | 'Mirando' | 'Pendiente';
 }
 
+// Kiroku solo tiene tres estados, y MyAnimeList tiene cinco. "Dropped" y
+// "On-Hold" no tienen equivalente, así que caen en "Pendiente" — que no es lo
+// mismo que el usuario tenía. Se sigue importando (perder la entrada sería
+// peor), pero `reclassifiedMalStatuses` deja contarlo para avisarlo antes de
+// importar en vez de cambiarle la lista por atrás.
+const RECLASSIFIED_MAL_STATUSES = new Set(['Dropped', 'On-Hold', 'On Hold']);
+
 function mapMalStatus(s: string): MalAnimeEntry['status'] {
   if (s === 'Completed') return 'Completado';
   if (s === 'Watching') return 'Mirando';
   return 'Pendiente';
+}
+
+/** Entradas cuyo estado original de MAL no existe en Kiroku, por estado. */
+export function getReclassifiedCounts(entries: MalAnimeEntry[]): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const e of entries) {
+    if (RECLASSIFIED_MAL_STATUSES.has(e.malStatus)) {
+      counts[e.malStatus] = (counts[e.malStatus] || 0) + 1;
+    }
+  }
+  return counts;
 }
 
 export function parseMalXml(xmlString: string): MalAnimeEntry[] {

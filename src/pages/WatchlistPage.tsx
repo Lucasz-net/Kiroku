@@ -1,13 +1,14 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { SavedAnimeCover } from '../components/SavedAnimeCover';
+import { prefersReducedMotion } from '../utils/motion';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useUserData } from '../contexts/UserDataContext';
 import {
   BookmarkCheck, Eye, Clock, Heart, List, Search,
   Star, LayoutGrid, AlignJustify, ArrowUpDown, X, type LucideIcon,
 } from 'lucide-react';
-import type { SavedAnime } from '../types/profile';
 import { translateGenre } from '../utils/translations';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
@@ -82,16 +83,34 @@ const WatchlistEmpty = () => (
 );
 
 export const WatchlistPage = () => {
-  const [animes, setAnimes] = useState<SavedAnime[]>([]);
-  const [loading, setLoading] = useState(true);
+  // La lista sale del contexto, que ya la mantiene sincronizada: antes esta
+  // página repetía el mismo select más un getSession() propio en cada visita.
+  // De paso desaparece la carrera con la inicialización de auth.
+  const { savedAnimes, session, authReady } = useUserData();
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const sortRef   = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   useDocumentTitle('Mi Watchlist');
+
+  const animes = useMemo(
+    () => [...savedAnimes].sort((a, b) =>
+      (b.created_at ?? '').localeCompare(a.created_at ?? '')),
+    [savedAnimes],
+  );
+  const loading = !authReady;
+
+  useEffect(() => {
+    if (authReady && !session) navigate('/');
+  }, [authReady, session, navigate]);
 
   // Anima el título cuando la página termina de cargar (se repite en cada visita)
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     if (loading) return;
     gsap.fromTo('.wl-label',
       { opacity: 0, y: 10 },
@@ -102,7 +121,6 @@ export const WatchlistPage = () => {
       { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power4.out', delay: 0.08 }
     );
   }, { scope: headerRef, dependencies: [loading] });
-  const navigate = useNavigate();
 
   // ── Filtros leídos directamente desde la URL ──────────────────────────────
   const activeTab   = searchParams.get('tab')  ?? 'Todos';
@@ -132,20 +150,6 @@ export const WatchlistPage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate('/'); return; }
-      const { data } = await supabase
-        .from('saved_animes')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('created_at', { ascending: false });
-      if (data) setAnimes(data as SavedAnime[]);
-      setLoading(false);
-    };
-    init();
-  }, [navigate]);
 
   const availableGenres = useMemo(() => {
     const set = new Set<string>();
@@ -390,9 +394,13 @@ export const WatchlistPage = () => {
                   to={`/anime/${anime.anime_id}`}
                   className="group flex items-center gap-4 p-3 bg-[#11131A] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 rounded-xl transition-all"
                 >
-                  <div className="w-11 h-16 shrink-0 overflow-hidden rounded-lg bg-[#0D0F15]">
-                    <img src={anime.image_url} alt={anime.title} loading="lazy" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
-                  </div>
+                  <SavedAnimeCover
+                    animeId={anime.anime_id}
+                    title={anime.title}
+                    imageUrl={anime.image_url}
+                    rowId={anime.id}
+                    className="w-11 h-16 shrink-0 overflow-hidden rounded-lg opacity-90 group-hover:opacity-100 transition-opacity"
+                  />
                   <div className="flex-1 min-w-0">
                     <h4 className="text-white text-sm font-bold truncate group-hover:text-[#FF3B3B] transition-colors mb-1">{anime.title}</h4>
                     <span className={`flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${color}`}>
@@ -435,11 +443,12 @@ export const WatchlistPage = () => {
                 className="group relative bg-[#11131A] overflow-hidden rounded-xl border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-[border-color] duration-500"
               >
                 <div className="relative aspect-[3/4] overflow-hidden">
-                  <img
-                    src={anime.image_url}
-                    alt={anime.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-opacity duration-500 opacity-90 group-hover:opacity-100"
+                  <SavedAnimeCover
+                    animeId={anime.anime_id}
+                    title={anime.title}
+                    imageUrl={anime.image_url}
+                    rowId={anime.id}
+                    className="w-full h-full transition-opacity duration-500 opacity-90 group-hover:opacity-100"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent opacity-90" />
                   <div className="absolute bottom-0 left-0 w-full p-3">

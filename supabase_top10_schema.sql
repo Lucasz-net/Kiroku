@@ -35,7 +35,7 @@ alter table public.profile_top10 enable row level security;
 create policy "top10_select" on public.profile_top10
   for select
   to anon, authenticated
-  using ( public.can_view_profile(user_id) );
+  using ( private.can_view_profile(user_id) );
 
 create policy "top10_insert" on public.profile_top10
   for insert

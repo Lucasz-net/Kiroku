@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { prefersReducedMotion } from '../utils/motion';
 import { getCurrentSeason } from '../services/jikanApi';
 import { getTopRatedAnime, getTopPopularAnime } from '../services/malApi';
 import { getSeasonAniList } from '../services/aniListApi';
@@ -53,6 +54,10 @@ export const Home = () => {
   }, [loadHomeData]);
 
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     ['.estrenos-section', '.rankings-section'].forEach((sel) => {
       gsap.fromTo(sel,
         { borderTopLeftRadius: '50% 120px', borderTopRightRadius: '50% 120px', y: 100 },

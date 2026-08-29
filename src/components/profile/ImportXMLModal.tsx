@@ -3,8 +3,8 @@ import {
   X, Upload, FileText, CheckCircle2, AlertCircle,
   Loader2, Tv, Play, Clock,
 } from 'lucide-react';
-import { parseMalXml, getMalStatusCounts, readMalListFile, type MalAnimeEntry } from '../../utils/malXmlParser';
-import { getAnimeById, getMediaImage } from '../../services/jikanApi';
+import { parseMalXml, getMalStatusCounts, getReclassifiedCounts, readMalListFile, type MalAnimeEntry } from '../../utils/malXmlParser';
+import { getAnimeById } from '../../services/jikanApi';
 import { getAnimeFullByMalId, type AniListAnimeBundle } from '../../services/aniListApi';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
@@ -17,7 +17,7 @@ interface ImportXMLModalProps {
   onImportComplete: () => void;
 }
 
-type Phase = 'pick' | 'preview' | 'importing' | 'done';
+type Phase = 'pick' | 'preview' | 'importing' | 'enriching' | 'done';
 
 interface ImportResult {
   imported: number;
@@ -25,7 +25,15 @@ interface ImportResult {
   failed: number;
 }
 
-const DELAY_MS = 370;
+/** Filas por lote en el guardado inicial. */
+const INSERT_BATCH = 100;
+
+/**
+ * Ritmo de la fase de completado. AniList limita a 30 peticiones por minuto
+ * (comprobado en su cabecera X-RateLimit-Limit), o sea 2 s por consulta; se
+ * deja un margen para no rozar el límite.
+ */
+const ENRICH_DELAY_MS = 2100;
 
 async function delay(ms: number) {
   return new Promise(r => setTimeout(r, ms));
@@ -42,6 +50,7 @@ export const ImportXMLModal = ({
   const [toImport, setToImport] = useState<MalAnimeEntry[]>([]);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [enriched, setEnriched] = useState<number | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef(false);
@@ -69,101 +78,137 @@ export const ImportXMLModal = ({
     }
   };
 
+  // ── Fase 1: guardar la lista ───────────────────────────────────────────
+  // Solo con lo que ya trae el XML (título, episodios, progreso, nota,
+  // estado) y en lotes: cero llamadas a APIs externas, así que una lista de
+  // 500 animes entra en segundos.
+  //
+  // Antes se consultaba AniList y Jikan por cada anime, con 370 ms de pausa
+  // entre uno y otro. Medido contra la API: AniList está limitando a 30
+  // peticiones por minuto (cabecera X-RateLimit-Limit), o sea 2 segundos por
+  // pedido — con esa pausa la importación no solo tardaba, se comía 429s. Las
+  // portadas ahora se resuelven al mostrarse (ver SavedAnimeCover) y el resto
+  // de los datos queda para la fase 2, opcional.
   const handleImport = async () => {
     setPhase('importing');
     abortRef.current = false;
     let imported = 0;
     let failed = 0;
 
-    for (let i = 0; i < toImport.length; i++) {
+    const rows = toImport.map(entry => ({
+      user_id: userId,
+      anime_id: entry.malId,
+      title: entry.title || `Anime ${entry.malId}`,
+      image_url: '',
+      status: entry.status,
+      episodes_total: entry.totalEpisodes || null,
+      score: null,
+      user_score: entry.userScore || null,
+      is_favorite: false,
+      year: null,
+      genres: [],
+      studios: [],
+      duration: null,
+      progress: entry.watchedEpisodes || null,
+    }));
+
+    for (let i = 0; i < rows.length; i += INSERT_BATCH) {
       if (abortRef.current) break;
-      const entry = toImport[i];
+      const chunk = rows.slice(i, i + INSERT_BATCH);
+      // `ignoreDuplicates` para que una fila ya existente no tire el lote
+      // entero abajo (puede haberse agregado entre la vista previa y esto).
+      const { error } = await supabase
+        .from('saved_animes')
+        .upsert(chunk, { onConflict: 'user_id,anime_id', ignoreDuplicates: true });
 
-      try {
-        // AniList first — its own database, not a live proxy to MAL, so a
-        // large import isn't as exposed to Jikan's occasional outages.
-        let bundle: AniListAnimeBundle | null = null;
-        try { bundle = await getAnimeFullByMalId(entry.malId); } catch { bundle = null; }
+      if (error) failed += chunk.length;
+      else imported += chunk.length;
 
-        let title: string, imageUrl: string, episodesTotal: number | null, score: number | null,
-          year: number | null, genres: string[], studios: string[], duration: string | null;
-
-        if (bundle) {
-          const { anime } = bundle;
-          title = anime.title_english || anime.title;
-          imageUrl = anime.images.jpg.large_image_url || anime.images.jpg.image_url || '';
-          episodesTotal = anime.episodes || entry.totalEpisodes || null;
-          score = anime.score ?? null;
-          year = anime.year ?? (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null);
-          genres = anime.genres?.map(g => g.name) ?? [];
-          studios = anime.studios?.map(s => s.name) ?? [];
-          duration = anime.duration || null;
-
-          // Prefer Jikan's cover (usually has the title logo baked in) when
-          // it's reachable; otherwise the AniList cover above stands.
-          try {
-            const jikanImg = await getMediaImage('anime', entry.malId);
-            const jUrl = jikanImg.data?.images?.jpg?.large_image_url || jikanImg.data?.images?.jpg?.image_url;
-            if (jUrl) imageUrl = jUrl;
-          } catch { /* keep AniList cover */ }
-        } else {
-          // AniList has no mapping for this MAL id (or errored) — fall back
-          // to Jikan directly.
-          const { data } = await getAnimeById(String(entry.malId)) as JikanFullResponse;
-          title = data.title_english || data.title;
-          imageUrl = data.images?.webp?.large_image_url || data.images?.jpg?.large_image_url || '';
-          episodesTotal = data.episodes || entry.totalEpisodes || null;
-          score = data.score ?? null;
-          year = data.year ?? (data.aired?.from ? new Date(data.aired.from).getFullYear() : null);
-          genres = data.genres?.map(g => g.name) ?? [];
-          studios = data.studios?.map(s => s.name) ?? [];
-          duration = data.duration || null;
-        }
-
-        await supabase.from('saved_animes').insert({
-          user_id: userId,
-          anime_id: entry.malId,
-          title,
-          image_url: imageUrl,
-          status: entry.status,
-          episodes_total: episodesTotal,
-          score,
-          user_score: entry.userScore || null,
-          is_favorite: false,
-          year,
-          genres,
-          studios,
-          duration,
-          progress: entry.watchedEpisodes || null,
-        });
-
-        imported++;
-      } catch {
-        failed++;
-      }
-
-      setProgress(Math.round(((i + 1) / toImport.length) * 100));
-
-      if (i < toImport.length - 1) await delay(DELAY_MS);
+      setProgress(Math.round(Math.min(i + INSERT_BATCH, rows.length) / rows.length * 100));
     }
 
     setResult({ imported, skipped: entries.length - toImport.length, failed });
     setPhase('done');
     if (imported > 0) {
-      toast.success(`¡Importación completada! ${imported} anime${imported !== 1 ? 's' : ''} añadidos.`);
+      toast.success(`¡Listo! ${imported} anime${imported !== 1 ? 's' : ''} en tu lista.`);
       onImportComplete();
     }
   };
 
+  // ── Fase 2 (opcional): completar géneros, estudios, año y duración ─────
+  // Son los datos que alimentan los gráficos y las horas vistas. Van uno por
+  // uno porque cada uno es una consulta a AniList, y el ritmo lo marca su
+  // límite real de 30/minuto. Se puede cortar en cualquier momento: lo que ya
+  // se completó queda guardado.
+  const handleEnrich = async () => {
+    setPhase('enriching');
+    abortRef.current = false;
+    let done = 0;
+
+    for (let i = 0; i < toImport.length; i++) {
+      if (abortRef.current) break;
+      const entry = toImport[i];
+
+      try {
+        let bundle: AniListAnimeBundle | null = null;
+        try { bundle = await getAnimeFullByMalId(entry.malId); } catch { bundle = null; }
+
+        let patch: Record<string, unknown> | null = null;
+
+        if (bundle) {
+          const { anime } = bundle;
+          patch = {
+            title: anime.title_english || anime.title,
+            image_url: anime.images.jpg.large_image_url || anime.images.jpg.image_url || '',
+            episodes_total: anime.episodes || entry.totalEpisodes || null,
+            score: anime.score ?? null,
+            year: anime.year ?? (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null),
+            genres: anime.genres?.map(g => g.name) ?? [],
+            studios: anime.studios?.map(s => s.name) ?? [],
+            duration: anime.duration || null,
+          };
+        } else {
+          // AniList no tiene mapeado ese id de MAL: se cae a Jikan, cuyo
+          // endpoint de detalle sí responde de forma fiable.
+          const { data } = await getAnimeById(String(entry.malId)) as JikanFullResponse;
+          patch = {
+            title: data.title_english || data.title,
+            image_url: data.images?.webp?.large_image_url || data.images?.jpg?.large_image_url || '',
+            episodes_total: data.episodes || entry.totalEpisodes || null,
+            score: data.score ?? null,
+            year: data.year ?? (data.aired?.from ? new Date(data.aired.from).getFullYear() : null),
+            genres: data.genres?.map(g => g.name) ?? [],
+            studios: data.studios?.map(s => s.name) ?? [],
+            duration: data.duration || null,
+          };
+        }
+
+        await supabase.from('saved_animes').update(patch)
+          .eq('user_id', userId).eq('anime_id', entry.malId);
+        done++;
+      } catch { /* se completará en otra pasada */ }
+
+      setProgress(Math.round(((i + 1) / toImport.length) * 100));
+      if (i < toImport.length - 1) await delay(ENRICH_DELAY_MS);
+    }
+
+    setEnriched(done);
+    setPhase('done');
+    onImportComplete();
+  };
+
   const statusCounts = getMalStatusCounts(entries);
-  const estimatedMinutes = Math.ceil((toImport.length * DELAY_MS) / 60000);
+  const reclassified = getReclassifiedCounts(toImport);
+  const reclassifiedTotal = Object.values(reclassified).reduce((a, b) => a + b, 0);
+  // Estimación honesta de la fase 2: el ritmo lo impone el límite de AniList.
+  const enrichMinutes = Math.max(1, Math.ceil((toImport.length * ENRICH_DELAY_MS) / 60000));
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={e => { if (e.target === e.currentTarget && phase !== 'importing') onClose(); }}
+      onClick={e => { if (e.target === e.currentTarget && phase !== 'importing' && phase !== 'enriching') onClose(); }}
     >
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => phase !== 'importing' && onClose()} />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => phase !== 'importing' && phase !== 'enriching' && onClose()} />
 
       <div className="relative z-10 w-full max-w-lg bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)]">
         {/* Header */}
@@ -172,7 +217,7 @@ export const ImportXMLModal = ({
             <h2 className="font-black text-white text-lg leading-tight">Importar lista de anime</h2>
             <p className="text-xs text-zinc-600 font-bold mt-0.5">Compatible con MyAnimeList y otros exportadores XML</p>
           </div>
-          {phase !== 'importing' && (
+          {phase !== 'importing' && phase !== 'enriching' && (
             <button
               onClick={onClose}
               className="p-2 text-zinc-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
@@ -251,13 +296,33 @@ export const ImportXMLModal = ({
                 </div>
                 {toImport.length > 0 && (
                   <p className="text-xs text-zinc-600 leading-relaxed">
-                    La importación obtendrá datos desde Jikan API (imágenes, géneros, estudios).
-                    {toImport.length > 20
-                      ? ` Tiempo estimado: ~${estimatedMinutes} minuto${estimatedMinutes !== 1 ? 's' : ''}.`
-                      : ' Solo tomará unos segundos.'}
+                    Se guarda todo lo que trae el archivo —título, episodios, progreso y tu
+                    puntuación— en unos segundos. Las portadas aparecen solas a medida que
+                    mirás la lista.
                   </p>
                 )}
               </div>
+
+              {/* Kiroku no tiene "Abandonado" ni "En pausa", así que esas
+                  entradas entran como "Pendiente". Se avisa antes de importar
+                  en vez de cambiarle la lista sin decir nada. */}
+              {reclassifiedTotal > 0 && (
+                <div className="flex items-start gap-2.5 text-sm text-amber-300/90 bg-amber-400/[0.07] border border-amber-400/25 rounded-xl px-4 py-3">
+                  <AlertCircle size={15} className="shrink-0 mt-0.5 text-amber-400" />
+                  <div className="leading-relaxed">
+                    <p className="font-bold text-amber-200 mb-0.5">
+                      {reclassifiedTotal} anime{reclassifiedTotal !== 1 ? 's' : ''} van a quedar como “Pendiente”
+                    </p>
+                    <p className="text-amber-300/70 text-xs">
+                      Kiroku todavía no tiene los estados{' '}
+                      {Object.entries(reclassified)
+                        .map(([s, n]) => `${s === 'Dropped' ? 'Abandonado' : 'En pausa'} (${n})`)
+                        .join(' y ')}
+                      , así que esas entradas se guardan como pendientes. Podés cambiarlas a mano después.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {toImport.length === 0 ? (
                 <div className="flex items-center gap-2 text-sm text-zinc-400 bg-zinc-800/40 border border-zinc-700/30 rounded-xl px-4 py-3">
@@ -289,15 +354,29 @@ export const ImportXMLModal = ({
             </div>
           )}
 
-          {/* ── PHASE: importing ── */}
-          {phase === 'importing' && (
+          {/* ── PHASE: importing / enriching ── */}
+          {(phase === 'importing' || phase === 'enriching') && (
             <div className="flex flex-col gap-6 py-2">
               <div className="flex items-center gap-3">
                 <Loader2 size={20} className="animate-spin text-[#FF3B3B] shrink-0" />
-                <div>
-                  <p className="font-bold text-white text-sm">Importando tu lista...</p>
-                  <p className="text-xs text-zinc-600 mt-0.5">No cierres esta ventana.</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-white text-sm">
+                    {phase === 'importing' ? 'Guardando tu lista...' : 'Completando datos...'}
+                  </p>
+                  <p className="text-xs text-zinc-600 mt-0.5">
+                    {phase === 'importing'
+                      ? 'Un momento, no cierres esta ventana.'
+                      : 'Tu lista ya está guardada. Podés cortar cuando quieras.'}
+                  </p>
                 </div>
+                {phase === 'enriching' && (
+                  <button
+                    onClick={() => { abortRef.current = true; }}
+                    className="shrink-0 px-3 py-2 border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-zinc-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors"
+                  >
+                    Detener
+                  </button>
+                )}
               </div>
 
               {/* Progress bar */}
@@ -313,7 +392,7 @@ export const ImportXMLModal = ({
                   />
                 </div>
                 <p className="text-xs text-zinc-700 mt-2">
-                  {Math.round((progress / 100) * toImport.length)} / {toImport.length} animes procesados
+                  {Math.round((progress / 100) * toImport.length)} / {toImport.length} animes
                 </p>
               </div>
             </div>
@@ -348,6 +427,36 @@ export const ImportXMLModal = ({
               {result.failed > 0 && (
                 <p className="text-xs text-zinc-600 leading-relaxed">
                   {result.failed} anime{result.failed !== 1 ? 's' : ''} no pudieron importarse (probablemente removidos de MAL o problemas de red).
+                </p>
+              )}
+
+              {/* Los géneros, estudios y duración alimentan los gráficos y las
+                  horas vistas. Es opcional y lento por el límite de AniList, así
+                  que se ofrece aparte en vez de retener la importación entera. */}
+              {enriched === null && result.imported > 0 && (
+                <div className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4 flex flex-col gap-3">
+                  <div>
+                    <p className="text-sm font-bold text-white mb-1">Completar géneros y estudios</p>
+                    <p className="text-xs text-zinc-600 leading-relaxed">
+                      Tu lista ya está guardada y se puede usar. Esto agrega los datos que
+                      alimentan los gráficos y las horas vistas. Tarda ~{enrichMinutes} minuto
+                      {enrichMinutes !== 1 ? 's' : ''} porque AniList permite 30 consultas por
+                      minuto; podés cortarlo cuando quieras y se guarda lo que haya avanzado.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleEnrich}
+                    className="w-full py-2.5 border border-[#FF3B3B]/25 hover:border-[#FF3B3B]/50 text-zinc-300 hover:text-white font-black text-[11px] uppercase tracking-widest rounded-lg transition-colors"
+                  >
+                    Completar datos
+                  </button>
+                </div>
+              )}
+
+              {enriched !== null && (
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Datos completados en {enriched} de {toImport.length} animes.
+                  {enriched < toImport.length && ' Podés volver a importar el mismo archivo más tarde para terminar el resto.'}
                 </p>
               )}
 

@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo, useRef, type ChangeEvent } from 'react';
+import { prefersReducedMotion } from '../utils/motion';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import {
   Tv, CheckCircle, Heart, Hourglass,
 } from 'lucide-react';
-import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
+import type { UserProfile, UserStats } from '../types/profile';
 import { toWebP } from '../utils/imageUtils';
 import { ACHIEVEMENTS } from '../constants/profile';
 import { computeUserStats } from '../utils/animeUtils';
@@ -30,6 +32,7 @@ import { useSocialProfile } from '../hooks/useSocialProfile';
 import { useTop10 } from '../hooks/useTop10';
 import { useFavoriteCharacters } from '../hooks/useFavoriteCharacters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useUserData } from '../contexts/UserDataContext';
 
 // Nombre del objeto dentro del bucket, extraído de la URL pública que el
 // perfil tiene guardada. Solo se usa para borrar restos del esquema viejo
@@ -47,8 +50,16 @@ const legacyObjectName = (url: string | null | undefined, bucket: string): strin
 
 export const Profile = () => {
 
+  // La lista de animes sale del contexto, que ya la mantiene sincronizada;
+  // esta página repetía el mismo select más un getSession() propio.
+  const { savedAnimes, session, authReady, refreshSavedAnimes } = useUserData();
+  const animes = useMemo(
+    () => [...savedAnimes].sort((a, b) =>
+      (b.created_at ?? '').localeCompare(a.created_at ?? '')),
+    [savedAnimes],
+  );
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [animes, setAnimes] = useState<SavedAnime[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
@@ -71,48 +82,41 @@ export const Profile = () => {
   useDocumentTitle(profile?.username ? `@${profile.username}` : 'Mi Perfil');
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (!currentSession) { navigate('/search'); return; }
+    if (!authReady) return;
+    if (!session) { navigate('/search'); return; }
 
+    const fetchProfile = async () => {
+      try {
         const { data: profileData } = await supabase
-          .from('profiles').select('*').eq('id', currentSession.user.id).single();
+          .from('profiles').select('*').eq('id', session.user.id).single();
 
         if (profileData) {
           setProfile(profileData as UserProfile);
           setNewBio(profileData.bio || '');
         } else {
           setProfile({
-            id: currentSession.user.id,
-            email: currentSession.user.email || '',
-            username: currentSession.user.email?.split('@')[0] || 'usuario',
+            id: session.user.id,
+            email: session.user.email || '',
+            username: session.user.email?.split('@')[0] || 'usuario',
             avatar_url: null,
             banner_url: null,
             bio: null,
           });
         }
-
-        const { data: animesData } = await supabase
-          .from('saved_animes').select('*')
-          .eq('user_id', currentSession.user.id)
-          .order('created_at', { ascending: false });
-
-        if (animesData) setAnimes(animesData as SavedAnime[]);
       } catch (error) {
         console.error('Error cargando perfil:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchUserData();
-  }, [navigate]);
+    fetchProfile();
+  }, [authReady, session, navigate]);
 
   const handleSignOut = async () => { await supabase.auth.signOut(); navigate('/'); };
 
   const handleRemove = async (id: string) => {
     const { error } = await supabase.from('saved_animes').delete().eq('id', id);
-    if (!error) setAnimes(prev => prev.filter(a => a.id !== id));
+    if (!error) await refreshSavedAnimes();
   };
 
   const handleUpdateBio = async () => {
@@ -177,7 +181,7 @@ export const Profile = () => {
       await uploadProfileImage('banners', file, 0.85, 1920, 'banner_url');
     } catch (error) {
       console.error(error);
-      alert('Hubo un error al subir el banner.');
+      toast.error('No se pudo subir el banner. Probá con otra imagen.');
     } finally { setUploadingBanner(false); }
   };
 
@@ -189,18 +193,11 @@ export const Profile = () => {
       await uploadProfileImage('avatars', file, 0.88, 800, 'avatar_url');
     } catch (error) {
       console.error(error);
-      alert('Hubo un error al subir la imagen.');
+      toast.error('No se pudo subir la imagen. Probá con otra.');
     } finally { setUploadingAvatar(false); }
   };
 
-  const handleImportComplete = async () => {
-    if (!profile) return;
-    const { data: animesData } = await supabase
-      .from('saved_animes').select('*')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false });
-    if (animesData) setAnimes(animesData as SavedAnime[]);
-  };
+  const handleImportComplete = refreshSavedAnimes;
 
   const stats: UserStats = useMemo(() => computeUserStats(animes), [animes]);
 
@@ -214,6 +211,10 @@ export const Profile = () => {
   ];
 
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     if (loading || !pageRef.current) return;
 
     gsap.fromTo(

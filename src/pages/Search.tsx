@@ -1,6 +1,7 @@
-import { useEffect, useId, useState, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useId, useState, useMemo, useRef } from 'react';
+import { prefersReducedMotion } from '../utils/motion';
 import { useSearchParams, Link } from 'react-router-dom';
-import { getRandomAnime, getRecommendedAnimes, searchAniList, type AniListFilters } from '../services/aniListApi';
+import { getRandomAnime, getRecommendedAnimes, searchAniList, searchByStudio, type AniListFilters } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
 import { AnimeCard } from '../components/AnimeCard';
 import debounce from 'lodash.debounce';
@@ -37,21 +38,38 @@ const SORT_OPTIONS = [
 
 type SortKey = typeof SORT_OPTIONS[number]['value'];
 
-const sortResults = (animes: Anime[], sort: SortKey): Anime[] => {
-  // Salida rápida: si está por defecto, no alteramos el orden que trae la API
-  if (sort === 'relevance') return animes;
-
-  const copy = [...animes];
-  switch (sort) {
-    case 'year_desc':     return copy.sort((a,b) => new Date(b.aired?.from||0).getTime() - new Date(a.aired?.from||0).getTime());
-    case 'score_desc':    return copy.sort((a,b) => (b.score||0) - (a.score||0));
-    case 'score_asc':     return copy.sort((a,b) => (a.score||0) - (b.score||0));
-    case 'popularity':    return copy.sort((a,b) => (a.popularity||9999) - (b.popularity||9999));
-    case 'episodes_desc': return copy.sort((a,b) => (b.episodes||0) - (a.episodes||0));
-    case 'year_asc':      return copy.sort((a,b) => new Date(a.aired?.from||0).getTime() - new Date(b.aired?.from||0).getTime());
-    default: return copy;
-  }
+// El orden se resuelve en AniList, no en el cliente.
+//
+// Antes se ordenaba el array ya descargado, con dos problemas: "Más popular"
+// no hacía nada (ordenaba por `popularity`, un campo que la búsqueda de
+// AniList nunca completa), y el resto solo ordenaba los 40 resultados de la
+// página cargada — así que "mayor puntuación" sobre 300 coincidencias te daba
+// el mejor de una muestra arbitraria, no el mejor de la búsqueda.
+const SORT_TO_ANILIST: Record<Exclude<SortKey, 'relevance'>, string[]> = {
+  year_desc:     ['START_DATE_DESC'],
+  score_desc:    ['SCORE_DESC'],
+  score_asc:     ['SCORE'],
+  popularity:    ['POPULARITY_DESC'],
+  episodes_desc: ['EPISODES_DESC'],
+  year_asc:      ['START_DATE'],
 };
+
+// Nombres de género tal como los espera AniList. Estaba embebido dentro de
+// executeAdvancedSearch; ahora lo comparten las dos ramas de búsqueda.
+const GENRE_TO_ANILIST: Record<string, string> = {
+  'Acción': 'Action', 'Aventura': 'Adventure', 'Comedia': 'Comedy',
+  'Drama': 'Drama', 'Fantasía': 'Fantasy', 'Terror': 'Horror',
+  'Misterio': 'Mystery', 'Romance': 'Romance', 'Sci-Fi': 'Sci-Fi',
+  'Slice of Life': 'Slice of Life', 'Deportes': 'Sports',
+  'Sobrenatural': 'Supernatural', 'Suspenso': 'Thriller',
+  'Isekai': 'Isekai', 'Ecchi': 'Ecchi',
+};
+
+const genreNamesFrom = (ids: string | null): string[] =>
+  (ids?.split(',') ?? [])
+    .map(id => GENRES.find(g => g.id.toString() === id))
+    .map(g => (g ? GENRE_TO_ANILIST[g.name] || g.name : ''))
+    .filter(Boolean);
 
 interface Option { value: string; label: string }
 interface CustomDropdownProps { label: string; value: string; options: Option[]; onChange: (val: string) => void; disabled?: boolean; placeholder?: string; }
@@ -132,9 +150,6 @@ export const Search = () => {
   const [loadingRandom, setLoadingRandom] = useState(false);
   const [query, setQuery] = useState('');
   
-  // Iniciamos en "relevance" para que no ordene el array automáticamente
-  const [sortKey, setSortKey] = useState<SortKey>('relevance'); 
-  
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef      = useRef<HTMLDivElement>(null);
   const sortTriggerRef = useRef<HTMLButtonElement>(null);
@@ -183,6 +198,74 @@ export const Search = () => {
 
   useEffect(() => { return () => debouncedFetchInstantResults.cancel(); }, [debouncedFetchInstantResults]);
 
+  // Solo usa setters de estado, que son estables — de ahí las dependencias
+  // vacías. Estar memoizadas es lo que permite que el efecto de arriba las
+  // liste como dependencia en vez de silenciar la regla.
+  const applyResults = useCallback((data: Anime[], hasNext: boolean, pageNumber: number) => {
+    if (pageNumber === 1) setResults(data);
+    else setResults(prev => {
+      const existingIds = new Set(prev.map(a => a.mal_id));
+      return [...prev, ...data.filter((a: Anime) => !existingIds.has(a.mal_id))];
+    });
+    setHasNextPage(hasNext);
+    setPage(pageNumber);
+  }, []);
+
+  const executeAdvancedSearch = useCallback(async (params: URLSearchParams, pageNumber: number = 1) => {
+    if (pageNumber === 1) { setLoading(true); setInstantResults([]); } else setLoadingMore(true);
+    try {
+      const sort = (params.get('sort') as SortKey | null) ?? 'relevance';
+
+      // Rama por estudio: usa Studio.media, el único camino de AniList que
+      // filtra por estudio. Ver searchByStudio en services/aniListApi.ts.
+      const studioName = params.get('studioName');
+      if (studioName) {
+        const year = params.get('year');
+        const res = await searchByStudio(
+          studioName,
+          pageNumber,
+          sort === 'relevance' ? ['POPULARITY_DESC'] : SORT_TO_ANILIST[sort],
+          {
+            genres: genreNamesFrom(params.get('genres')),
+            formats: params.get('formats')?.split(',').filter(Boolean),
+            status: params.get('status') ?? undefined,
+            year: year ? parseInt(year, 10) : undefined,
+          },
+        );
+        applyResults(res.data, res.hasNextPage, pageNumber);
+        return;
+      }
+
+      const aniFilters: AniListFilters = { page: pageNumber, perPage: 40 };
+      if (sort !== 'relevance') aniFilters.sort = SORT_TO_ANILIST[sort];
+
+      const qParam = params.get('q');
+      if (qParam) aniFilters.q = qParam;
+
+      const statusParam = params.get('status');
+      if (statusParam) aniFilters.status = statusParam;
+
+      const formatsParam = params.get('formats');
+      if (formatsParam) aniFilters.formats = formatsParam.split(',');
+      
+      const genreNames = genreNamesFrom(params.get('genres'));
+      if (genreNames.length > 0) aniFilters.genres = genreNames;
+
+      let targetYear = params.get('year');
+      const seasonParam = params.get('season');
+      if (seasonParam && !targetYear) targetYear = currentYear.toString();
+
+      if (targetYear) aniFilters.seasonYear = parseInt(targetYear, 10);
+      if (seasonParam) aniFilters.season = seasonParam;
+
+      const response = await searchAniList(aniFilters);
+      applyResults(response.data, response.hasNextPage, pageNumber);
+    } catch (error) { console.error(error); } finally { setLoading(false); setLoadingMore(false); }
+  }, [applyResults]);
+
+  // Toda búsqueda arranca acá: la URL es la fuente de verdad, así que
+  // cambiar cualquier filtro —incluido el orden— vuelve a ejecutarla desde
+  // la página 1. Va después de executeAdvancedSearch porque la referencia.
   useEffect(() => {
     const qParam = searchParams.get('q') || '';
     setQuery(qParam);
@@ -197,56 +280,7 @@ export const Search = () => {
     });
     if (Array.from(searchParams.keys()).length > 0) executeAdvancedSearch(searchParams, 1);
     else { setResults([]); setHasNextPage(false); }
-  }, [searchParams]);
-
-  const executeAdvancedSearch = async (params: URLSearchParams, pageNumber: number = 1) => {
-    if (pageNumber === 1) { setLoading(true); setInstantResults([]); } else setLoadingMore(true);
-    try {
-      const aniFilters: AniListFilters = { page: pageNumber, perPage: 40 }; 
-      
-      const qParam = params.get('q');
-      if (qParam) aniFilters.q = qParam;
-
-      const statusParam = params.get('status');
-      if (statusParam) aniFilters.status = statusParam;
-
-      const formatsParam = params.get('formats');
-      if (formatsParam) aniFilters.formats = formatsParam.split(',');
-      
-      if (params.get('genres')) {
-        const selectedGenreIds = params.get('genres')!.split(',');
-        const genreNames = selectedGenreIds.map(id => {
-          const genreObj = GENRES.find(g => g.id.toString() === id);
-          const translationMap: Record<string, string> = {
-            'Acción': 'Action', 'Aventura': 'Adventure', 'Comedia': 'Comedy', 
-            'Drama': 'Drama', 'Fantasía': 'Fantasy', 'Terror': 'Horror', 
-            'Misterio': 'Mystery', 'Romance': 'Romance', 'Sci-Fi': 'Sci-Fi', 
-            'Slice of Life': 'Slice of Life', 'Deportes': 'Sports', 
-            'Sobrenatural': 'Supernatural', 'Suspenso': 'Thriller', 
-            'Isekai': 'Isekai', 'Ecchi': 'Ecchi'
-          };
-          return genreObj ? translationMap[genreObj.name] || genreObj.name : '';
-        }).filter(Boolean);
-        
-        aniFilters.genres = genreNames;
-      }
-
-      let targetYear = params.get('year');
-      const seasonParam = params.get('season');
-      if (seasonParam && !targetYear) targetYear = currentYear.toString();
-
-      if (targetYear) aniFilters.seasonYear = parseInt(targetYear, 10);
-      if (seasonParam) aniFilters.season = seasonParam;
-
-      const response = await searchAniList(aniFilters);
-      if (pageNumber === 1) setResults(response.data);
-      else setResults(prev => {
-          const existingIds = new Set(prev.map(a => a.mal_id));
-          return [...prev, ...response.data.filter((a: Anime) => !existingIds.has(a.mal_id))];
-      });
-      setHasNextPage(response.hasNextPage); setPage(pageNumber);
-    } catch (error) { console.error(error); } finally { setLoading(false); setLoadingMore(false); }
-  };
+  }, [searchParams, executeAdvancedSearch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value); debouncedFetchInstantResults(e.target.value);
@@ -272,16 +306,14 @@ export const Search = () => {
     if (localFilters.studioName) newParams.set('studioName', localFilters.studioName);
     if (localFilters.genres.length > 0) newParams.set('genres', localFilters.genres.join(','));
     
-    // Al realizar una nueva búsqueda, volvemos al orden por defecto
-    setSortKey('relevance');
-    
+    // Una búsqueda nueva vuelve al orden por defecto: `newParams` se arma
+    // desde cero, así que no llevar `sort` ya lo deja en 'relevance'.
     setSearchParams(newParams); setShowFilters(false);
   };
 
   const clearFilters = () => {
     setQuery(''); 
     setLocalFilters({ formats: [], status: '', year: '', season: '', studioId: '', studioName: '', genres: [] });
-    setSortKey('relevance');
     setSearchParams({}); setPage(1); setHasNextPage(false);
   };
 
@@ -289,6 +321,10 @@ export const Search = () => {
   const isDiscoverMode   = !hasActiveFilters && results.length === 0 && !loading;
 
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     if (!isDiscoverMode || !discoverRef.current) return;
     gsap.fromTo('.src-label', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power4.out' });
     gsap.fromTo('.src-title', { opacity: 0, y: 22, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power4.out', delay: 0.08 });
@@ -317,8 +353,18 @@ export const Search = () => {
   };
   const activeTags = getActiveFilterTags();
 
-  const sortedResults = useMemo(() => sortResults(results, sortKey), [results, sortKey]);
+  // El orden vive en la URL, igual que el resto de los filtros: cambiarlo
+  // dispara el mismo efecto que re-ejecuta la búsqueda desde la página 1,
+  // esta vez pidiéndole a AniList el orden ya aplicado sobre el total.
+  const sortKey = (searchParams.get('sort') as SortKey | null) ?? 'relevance';
   const currentSortLabel = SORT_OPTIONS.find(s => s.value === sortKey)?.label || 'Ordenar';
+
+  const applySort = (next: SortKey) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === 'relevance') params.delete('sort');
+    else params.set('sort', next);
+    setSearchParams(params);
+  };
 
   return (
     <div className="min-h-screen bg-[#080A0F] font-sans pt-28 md:pt-32 pb-24">
@@ -452,14 +498,14 @@ export const Search = () => {
           </div>
         )}
 
-        {!loading && sortedResults.length > 0 && (
+        {!loading && results.length > 0 && (
           <div className="animate-in fade-in duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-[#FF3B3B]/10 gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Búsqueda</p>
                 <h2 className="text-2xl font-black text-white flex items-center gap-3">
                   Resultados
-                  <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/10 bg-[#11131A] px-3 py-1 rounded-lg">{sortedResults.length}</span>
+                  <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/10 bg-[#11131A] px-3 py-1 rounded-lg">{results.length}</span>
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -486,7 +532,7 @@ export const Search = () => {
                           key={opt.value}
                           role="option"
                           aria-selected={sortKey === opt.value}
-                          onClick={() => { setSortKey(opt.value as SortKey); closeSortDropdown(); }}
+                          onClick={() => { applySort(opt.value as SortKey); closeSortDropdown(); }}
                           className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${sortKey === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}
                         >
                           {opt.label}
@@ -502,7 +548,7 @@ export const Search = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
-              {sortedResults.map((anime) => <AnimeCard key={anime.mal_id} anime={anime} />)}
+              {results.map((anime) => <AnimeCard key={anime.mal_id} anime={anime} />)}
             </div>
 
             {hasNextPage && (

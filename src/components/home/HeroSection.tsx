@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { prefersReducedMotion } from '../../utils/motion';
 import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import gsap from 'gsap';
@@ -9,6 +10,10 @@ export const HeroSection = () => {
   const heroRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
 
     tl.fromTo('.hero-line',

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { scrollBehavior } from './utils/motion';
+
 import { useUserData } from './contexts/UserDataContext';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -33,7 +35,7 @@ const PageLoader = () => (
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
-    if (pathname !== '/') window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    if (pathname !== '/') window.scrollTo({ top: 0, left: 0, behavior: scrollBehavior() });
   }, [pathname]);
   return null;
 };
@@ -90,17 +92,18 @@ const AnimatedRoutes = () => {
 };
 
 const AppContent = () => {
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const { needsUsernameSetup, authReady } = useUserData();
+  // El estado del modal vive en el contexto para que también lo pueda abrir
+  // una pantalla interna (ver AnimeDetails: guardar un anime sin sesión).
+  const { needsUsernameSetup, authReady, isLoginOpen, openLogin, closeLogin } = useUserData();
   return (
     <div className="min-h-screen bg-[#080A0F] text-zinc-100 flex flex-col font-sans relative">
-      <Header onOpenLogin={() => setIsLoginOpen(true)} />
+      <Header onOpenLogin={openLogin} />
       <main className="flex-1 w-full relative pb-16 md:pb-0">
         <AnimatedRoutes />
       </main>
       <Footer />
-      <BottomNav onOpenLogin={() => setIsLoginOpen(true)} />
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+      <BottomNav onOpenLogin={openLogin} />
+      <LoginModal isOpen={isLoginOpen} onClose={closeLogin} />
       {authReady && needsUsernameSetup && <UsernameSetupModal />}
       <Toaster
         position="bottom-right"

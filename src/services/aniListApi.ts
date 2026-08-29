@@ -142,45 +142,157 @@ export const searchAniList = async (filters: AniListFilters) => {
   const json = (await response.json()) as AniListResponse;
   const pageData = json.data.Page;
 
-  const mappedData: Anime[] = pageData.media
-    .filter((media) => {
+  return {
+    data: mapAniListMedia(pageData.media),
+    hasNextPage: pageData.pageInfo.hasNextPage,
+  };
+};
+
+// Compartido por la búsqueda general y por la búsqueda por estudio, que
+// consultan endpoints distintos de AniList pero tienen que devolver
+// exactamente la misma forma y aplicar los mismos descartes.
+function mapAniListMedia(media: AniListMedia[]): Anime[] {
+  return media
+    .filter((m) => {
       // 1. Debe tener un ID válido de MyAnimeList/Jikan
-      if (media.idMal === null) return false;
+      if (m.idMal === null) return false;
 
       // 2. Ocultar videos musicales promocionales ("Other" / "Music")
-      if (media.format === 'MUSIC') return false;
+      if (m.format === 'MUSIC') return false;
 
       // 3. Si el anime ya finalizó, DEBE tener una calificación.
       // Esto elimina animes "fantasma" o especiales raros que no tienen score.
-      if (media.status === 'FINISHED' && !media.averageScore) return false;
+      if (m.status === 'FINISHED' && !m.averageScore) return false;
 
       return true;
     })
-    .map((media): Anime => ({
-      mal_id: media.idMal as number,
-      title: media.title.romaji || media.title.english || 'Sin título',
-      episodes: media.episodes || null,
-      score: media.averageScore ? media.averageScore / 10 : null,
+    .map((m): Anime => ({
+      mal_id: m.idMal as number,
+      title: m.title.romaji || m.title.english || 'Sin título',
+      episodes: m.episodes || null,
+      score: m.averageScore ? m.averageScore / 10 : null,
       images: {
         jpg: {
-          image_url: media.coverImage?.large || '',
-          large_image_url: media.coverImage?.large || '',
+          image_url: m.coverImage?.large || '',
+          large_image_url: m.coverImage?.large || '',
         },
       },
       aired: {
-        from: media.startDate?.year 
-          ? `${media.startDate.year}-${String(media.startDate.month || 1).padStart(2, '0')}-${String(media.startDate.day || 1).padStart(2, '0')}`
+        from: m.startDate?.year
+          ? `${m.startDate.year}-${String(m.startDate.month || 1).padStart(2, '0')}-${String(m.startDate.day || 1).padStart(2, '0')}`
           : '',
       },
-      genres: (media.genres || []).map((g, i) => ({
-        mal_id: i, 
+      genres: (m.genres || []).map((g, i) => ({
+        mal_id: i,
         name: g,
       })),
     }));
+}
+
+// ── Búsqueda por estudio ───────────────────────────────────────────────────
+// `Page.media()` no tiene ningún argumento de estudio, así que el filtro de
+// estudios de la búsqueda no llegaba nunca a la API: se guardaba en la URL,
+// se mostraba el chip, y los resultados eran los mismos con o sin filtro.
+//
+// El camino que sí existe es `Studio.media`, que acepta orden y paginación
+// pero no los demás filtros — esos se aplican sobre los resultados en
+// Search.tsx. Se evaluó resolverlo con `producers=` de Jikan, que sí combina
+// todo, pero su endpoint de búsqueda estaba devolviendo 504 de forma
+// sostenida (6 de 6 intentos) mientras el de detalle respondía normal, así
+// que colgar un filtro de la UI de ahí no era viable.
+
+interface AniListStudioResponse {
+  data: {
+    Studio: {
+      media: {
+        pageInfo: { hasNextPage: boolean };
+        nodes: AniListMedia[];
+      };
+    } | null;
+  };
+}
+
+const STUDIO_QUERY = `
+  query ($search: String, $page: Int, $perPage: Int, $sort: [MediaSort]) {
+    Studio(search: $search) {
+      media(sort: $sort, isMain: true, page: $page, perPage: $perPage) {
+        pageInfo { hasNextPage }
+        nodes {
+          idMal
+          title { romaji english }
+          episodes
+          averageScore
+          coverImage { large }
+          startDate { year month day }
+          genres
+          status
+          format
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * Filtros que `Studio.media` no acepta y por eso se aplican sobre lo que
+ * devuelve. Se hace acá y no en la página para que los campos crudos de
+ * AniList (`format`, `status`) no tengan que filtrarse al tipo `Anime`, que
+ * usa etiquetas distintas.
+ */
+export interface StudioClientFilters {
+  /** Nombres de género de AniList, ya traducidos. */
+  genres?: string[];
+  /** Formatos de AniList: TV, MOVIE, OVA, SPECIAL, ONA. */
+  formats?: string[];
+  /** airing | complete | upcoming, igual que el resto de la búsqueda. */
+  status?: string;
+  year?: number;
+}
+
+const STATUS_FILTER: Record<string, string> = {
+  airing: 'RELEASING',
+  complete: 'FINISHED',
+  upcoming: 'NOT_YET_RELEASED',
+};
+
+export const searchByStudio = async (
+  studioName: string,
+  page = 1,
+  sort: string[] = ['POPULARITY_DESC'],
+  filters: StudioClientFilters = {},
+): Promise<{ data: Anime[]; hasNextPage: boolean }> => {
+  const response = await fetch(ANILIST_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      query: STUDIO_QUERY,
+      // 25 y no 50: AniList topa la paginación de `Studio.media` ahí, así que
+      // pedir más solo hace creer que la página trae el doble de lo que trae.
+      variables: { search: studioName, page, perPage: 25, sort },
+    }),
+  });
+  if (!response.ok) throw new Error('Error fetching from AniList');
+
+  const json = (await response.json()) as AniListStudioResponse;
+  const media = json.data?.Studio?.media;
+  if (!media) return { data: [], hasNextPage: false };
+
+  const wantedStatus = filters.status ? STATUS_FILTER[filters.status] : undefined;
+
+  const filtered = media.nodes.filter(m => {
+    if (filters.formats?.length && !filters.formats.includes(m.format ?? '')) return false;
+    if (wantedStatus && m.status !== wantedStatus) return false;
+    if (filters.year && m.startDate?.year !== filters.year) return false;
+    if (filters.genres?.length) {
+      const has = filters.genres.every(g => (m.genres || []).includes(g));
+      if (!has) return false;
+    }
+    return true;
+  });
 
   return {
-    data: mappedData,
-    hasNextPage: pageData.pageInfo.hasNextPage,
+    data: mapAniListMedia(filtered),
+    hasNextPage: media.pageInfo.hasNextPage,
   };
 };
 

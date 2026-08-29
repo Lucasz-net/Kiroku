@@ -4,6 +4,7 @@ import debounce from 'lodash.debounce';
 import { X, Search, Loader2, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { PublicProfileSummary } from '../../types/profile';
+import { escapeLikePattern } from '../../utils/likePattern';
 
 const RESULTS_LIMIT = 20;
 const MIN_QUERY_LENGTH = 2;
@@ -24,7 +25,9 @@ export const UserSearchModal = ({ excludeUserId, onClose }: UserSearchModalProps
       let request = supabase
         .from('public_profiles')
         .select('id, username, avatar_url, is_private')
-        .ilike('username', `%${term}%`)
+        // Escapado para que un `_` escrito por el usuario se busque literal
+        // en vez de comportarse como comodín (ver utils/likePattern.ts).
+        .ilike('username', `%${escapeLikePattern(term)}%`)
         .order('username', { ascending: true })
         .limit(RESULTS_LIMIT);
 

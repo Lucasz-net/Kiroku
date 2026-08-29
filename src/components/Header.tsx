@@ -67,7 +67,9 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       setInstantResults([]);
-      navigate(`/search?q=${searchTerm}`);
+      // Sin encodear, un título con "/", "&", "#" o "%" corta o corrompe la
+      // query — y "Fate/Zero" no es un caso raro.
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
     }
   };
 

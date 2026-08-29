@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
+import { prefersReducedMotion } from '../utils/motion';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useParams, Link } from 'react-router-dom';
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
 import { computeUserStats } from '../utils/animeUtils';
+import { escapeLikePattern } from '../utils/likePattern';
 import { ACHIEVEMENTS } from '../constants/profile';
 import { AchievementGallery } from '../components/profile/AchievementGallery';
 import { ActivityFeed } from '../components/profile/ActivityFeed';
@@ -57,6 +59,12 @@ export const PublicProfilePage = () => {
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [followersInitialTab, setFollowersInitialTab] = useState<'followers' | 'following'>('followers');
 
+  // Comparación sin distinguir mayúsculas: la base trata los nombres de
+  // usuario como case-insensitive, así que /u/luxioz siendo Luxioz también
+  // es tu propio perfil y tiene que abrir la vista de dueño.
+  const isOwnProfile = !!ownUsername && !!username
+    && ownUsername.toLowerCase() === username.toLowerCase();
+
   const currentUserId = session?.user?.id ?? null;
   useDocumentTitle(username ? `@${username}` : 'Perfil');
 
@@ -72,15 +80,23 @@ export const PublicProfilePage = () => {
 
   useEffect(() => {
     if (!ownerChecked) return;
-    if (ownUsername === username) { setLoading(false); return; }
+    if (isOwnProfile) { setLoading(false); return; }
     if (!username) return;
 
     const fetchProfile = async () => {
       try {
         // `public_profiles` is a view that deliberately excludes `email` —
         // viewing someone else's profile has no business seeing their email.
+        // `ilike` sin comodines = igualdad sin distinguir mayúsculas, que es
+        // como la base trata los nombres de usuario (el índice único es sobre
+        // lower(username)). Con `eq`, /u/luxioz daba "perfil no encontrado"
+        // para el usuario Luxioz — justo el link que reparte "Compartir perfil".
+        // El escape es imprescindible: los nombres admiten `_`, que en LIKE
+        // es comodín y haría resolver /u/a_b al perfil de axb.
         const { data: profileData } = await supabase
-          .from('public_profiles').select('*').eq('username', username).single();
+          .from('public_profiles').select('*')
+          .ilike('username', escapeLikePattern(username))
+          .maybeSingle();
 
         if (!profileData) { setNotFound(true); setLoading(false); return; }
         setProfile({ ...profileData, email: '' } as UserProfile);
@@ -98,7 +114,7 @@ export const PublicProfilePage = () => {
       }
     };
     fetchProfile();
-  }, [ownerChecked, ownUsername, username]);
+  }, [ownerChecked, isOwnProfile, username]);
 
   const social = useSocialProfile(profile?.id ?? null, currentUserId);
   const top10 = useTop10(profile?.id ?? null);
@@ -119,6 +135,10 @@ export const PublicProfilePage = () => {
   const counterRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     if (loading || !pageRef.current) return;
     gsap.fromTo(
       '.profile-section',
@@ -141,7 +161,7 @@ export const PublicProfilePage = () => {
       <Loader2 className="animate-spin text-[#FF3B3B]" size={28} />
     </div>
   );
-  if (ownUsername === username) return <Profile />;
+  if (isOwnProfile) return <Profile />;
   if (notFound || !profile) return <NotFound username={username} />;
 
   const isOwner = false;

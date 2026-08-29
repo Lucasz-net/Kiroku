@@ -31,7 +31,7 @@ alter table public.profiles
   add column if not exists is_private boolean not null default false;
 
 -- ── 2. Función de visibilidad ────────────────────────────────────────
-create or replace function public.can_view_profile(target_id uuid)
+create or replace function private.can_view_profile(target_id uuid)
 returns boolean
 language sql
 stable
@@ -47,8 +47,8 @@ as $$
     );
 $$;
 
-revoke all on function public.can_view_profile(uuid) from public;
-grant execute on function public.can_view_profile(uuid) to anon, authenticated;
+revoke all on function private.can_view_profile(uuid) from public;
+grant execute on function private.can_view_profile(uuid) to anon, authenticated;
 
 -- ── 3. public_profiles: exponer is_private, ocultar bio/banner si corresponde ──
 create or replace view public.public_profiles as
@@ -56,8 +56,8 @@ select
   p.id,
   p.username,
   p.avatar_url,
-  case when public.can_view_profile(p.id) then p.banner_url else null end as banner_url,
-  case when public.can_view_profile(p.id) then p.bio else null end as bio,
+  case when private.can_view_profile(p.id) then p.banner_url else null end as banner_url,
+  case when private.can_view_profile(p.id) then p.bio else null end as bio,
   p.created_at,
   p.is_private
 from public.profiles p;
@@ -77,7 +77,7 @@ drop policy if exists "Users can view their own saved animes" on public.saved_an
 create policy "saved_animes_select" on public.saved_animes
   for select
   to anon, authenticated
-  using ( public.can_view_profile(user_id) );
+  using ( private.can_view_profile(user_id) );
 
 -- ── 5. profile_followers: fila visible solo si AMBOS extremos lo son ──
 -- Diseño: una relación de follow se oculta si cualquiera de las dos
@@ -88,18 +88,18 @@ drop policy if exists "followers_select" on public.profile_followers;
 create policy "followers_select" on public.profile_followers
   for select
   to public
-  using ( public.can_view_profile(follower_id) and public.can_view_profile(following_id) );
+  using ( private.can_view_profile(follower_id) and private.can_view_profile(following_id) );
 
 -- ── 6. profile_comments: gateado por el dueño del perfil comentado ───
 drop policy if exists "comments_select" on public.profile_comments;
 create policy "comments_select" on public.profile_comments
   for select
   to public
-  using ( public.can_view_profile(profile_id) );
+  using ( private.can_view_profile(profile_id) );
 
 -- ── 7. profile_likes: gateado por el dueño del perfil likeado ────────
 drop policy if exists "likes_select" on public.profile_likes;
 create policy "likes_select" on public.profile_likes
   for select
   to public
-  using ( public.can_view_profile(profile_id) );
+  using ( private.can_view_profile(profile_id) );

@@ -52,3 +52,17 @@ html, body, #root {
 .virtual-list-item {
   contain: layout style paint;
 }
+
+/* ── Reducir movimiento ──
+   Cubre lo que es CSS: transiciones, keyframes y el scroll suave. Las
+   animaciones de GSAP no se apagan desde acá — cada useGSAP consulta
+   prefersReducedMotion() y no anima (ver src/utils/motion.ts). */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

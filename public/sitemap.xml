@@ -8,37 +8,37 @@
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://kiroku.app/</loc>
+    <loc>https://kiroku-anime.vercel.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://kiroku.app/search</loc>
+    <loc>https://kiroku-anime.vercel.app/search</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://kiroku.app/top/rated</loc>
+    <loc>https://kiroku-anime.vercel.app/top/rated</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kiroku.app/top/popular</loc>
+    <loc>https://kiroku-anime.vercel.app/top/popular</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kiroku.app/seasonal</loc>
+    <loc>https://kiroku-anime.vercel.app/seasonal</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kiroku.app/privacidad</loc>
+    <loc>https://kiroku-anime.vercel.app/privacidad</loc>
     <changefreq>monthly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://kiroku.app/terminos</loc>
+    <loc>https://kiroku-anime.vercel.app/terminos</loc>
     <changefreq>monthly</changefreq>
     <priority>0.2</priority>
   </url>

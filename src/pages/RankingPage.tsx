@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { prefersReducedMotion } from '../utils/motion';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getTopRatedAnime, getTopPopularAnime } from '../services/malApi';
 import type { Anime } from '../types/anime';
@@ -55,6 +56,10 @@ export const RankingPage = () => {
   const animesLenRef = useRef(0);
 
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     gsap.fromTo('.rk-label',
       { opacity: 0, y: 10 },
       { opacity: 1, y: 0, duration: 0.45, ease: 'power4.out' }

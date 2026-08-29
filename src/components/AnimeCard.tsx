@@ -5,6 +5,7 @@ import { Calendar, BookmarkCheck, Eye, Clock } from 'lucide-react';
 import { getHighResImageUrl } from '../utils/animeUtils';
 import { useUserData } from '../contexts/UserDataContext';
 import { useJikanCover } from '../hooks/useJikanCover';
+import { useInView } from '../hooks/useInView';
 import { translateGenre } from '../utils/translations';
 
 interface AnimeCardProps {
@@ -23,7 +24,10 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
   const savedStatus = getSavedStatus(anime.mal_id);
   const statusCfg = savedStatus ? STATUS_CONFIG[savedStatus] : null;
   const baseImage = getHighResImageUrl(anime.images.jpg.large_image_url || anime.images.jpg.image_url);
-  const displayImage = useJikanCover(anime.mal_id, baseImage);
+  // La portada mejorada solo se pide para las tarjetas que llegan a verse:
+  // es una petición a Jikan por tarjeta y todas comparten una cola de ~380 ms.
+  const { ref: cardRef, inView } = useInView<HTMLAnchorElement>();
+  const displayImage = useJikanCover(anime.mal_id, baseImage, inView);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return null;
@@ -36,6 +40,7 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
 
   return (
     <Link
+      ref={cardRef}
       to={`/anime/${anime.mal_id}`}
       className="flex flex-col bg-transparent group font-sans h-full cursor-pointer"
     >

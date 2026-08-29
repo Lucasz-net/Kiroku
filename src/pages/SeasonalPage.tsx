@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { prefersReducedMotion } from '../utils/motion';
 import { useSearchParams } from 'react-router-dom'; // <-- NUEVO
 import { ChevronLeft, ChevronRight, CalendarDays, Loader2, Plus } from 'lucide-react';
 import { getCurrentSeason, getSeasonLabel } from '../services/jikanApi';
@@ -87,6 +88,10 @@ export const SeasonalPage = () => {
   }, [searchParams]);
 
   useGSAP(() => {
+    // Sin animaciones de entrada si el sistema pidió reducir el movimiento:
+    // GSAP es quien pone el estado inicial, así que salir acá deja los
+    // elementos directamente en su estado final. Ver utils/motion.ts.
+    if (prefersReducedMotion()) return;
     gsap.fromTo('.sea-label', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.45, ease: 'power4.out' });
     gsap.fromTo('.sea-title', { opacity: 0, y: 22, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power4.out', delay: 0.08 });
     gsap.fromTo('.sea-nav', { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out', delay: 0.18 });
