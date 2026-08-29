@@ -3,6 +3,10 @@ import { useId, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 
+// Mismo formato que exige la base (profiles_username_format) y que ya validan
+// UsernameSetupModal y ProfileHeader.
+const USERNAME_RE = /^[a-zA-Z0-9_-]{3,20}$/;
+
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -71,24 +75,15 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     setMessage(null);
 
     try {
-      let resetEmail = identifier;
-
-      if (!identifier.includes('@')) {
-        const { data: foundEmail, error: searchError } = await supabase
-          .rpc('get_email_for_login', { p_username: identifier });
-
-        if (searchError || !foundEmail) {
-          throw new Error('Usuario no encontrado.');
-        }
-
-        resetEmail = foundEmail;
-      }
-
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/restablecer-contrasena`,
+      // El nombre de usuario se resuelve a email del lado del servidor
+      // (api/auth/reset-password.ts). Antes se hacía acá con una RPC que
+      // cualquier visitante anónimo podía llamar para leer el email de
+      // cualquier cuenta.
+      await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier }),
       });
-
-      if (resetError) throw resetError;
 
       setMessage('Si el usuario o correo existe, te enviamos un enlace para restablecer tu contraseña.');
     } catch (err: unknown) {
@@ -116,33 +111,39 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
     try {
       if (isLogin) {
-        let loginEmail = identifier;
+        // El login pasa por nuestro propio endpoint: resolver un nombre de
+        // usuario a su email necesita la service-role key, y ese email nunca
+        // vuelve al navegador. El endpoint devuelve los tokens de una sesión
+        // normal de Supabase, que instalamos acá — de ahí en adelante el
+        // resto de la app funciona igual que siempre.
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier, password }),
+        });
+        const payload = await res.json().catch(() => null);
 
-        if (!identifier.includes('@')) {
-          // Narrow RPC (returns only the email string) instead of selecting
-          // from `profiles` directly — the table itself only allows a user
-          // to read their own row, so an anonymous login attempt needs this
-          // dedicated lookup rather than a plain SELECT.
-          const { data: foundEmail, error: searchError } = await supabase
-            .rpc('get_email_for_login', { p_username: identifier });
-
-          if (searchError || !foundEmail) {
-            throw new Error('Usuario no encontrado.');
-          }
-
-          loginEmail = foundEmail;
+        if (!res.ok || !payload?.access_token) {
+          throw new Error(payload?.error || 'Usuario o contraseña incorrectos.');
         }
 
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: loginEmail,
-          password,
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: payload.access_token,
+          refresh_token: payload.refresh_token,
         });
-
-        if (signInError) throw signInError;
+        if (sessionError) throw sessionError;
 
         onClose();
 
       } else {
+        // La base ahora exige este formato (constraint profiles_username_format).
+        // Sin este chequeo, un nombre inválido revienta dentro del trigger
+        // handle_new_user y Supabase devuelve un "Database error saving new
+        // user" que no le dice nada a nadie.
+        if (!USERNAME_RE.test(username)) {
+          throw new Error('El nombre de usuario debe tener entre 3 y 20 caracteres, solo letras, números, guion y guion bajo.');
+        }
+
         const { data: usernameAvailable } = await supabase
           .rpc('username_available', { p_username: username });
 
@@ -166,9 +167,11 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       let errorMessage = 'Ocurrió un error inesperado.';
       if (err instanceof Error) errorMessage = err.message;
 
-      if (errorMessage.includes('Invalid login credentials')) {
-        setError('Contraseña incorrecta.');
-      } else if (errorMessage.includes('User already registered')) {
+      // Ojo: el error de login llega ya traducido y deliberadamente ambiguo
+      // desde /api/auth/login ("Usuario o contraseña incorrectos"). No lo
+      // afines a "contraseña incorrecta": eso confirmaría que la cuenta
+      // existe, que es justo lo que el endpoint evita revelar.
+      if (errorMessage.includes('User already registered')) {
         setError('Este correo ya está registrado.');
       } else {
         setError(errorMessage);

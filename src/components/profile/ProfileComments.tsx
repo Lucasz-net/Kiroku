@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquare, Trash2, Send, Loader2 } from 'lucide-react';
+import { MessageSquare, Trash2, Send, Loader2, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 
@@ -19,6 +19,13 @@ interface ProfileCommentsProps {
   profileId: string;
   currentUserId: string | null;
   isOwner: boolean;
+  /**
+   * Dueño del perfil con los comentarios cerrados. Los que ya existen se
+   * siguen viendo (y el dueño los puede borrar); lo que se cierra es publicar
+   * nuevos. La base lo aplica igual en la policy de INSERT — esto solo evita
+   * mostrar un formulario que va a fallar.
+   */
+  commentsEnabled?: boolean;
 }
 
 function relativeTime(dateStr: string): string {
@@ -43,6 +50,7 @@ export const ProfileComments = ({
   profileId,
   currentUserId,
   isOwner,
+  commentsEnabled = true,
 }: ProfileCommentsProps) => {
   const [comments, setComments] = useState<ProfileComment[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -173,7 +181,16 @@ export const ProfileComments = ({
       </div>
 
       {/* Form */}
-      {currentUserId ? (
+      {!commentsEnabled ? (
+        <div className="px-6 py-4 border-b border-[#FF3B3B]/[0.07] flex items-center justify-center gap-2 text-center">
+          <Lock size={12} className="text-zinc-700 shrink-0" />
+          <p className="text-xs text-zinc-600 font-bold">
+            {isOwner
+              ? 'Tenés los comentarios cerrados. Nadie puede escribirte.'
+              : 'Este perfil tiene los comentarios cerrados.'}
+          </p>
+        </div>
+      ) : currentUserId ? (
         <div className="px-6 py-4 border-b border-[#FF3B3B]/[0.07] bg-[#0D0F15]/40">
           <div className="flex gap-3">
             <textarea

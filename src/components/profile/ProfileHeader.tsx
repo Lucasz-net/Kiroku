@@ -2,6 +2,7 @@ import { useState, useRef, type ChangeEvent } from 'react';
 import {
   Loader2, Camera, Edit2, X, LogOut, Share2, Check,
   ImagePlus, Users, UserCheck, Heart, Upload, AtSign, Lock, Unlock, Search,
+  MessageSquare, MessageSquareOff,
 } from 'lucide-react';
 import type { UserProfile, SocialCounts } from '../../types/profile';
 import { supabase } from '../../lib/supabase';
@@ -29,6 +30,7 @@ interface ProfileHeaderProps {
   onFollowingClick?: () => void;
   onImportClick?: () => void;
   onPrivacyToggle?: (isPrivate: boolean) => void;
+  onCommentsToggle?: (enabled: boolean) => void;
   onSearchUsersClick?: () => void;
 }
 
@@ -38,7 +40,8 @@ export const ProfileHeader = ({
   onBioChange, onEditBio, onBioSave, onBioCancel,
   onAvatarUpload, onBannerUpload, onSignOut,
   onUsernameUpdate,
-  onFollowersClick, onFollowingClick, onImportClick, onPrivacyToggle, onSearchUsersClick,
+  onFollowersClick, onFollowingClick, onImportClick, onPrivacyToggle, onCommentsToggle,
+  onSearchUsersClick,
 }: ProfileHeaderProps) => {
   const [copied, setCopied] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -46,6 +49,7 @@ export const ProfileHeader = ({
   const [usernameCheck, setUsernameCheck] = useState<UsernameCheck>('idle');
   const [savingUsername, setSavingUsername] = useState(false);
   const [togglingPrivacy, setTogglingPrivacy] = useState(false);
+  const [togglingComments, setTogglingComments] = useState(false);
   const { applyUsername } = useUserData();
   const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -55,6 +59,16 @@ export const ProfileHeader = ({
     const { error } = await supabase.from('profiles').update({ is_private: next }).eq('id', profile.id);
     if (!error) onPrivacyToggle?.(next);
     setTogglingPrivacy(false);
+  };
+
+  const commentsEnabled = profile.comments_enabled !== false;
+
+  const handleCommentsToggle = async () => {
+    const next = !commentsEnabled;
+    setTogglingComments(true);
+    const { error } = await supabase.from('profiles').update({ comments_enabled: next }).eq('id', profile.id);
+    if (!error) onCommentsToggle?.(next);
+    setTogglingComments(false);
   };
 
   const handleUsernameChange = (val: string) => {
@@ -229,6 +243,23 @@ export const ProfileHeader = ({
                 <Unlock size={11} />
               )}
               {profile.is_private ? 'Perfil privado' : 'Perfil público'}
+            </button>
+            <button
+              onClick={handleCommentsToggle}
+              disabled={togglingComments}
+              title={commentsEnabled
+                ? 'Cualquiera puede dejarte comentarios en el perfil'
+                : 'Nadie puede escribirte comentarios nuevos — los que ya están siguen visibles'}
+              className="flex items-center gap-1 text-[10px] font-bold text-zinc-600 hover:text-[#FF3B3B] uppercase tracking-widest transition-colors disabled:opacity-50"
+            >
+              {togglingComments ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : commentsEnabled ? (
+                <MessageSquare size={11} />
+              ) : (
+                <MessageSquareOff size={11} />
+              )}
+              {commentsEnabled ? 'Comentarios abiertos' : 'Comentarios cerrados'}
             </button>
           </div>
 

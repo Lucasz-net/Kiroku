@@ -1,0 +1,52 @@
+-- =====================================================================
+-- KIROKU — S-1: cerrar la fuga de emails por get_email_for_login
+-- =====================================================================
+--
+-- ⚠️  ESTE ARCHIVO NO ESTÁ APLICADO TODAVÍA. Correlo JUSTO DESPUÉS de
+--     desplegar a producción el commit que agrega /api/auth/login y
+--     /api/auth/reset-password. Ni antes ni mucho después:
+--
+--       · Si lo corrés ANTES del deploy, el login por nombre de usuario
+--         y el "olvidé mi contraseña" se rompen para todos hasta que el
+--         deploy termine (el cliente viejo todavía llama a esta RPC).
+--       · Cada minuto que pasa DESPUÉS del deploy es un minuto más con
+--         la base de emails expuesta.
+--
+--     Verificación rápida post-deploy, antes de correr esto: entrá con
+--     tu nombre de usuario (no con el email) y pedí un enlace de
+--     recuperación. Si ambas cosas funcionan, el cliente nuevo ya está
+--     arriba y podés ejecutar el revoke.
+--
+-- QUÉ ARREGLA
+--   `public.get_email_for_login(text)` es SECURITY DEFINER y tenía
+--   `execute` concedido a `anon`. Le pasabas un nombre de usuario y
+--   devolvía el email de esa cuenta, vía POST a
+--   /rest/v1/rpc/get_email_for_login. Como los nombres de usuario son
+--   públicos y enumerables desde `public_profiles`, un script podía
+--   recorrer la lista entera y llevarse todos los emails.
+--
+--   Comprobado en vivo contra el proyecto antes de escribir esto:
+--
+--     set local role anon;
+--     select get_email_for_login('Admin');   →  devolvía el email real
+--
+--   Esto anulaba por completo el hardening de la fase 1, que había
+--   bloqueado justamente la lectura de `profiles` por ese motivo.
+--
+-- CÓMO QUEDA
+--   La resolución usuario → email ahora ocurre en api/_lib/auth.ts, del
+--   lado del servidor y con la service-role key, y el email nunca forma
+--   parte de ninguna respuesta: /api/auth/login devuelve tokens de sesión
+--   o un error deliberadamente ambiguo, y /api/auth/reset-password
+--   siempre responde 200 exista o no la cuenta.
+--
+--   La función se borra en vez de solo revocarle el permiso: dejarla
+--   ahí es dejar una trampa para que alguien (o el fix de un click del
+--   dashboard) le devuelva el grant sin saber por qué estaba.
+
+drop function if exists public.get_email_for_login(text);
+
+-- Comprobación: no debería quedar ninguna función SECURITY DEFINER en
+-- `public` ejecutable por anon que devuelva datos de otro usuario.
+-- Después de esto, el advisor de seguridad de Supabase tiene que dejar de
+-- reportar "Public Can Execute SECURITY DEFINER Function".

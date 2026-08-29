@@ -35,15 +35,27 @@ function malDevProxy(): Plugin {
   };
 }
 
-// Same reasoning as malDevProxy above, for the /api/account/* endpoints.
-function accountDevProxy(): Plugin {
+// Same reasoning as malDevProxy above, for the /api/account/* and /api/auth/*
+// endpoints. These take POST bodies, which the Vercel runtime pre-parses into
+// `req.body` and the dev server doesn't — the handlers read either shape (see
+// readJsonBody in api/_lib/auth.ts), so the raw stream is passed through
+// untouched here.
+const POST_ROUTES: Record<string, string> = {
+  '/api/account/delete':      '/api/account/delete.ts',
+  '/api/auth/login':          '/api/auth/login.ts',
+  '/api/auth/reset-password': '/api/auth/reset-password.ts',
+};
+
+function serverlessDevProxy(): Plugin {
   return {
-    name: 'account-api-dev-proxy',
+    name: 'serverless-api-dev-proxy',
     configureServer(server) {
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next) => {
-        if (req.url !== '/api/account/delete') return next();
+        const path = req.url?.split('?')[0] ?? '';
+        const modulePath = POST_ROUTES[path];
+        if (!modulePath) return next();
         try {
-          const mod = await server.ssrLoadModule('/api/account/delete.ts');
+          const mod = await server.ssrLoadModule(modulePath);
           await mod.default(req, res);
         } catch (err) {
           res.statusCode = 500;
@@ -62,16 +74,20 @@ export default defineConfig(({ mode }) => {
   // the dev proxy above the same way it reaches the Vercel function.
   const env = loadEnv(mode, process.cwd(), '');
   if (env.MAL_CLIENT_ID) process.env.MAL_CLIENT_ID = env.MAL_CLIENT_ID;
-  // Same reasoning, for api/account/delete.ts's service-role client.
+  // Same reasoning, for the service-role clients in api/account/delete.ts and
+  // api/auth/*. The anon key is needed server-side too: /api/auth/login signs
+  // in through a plain anon client so the session it hands back is an ordinary
+  // user session, not a privileged one.
   if (env.SUPABASE_SERVICE_ROLE_KEY) process.env.SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
   if (env.VITE_SUPABASE_URL) process.env.VITE_SUPABASE_URL = env.VITE_SUPABASE_URL;
+  if (env.VITE_SUPABASE_ANON_KEY) process.env.VITE_SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY;
 
   return {
     plugins: [
       react(),
       tailwindcss(),
       malDevProxy(),
-      accountDevProxy(),
+      serverlessDevProxy(),
     ],
     server: {
       headers: {

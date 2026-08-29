@@ -30,6 +30,20 @@ import { useTop10 } from '../hooks/useTop10';
 import { useFavoriteCharacters } from '../hooks/useFavoriteCharacters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
+// Nombre del objeto dentro del bucket, extraído de la URL pública que el
+// perfil tiene guardada. Solo se usa para borrar restos del esquema viejo
+// (`<id>-<timestamp>.webp` en la raíz del bucket); devuelve null para
+// cualquier URL que no sea de nuestro Storage — por ejemplo el avatar de
+// Google que llega por OAuth, que no nos toca borrar.
+const legacyObjectName = (url: string | null | undefined, bucket: string): string | null => {
+  if (!url) return null;
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  const index = url.indexOf(marker);
+  if (index === -1) return null;
+  const name = url.slice(index + marker.length).split('?')[0];
+  return name ? decodeURIComponent(name) : null;
+};
+
 export const Profile = () => {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -110,18 +124,56 @@ export const Profile = () => {
     } catch (error) { console.error(error); }
   };
 
+  // Una imagen por usuario y por bucket, en una ruta fija bajo su propio id.
+  //
+  // Antes cada subida creaba un archivo nuevo (`<id>-<timestamp>.webp`) y el
+  // anterior quedaba en un bucket público para siempre: cambiar de avatar diez
+  // veces dejaba diez fotos tuyas accesibles por URL, y el almacenamiento
+  // crecía sin techo. Con una ruta fija, `upsert` sobrescribe la anterior y no
+  // se acumula nada. La carpeta `<id>/` además permite que las policies del
+  // bucket exijan que cada quien escriba solo dentro de la suya.
+  //
+  // Como la URL ahora es estable, se le agrega `?v=` para que el navegador y
+  // el CDN no sigan sirviendo la imagen vieja después de cambiarla.
+  const uploadProfileImage = async (
+    bucket: 'avatars' | 'banners',
+    file: File,
+    quality: number,
+    maxWidth: number,
+    column: 'avatar_url' | 'banner_url',
+  ) => {
+    if (!profile) return;
+    const webp = await toWebP(file, quality, maxWidth);
+    const filePath = `${profile.id}/${bucket === 'avatars' ? 'avatar' : 'banner'}.webp`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, webp, { contentType: 'image/webp', upsert: true });
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    const versionedUrl = `${publicUrl}?v=${Date.now()}`;
+
+    const { error: updateError } = await supabase
+      .from('profiles').update({ [column]: versionedUrl }).eq('id', profile.id);
+    if (updateError) throw updateError;
+
+    // Limpieza del esquema viejo: si el perfil todavía apuntaba a un archivo
+    // con el nombre anterior, se borra ahora que ya no lo referencia nadie.
+    const previous = legacyObjectName(profile[column], bucket);
+    if (previous && previous !== filePath) {
+      await supabase.storage.from(bucket).remove([previous]);
+    }
+
+    setProfile({ ...profile, [column]: versionedUrl });
+  };
+
   const handleBannerUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
     try {
       setUploadingBanner(true);
-      if (!event.target.files || event.target.files.length === 0 || !profile) return;
-      const webp = await toWebP(event.target.files[0], 0.85, 1920);
-      const filePath = `${profile.id}-${Date.now()}.webp`;
-      const { error: uploadError } = await supabase.storage.from('banners').upload(filePath, webp, { contentType: 'image/webp', upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('banners').getPublicUrl(filePath);
-      const { error: updateError } = await supabase.from('profiles').update({ banner_url: publicUrl }).eq('id', profile.id);
-      if (updateError) throw updateError;
-      setProfile({ ...profile, banner_url: publicUrl });
+      await uploadProfileImage('banners', file, 0.85, 1920, 'banner_url');
     } catch (error) {
       console.error(error);
       alert('Hubo un error al subir el banner.');
@@ -129,17 +181,11 @@ export const Profile = () => {
   };
 
   const handleAvatarUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
     try {
       setUploadingAvatar(true);
-      if (!event.target.files || event.target.files.length === 0 || !profile) return;
-      const webp = await toWebP(event.target.files[0], 0.88, 800);
-      const filePath = `${profile.id}-${Date.now()}.webp`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, webp, { contentType: 'image/webp', upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', profile.id);
-      if (updateError) throw updateError;
-      setProfile({ ...profile, avatar_url: publicUrl });
+      await uploadProfileImage('avatars', file, 0.88, 800, 'avatar_url');
     } catch (error) {
       console.error(error);
       alert('Hubo un error al subir la imagen.');
@@ -240,6 +286,7 @@ export const Profile = () => {
             onSignOut={handleSignOut}
             onUsernameUpdate={u => setProfile(prev => prev ? { ...prev, username: u } : prev)}
             onPrivacyToggle={v => setProfile(prev => prev ? { ...prev, is_private: v } : prev)}
+            onCommentsToggle={v => setProfile(prev => prev ? { ...prev, comments_enabled: v } : prev)}
             onFollowersClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
             onFollowingClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
             onImportClick={() => setShowImportModal(true)}
@@ -330,6 +377,7 @@ export const Profile = () => {
             profileId={profile.id}
             currentUserId={profile.id}
             isOwner={true}
+            commentsEnabled={profile.comments_enabled !== false}
           />
         </div>
 

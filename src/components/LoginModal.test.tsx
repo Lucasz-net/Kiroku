@@ -1,17 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LoginModal } from './LoginModal';
 
-const { signInWithPassword, rpc, resetPasswordForEmail } = vi.hoisted(() => ({
-  signInWithPassword: vi.fn(),
+const { setSession, rpc, resetPasswordForEmail, signInWithPassword } = vi.hoisted(() => ({
+  setSession: vi.fn(),
   rpc: vi.fn(),
   resetPasswordForEmail: vi.fn(),
+  signInWithPassword: vi.fn(),
 }));
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
+      setSession,
       signInWithPassword,
       resetPasswordForEmail,
       signInWithOAuth: vi.fn(),
@@ -21,50 +23,72 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
+const jsonResponse = (status: number, body: unknown) => ({
+  ok: status >= 200 && status < 300,
+  status,
+  json: async () => body,
+}) as Response;
+
 describe('LoginModal - login flow', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
-    signInWithPassword.mockReset();
+    setSession.mockReset().mockResolvedValue({ error: null });
     rpc.mockReset();
     resetPasswordForEmail.mockReset();
+    signInWithPassword.mockReset();
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
   });
 
-  it('logs in directly with an email identifier, without resolving a username first', async () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  // El navegador nunca resuelve un nombre de usuario a su email: eso pasa
+  // detrás de /api/auth/login con la service-role key. La RPC pública que
+  // lo hacía antes filtraba el email de cualquier cuenta a cualquiera.
+  it('sends the raw identifier to the server and never resolves the email client-side', async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    signInWithPassword.mockResolvedValue({ error: null });
+    fetchMock.mockResolvedValue(jsonResponse(200, { access_token: 'at', refresh_token: 'rt' }));
 
     render(<LoginModal isOpen onClose={onClose} />);
-
-    await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'lucas@example.com');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret');
-    await user.click(screen.getByRole('button', { name: 'Entrar' }));
-
-    await waitFor(() => expect(signInWithPassword).toHaveBeenCalledWith({
-      email: 'lucas@example.com',
-      password: 'supersecret',
-    }));
-    expect(rpc).not.toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalled();
-  });
-
-  it('resolves a username identifier to an email via RPC before logging in', async () => {
-    const user = userEvent.setup();
-    rpc.mockResolvedValue({ data: 'lucas@example.com', error: null });
-    signInWithPassword.mockResolvedValue({ error: null });
-
-    render(<LoginModal isOpen onClose={vi.fn()} />);
 
     await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'Lucasz');
     await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    await waitFor(() => expect(rpc).toHaveBeenCalledWith('get_email_for_login', { p_username: 'Lucasz' }));
-    expect(signInWithPassword).toHaveBeenCalledWith({ email: 'lucas@example.com', password: 'supersecret' });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ identifier: 'Lucasz', password: 'supersecret' }),
+    })));
+
+    expect(rpc).not.toHaveBeenCalled();
+    expect(signInWithPassword).not.toHaveBeenCalled();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
   });
 
-  it('shows a friendly error message on invalid credentials', async () => {
+  it('installs the returned tokens as the Supabase session', async () => {
     const user = userEvent.setup();
-    signInWithPassword.mockResolvedValue({ error: new Error('Invalid login credentials') });
+    fetchMock.mockResolvedValue(jsonResponse(200, { access_token: 'at', refresh_token: 'rt' }));
+
+    render(<LoginModal isOpen onClose={vi.fn()} />);
+
+    await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'lucas@example.com');
+    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    await waitFor(() => expect(setSession).toHaveBeenCalledWith({
+      access_token: 'at',
+      refresh_token: 'rt',
+    }));
+  });
+
+  // El mensaje tiene que ser el mismo para "no existe la cuenta" y para
+  // "contraseña incorrecta": afinarlo convierte el formulario en un
+  // detector de qué cuentas existen.
+  it('shows the ambiguous server error verbatim on a rejected login', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(jsonResponse(400, { error: 'Usuario o contraseña incorrectos.' }));
 
     render(<LoginModal isOpen onClose={vi.fn()} />);
 
@@ -72,12 +96,26 @@ describe('LoginModal - login flow', () => {
     await user.type(screen.getByPlaceholderText('••••••••'), 'wrongpass');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByText('Contraseña incorrecta.')).toBeInTheDocument();
+    expect(await screen.findByText('Usuario o contraseña incorrectos.')).toBeInTheDocument();
+    expect(setSession).not.toHaveBeenCalled();
   });
 
-  it('sends a password reset link and shows the same message whether or not the account exists', async () => {
+  it('surfaces the throttling message when the server rate-limits the attempt', async () => {
     const user = userEvent.setup();
-    resetPasswordForEmail.mockResolvedValue({ error: null });
+    fetchMock.mockResolvedValue(jsonResponse(429, { error: 'Demasiados intentos. Esperá unos minutos y probá de nuevo.' }));
+
+    render(<LoginModal isOpen onClose={vi.fn()} />);
+
+    await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'lucas@example.com');
+    await user.type(screen.getByPlaceholderText('••••••••'), 'whatever');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    expect(await screen.findByText(/Demasiados intentos/i)).toBeInTheDocument();
+  });
+
+  it('asks the server for the reset link and never calls resetPasswordForEmail directly', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
 
     render(<LoginModal isOpen onClose={vi.fn()} />);
 
@@ -85,16 +123,38 @@ describe('LoginModal - login flow', () => {
     await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'lucas@example.com');
     await user.click(screen.getByRole('button', { name: 'Enviar Enlace' }));
 
-    await waitFor(() => expect(resetPasswordForEmail).toHaveBeenCalledWith(
-      'lucas@example.com',
-      expect.objectContaining({ redirectTo: expect.stringContaining('/restablecer-contrasena') }),
-    ));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/reset-password', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ identifier: 'lucas@example.com' }),
+    })));
+
+    // El redirectTo lo arma el servidor a partir de su propio host; que lo
+    // mande el cliente lo convertiría en un open redirect.
+    expect(resetPasswordForEmail).not.toHaveBeenCalled();
+    expect(rpc).not.toHaveBeenCalled();
     expect(await screen.findByText(/Si el usuario o correo existe/i)).toBeInTheDocument();
   });
 
-  it('shows the same anti-enumeration message even when the username lookup fails', async () => {
+  // La base rechaza estos nombres con un CHECK; sin este guardia el usuario
+  // recibiría un "Database error saving new user" desde el trigger.
+  it('rejects an invalid username at signup before touching the network', async () => {
     const user = userEvent.setup();
-    rpc.mockResolvedValue({ data: null, error: null });
+
+    render(<LoginModal isOpen onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Registrarse' }));
+    await user.type(screen.getByLabelText(/Nombre de Usuario/i), 'ab');
+    await user.type(screen.getByLabelText(/Correo Electrónico/i), 'lucas@example.com');
+    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret');
+    await user.click(screen.getByRole('button', { name: 'Crear Cuenta' }));
+
+    expect(await screen.findByText(/entre 3 y 20 caracteres/i)).toBeInTheDocument();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('shows the same anti-enumeration message for an unknown identifier', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValue(jsonResponse(200, { ok: true }));
 
     render(<LoginModal isOpen onClose={vi.fn()} />);
 
@@ -103,6 +163,5 @@ describe('LoginModal - login flow', () => {
     await user.click(screen.getByRole('button', { name: 'Enviar Enlace' }));
 
     expect(await screen.findByText(/Si el usuario o correo existe/i)).toBeInTheDocument();
-    expect(resetPasswordForEmail).not.toHaveBeenCalled();
   });
 });

@@ -8,6 +8,8 @@ export interface UserProfile {
   banner_url: string | null;
   bio: string | null;
   is_private?: boolean;
+  /** Ausente o true = cualquiera puede comentar. False = solo lectura. */
+  comments_enabled?: boolean;
 }
 
 export interface SavedAnime {

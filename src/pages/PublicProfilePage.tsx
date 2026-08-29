@@ -342,6 +342,7 @@ export const PublicProfilePage = () => {
                 profileId={profile.id}
                 currentUserId={currentUserId}
                 isOwner={isOwner}
+                commentsEnabled={profile.comments_enabled !== false}
               />
             </div>
           </>
