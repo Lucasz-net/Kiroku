@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
-import { getAnimeById, getAnimeCharacters, getAnimeStreaming, getMediaImage, JikanError } from '../services/jikanApi';
-import { getAnimeRanking } from '../services/malApi';
+import { getAnimeById, getAnimeStreaming, getMediaImage, JikanError } from '../services/jikanApi';
+import { getAnimeRanking, getAnimeCharactersMal } from '../services/malApi';
 import { getAnimeFullByMalId } from '../services/aniListApi';
 import { translateToSpanish } from '../services/translateApi';
-import { getHighResImageUrl } from '../utils/animeUtils';
+import { getHighResImageUrl, buildSavedAnimePayload } from '../utils/animeUtils';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import type { AnimeFull, Character } from '../types/anime';
 import { supabase } from '../lib/supabase';
@@ -22,8 +22,9 @@ interface StreamingLink {
   url: string;
 }
 
-// Shared by both data sources (AniList and the Jikan fallback) since they
-// both resolve into the same Character[] shape.
+// Principales primero (ordenados por favoritos), después los secundarios
+// más queridos — la lista cruda de MAL trae decenas de personajes de fondo
+// que no aportan nada a la grilla.
 const sortCharacters = (list: Character[]): Character[] => {
   const byFav = (a: Character, b: Character) => (b.favorites ?? 0) - (a.favorites ?? 0);
   const mains = list.filter(c => c.role === 'Main').sort(byFav);
@@ -108,10 +109,6 @@ export const AnimeDetails = () => {
         });
 
       // Non-critical: failures here must not block the main details from showing.
-      getAnimeCharacters(id)
-        .then(charsRes => { if (!cancelled) setCharacters(sortCharacters(charsRes.data)); })
-        .catch(error => console.error(error));
-
       getAnimeStreaming(id)
         .then(streamingRes => { if (!cancelled) setStreaming(streamingRes.data || []); })
         .catch(error => console.error(error));
@@ -126,7 +123,6 @@ export const AnimeDetails = () => {
         if (!bundle) { loadFromJikan(); return; }
 
         setAnime(bundle.anime);
-        setCharacters(sortCharacters(bundle.characters));
         setStreaming(bundle.streaming);
         setLoading(false);
         translateSynopsisInBackground(bundle.anime.synopsis);
@@ -149,6 +145,20 @@ export const AnimeDetails = () => {
         console.error(error);
         loadFromJikan();
       });
+
+    return () => { cancelled = true; };
+  }, [id, retryToken]);
+
+  // Los personajes se cargan por su cuenta, sin depender de qué fuente
+  // respondió por el anime en sí. Salen de la API oficial de MAL: los
+  // endpoints de personaje de Jikan respondían 504 de forma sostenida.
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+
+    getAnimeCharactersMal(Number(id))
+      .then(list => { if (!cancelled) setCharacters(sortCharacters(list)); })
+      .catch(error => console.error(error));
 
     return () => { cancelled = true; };
   }, [id, retryToken]);
@@ -239,20 +249,7 @@ export const AnimeDetails = () => {
         .eq('user_id', session.user.id)
         .eq('anime_id', anime.mal_id)
         .maybeSingle();
-      const payload = {
-        status: newStatus,
-        progress: episodesWatched,
-        user_id: session.user.id,
-        anime_id: anime.mal_id,
-        title: anime.title,
-        image_url: anime.images.jpg.image_url,
-        episodes_total: anime.episodes,
-        score: anime.score,
-        is_favorite: isFavorite,
-        genres: anime.genres?.map(g => g.name) || [],
-        studios: anime.studios?.map(s => s.name) || [],
-        duration: anime.duration || null,
-      };
+      const payload = buildSavedAnimePayload(anime, session.user.id, newStatus, episodesWatched, isFavorite);
       if (existing) {
         await supabase.from('saved_animes').update({ status: newStatus, progress: episodesWatched }).eq('id', existing.id);
       } else {
@@ -358,7 +355,12 @@ export const AnimeDetails = () => {
         <RelatedContentSection relations={filteredRelations} imageMap={relatedImages} />
         <StreamingSection streaming={filteredStreaming} />
         <TrailerSection trailer={anime.trailer} title={anime.title} />
-        <CharactersGrid characters={characters} />
+        <CharactersGrid
+          characters={characters}
+          animeId={anime.mal_id}
+          animeTitle={anime.title}
+          currentUserId={session?.user?.id ?? null}
+        />
       </div>
     </div>
   );

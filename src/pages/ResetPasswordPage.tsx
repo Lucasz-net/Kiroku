@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useId, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Lock, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
 
 export const ResetPasswordPage = () => {
   useDocumentTitle('Restablecer contraseña');
   const navigate = useNavigate();
+  const newPasswordId = useId();
+  const confirmPasswordId = useId();
 
   const [sessionReady, setSessionReady] = useState(false);
   const [invalidLink, setInvalidLink] = useState(false);
@@ -30,8 +33,8 @@ export const ResetPasswordPage = () => {
     e.preventDefault();
     setError(null);
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.');
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
       return;
     }
     if (password !== confirmPassword) {
@@ -103,33 +106,38 @@ export const ResetPasswordPage = () => {
                 )}
 
                 <div>
-                  <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Nueva contraseña</label>
+                  <label htmlFor={newPasswordId} className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Nueva contraseña</label>
                   <div className="relative">
                     <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
                     <input
+                      id={newPasswordId}
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      minLength={6}
+                      minLength={8}
+                      autoComplete="new-password"
                       autoFocus
                       className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                     />
                   </div>
+                  <PasswordStrengthMeter password={password} />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Confirmar contraseña</label>
+                  <label htmlFor={confirmPasswordId} className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">Confirmar contraseña</label>
                   <div className="relative">
                     <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
                     <input
+                      id={confirmPasswordId}
                       type="password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      minLength={6}
+                      minLength={8}
+                      autoComplete="new-password"
                       className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                     />
                   </div>

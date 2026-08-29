@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -8,13 +9,19 @@ import type { IncomingMessage, ServerResponse } from 'http'
 // modules (api/mal/*.ts) through Vite's own SSR module loader and wires
 // them up as dev-server middleware, instead of requiring `vercel dev` or
 // duplicating the proxy logic.
+const MAL_ROUTES = new Set(['anime', 'ranking', 'characters']);
+
 function malDevProxy(): Plugin {
   return {
     name: 'mal-api-dev-proxy',
     configureServer(server) {
       server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next) => {
         if (!req.url?.startsWith('/api/mal/')) return next();
-        const modulePath = req.url.startsWith('/api/mal/anime') ? '/api/mal/anime.ts' : '/api/mal/ranking.ts';
+        // Vercel resolves /api/mal/<route> to api/mal/<route>.ts by path;
+        // mirror that here instead of hardcoding one route per branch.
+        const route = req.url.slice('/api/mal/'.length).split(/[?#/]/)[0];
+        if (!MAL_ROUTES.has(route)) return next();
+        const modulePath = `/api/mal/${route}.ts`;
         try {
           const mod = await server.ssrLoadModule(modulePath);
           await mod.default(req, res);
@@ -79,6 +86,11 @@ export default defineConfig(({ mode }) => {
         // Para producción real, el servidor de hosting gestiona estas cabeceras.
         'Cache-Control': 'no-store',
       },
+    },
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      globals: true,
     },
   };
 })

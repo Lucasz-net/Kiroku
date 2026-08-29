@@ -16,6 +16,8 @@ dist-ssr
 .claudecodeignore
 .opencode/
 *.local
+install.cmd
+skills-lock.json
 
 # Environment variables
 .env

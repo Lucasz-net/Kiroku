@@ -1,14 +1,58 @@
-import { useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Trash2, ChevronLeft, ChevronRight, Search, Star, BookmarkCheck, Eye, Clock } from 'lucide-react';
+import { Heart, Trash2, ChevronLeft, ChevronRight, Search, Star, BookmarkCheck, Eye, Clock, ArrowUpDown } from 'lucide-react';
 import type { SavedAnime } from '../../types/profile';
 import { PROFILE_TABS } from '../../constants/profile';
 
 const ITEMS_PER_PAGE = 28;
 
+type SortKey = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'rating_desc' | 'rating_asc';
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: 'date_desc',   label: 'Agregados recientemente' },
+  { value: 'date_asc',    label: 'Agregados hace más tiempo' },
+  { value: 'name_asc',    label: 'Nombre (A-Z)' },
+  { value: 'name_desc',   label: 'Nombre (Z-A)' },
+  { value: 'rating_desc', label: 'Mi puntuación (mayor a menor)' },
+  { value: 'rating_asc',  label: 'Mi puntuación (menor a mayor)' },
+];
+
+// Preferencia solo de UI — no hay columna de orden en la base de datos,
+// así que se guarda en localStorage y persiste entre visitas al perfil.
+const SORT_STORAGE_KEY = 'kiroku:profile-anime-sort';
+
+const loadStoredSort = (): SortKey => {
+  try {
+    const stored = localStorage.getItem(SORT_STORAGE_KEY);
+    if (SORT_OPTIONS.some(o => o.value === stored)) return stored as SortKey;
+  } catch { /* localStorage no disponible (modo privado, etc.) */ }
+  return 'date_desc';
+};
+
+// Sin puntuación propia siempre queda al final, sin importar la dirección.
+const compareRating = (a: SavedAnime, b: SavedAnime, dir: 1 | -1) => {
+  if (a.user_score == null && b.user_score == null) return 0;
+  if (a.user_score == null) return 1;
+  if (b.user_score == null) return -1;
+  return (a.user_score - b.user_score) * dir;
+};
+
+const sortAnimes = (list: SavedAnime[], key: SortKey): SavedAnime[] => {
+  const copy = [...list];
+  switch (key) {
+    case 'name_asc':    return copy.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+    case 'name_desc':   return copy.sort((a, b) => b.title.localeCompare(a.title, 'es', { sensitivity: 'base' }));
+    case 'date_asc':    return copy.sort((a, b) => new Date(a.created_at ?? 0).getTime() - new Date(b.created_at ?? 0).getTime());
+    case 'rating_desc': return copy.sort((a, b) => compareRating(a, b, -1));
+    case 'rating_asc':  return copy.sort((a, b) => compareRating(a, b, 1));
+    default:            return copy.sort((a, b) => new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime());
+  }
+};
+
 interface AnimeGridProps {
   animes: SavedAnime[];
   onRemove?: (id: string) => void;
+  isOwner?: boolean;
 }
 
 // Empty state ilustrado (#15)
@@ -39,13 +83,34 @@ const EmptyGridState = ({ tab }: { tab: string }) => (
   </div>
 );
 
-export const AnimeGrid = ({ animes, onRemove }: AnimeGridProps) => {
+export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps) => {
   const [activeTab, setActiveTab] = useState('Favoritos');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState<SortKey>(() => (isOwner ? loadStoredSort() : 'date_desc'));
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
+  const sortTriggerRef = useRef<HTMLButtonElement>(null);
+  const sortListboxId = useId();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setShowSortDropdown(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     setCurrentPage(1);
+  };
+
+  const handleSortChange = (key: SortKey) => {
+    setSortKey(key);
+    setCurrentPage(1);
+    setShowSortDropdown(false);
+    sortTriggerRef.current?.focus();
+    try { localStorage.setItem(SORT_STORAGE_KEY, key); } catch { /* localStorage no disponible */ }
   };
 
   const filteredAnimes = animes.filter(a => {
@@ -54,9 +119,12 @@ export const AnimeGrid = ({ animes, onRemove }: AnimeGridProps) => {
     return a.status === activeTab;
   });
 
-  const totalPages = Math.ceil(filteredAnimes.length / ITEMS_PER_PAGE);
+  const sortedAnimes = useMemo(() => sortAnimes(filteredAnimes, sortKey), [filteredAnimes, sortKey]);
+  const currentSortLabel = SORT_OPTIONS.find(o => o.value === sortKey)?.label ?? 'Ordenar';
+
+  const totalPages = Math.ceil(sortedAnimes.length / ITEMS_PER_PAGE);
   const effectivePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1;
-  const paginatedAnimes = filteredAnimes.slice((effectivePage - 1) * ITEMS_PER_PAGE, effectivePage * ITEMS_PER_PAGE);
+  const paginatedAnimes = sortedAnimes.slice((effectivePage - 1) * ITEMS_PER_PAGE, effectivePage * ITEMS_PER_PAGE);
 
   return (
     <div className="lg:col-span-8 xl:col-span-8">
@@ -76,7 +144,42 @@ export const AnimeGrid = ({ animes, onRemove }: AnimeGridProps) => {
           ))}
         </div>
 
-        <div className="p-6 md:p-8 flex-1 flex flex-col">
+        <div className="px-6 pt-3 pb-6 md:px-8 md:pt-4 md:pb-8 flex-1 flex flex-col">
+          {isOwner && paginatedAnimes.length > 0 && (
+            <div
+              className="relative self-end mb-3"
+              ref={sortRef}
+              onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); setShowSortDropdown(false); sortTriggerRef.current?.focus(); } }}
+            >
+              <button
+                ref={sortTriggerRef}
+                onClick={() => setShowSortDropdown(v => !v)}
+                aria-haspopup="listbox"
+                aria-expanded={showSortDropdown}
+                aria-controls={sortListboxId}
+                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+              >
+                <ArrowUpDown size={12} className="text-[#FF3B3B]/40" />
+                {currentSortLabel}
+              </button>
+              {showSortDropdown && (
+                <div id={sortListboxId} role="listbox" className="absolute right-0 top-full mt-2 bg-[#0D0F15] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 min-w-52 rounded-xl overflow-hidden">
+                  {SORT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      role="option"
+                      aria-selected={sortKey === opt.value}
+                      onClick={() => handleSortChange(opt.value)}
+                      className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${sortKey === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {paginatedAnimes.length === 0 ? (
             <EmptyGridState tab={activeTab} />
           ) : (

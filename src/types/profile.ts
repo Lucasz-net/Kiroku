@@ -78,6 +78,13 @@ export interface SocialCounts {
   likesCount: number;
 }
 
+export interface PublicProfileSummary {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+  is_private?: boolean;
+}
+
 export interface Top10Entry {
   id?: string;
   user_id?: string;
@@ -85,4 +92,15 @@ export interface Top10Entry {
   anime_id: number;
   title: string;
   image_url: string;
+}
+
+export interface FavoriteCharacter {
+  id?: string;
+  user_id?: string;
+  character_id: number;
+  name: string;
+  image_url: string;
+  anime_id: number;
+  anime_title: string;
+  created_at?: string;
 }

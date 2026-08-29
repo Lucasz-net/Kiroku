@@ -43,7 +43,7 @@ export const HeroSection = () => {
     >
       <div
         ref={heroRef}
-        className="w-full h-full flex flex-col justify-center items-start pl-6 md:pl-16 lg:pl-[8vw] relative z-10"
+        className="w-full h-full flex flex-col justify-center items-start pl-6 pr-6 md:pl-16 lg:pl-[8vw] relative z-10"
       >
         <div className="max-w-2xl">
           {/* Línea de acento */}

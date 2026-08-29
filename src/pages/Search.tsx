@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useId, useState, useMemo, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { getRandomAnime, getRecommendedAnimes, searchAniList, type AniListFilters } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
@@ -59,24 +59,41 @@ interface CustomDropdownProps { label: string; value: string; options: Option[];
 const CustomDropdown = ({ label, value, options, onChange, disabled = false, placeholder }: CustomDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const labelId = useId();
+  const listboxId = useId();
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setIsOpen(false); };
     document.addEventListener('mousedown', handleClickOutside); return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const closeAndRefocus = () => { setIsOpen(false); triggerRef.current?.focus(); };
+  const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); closeAndRefocus(); } };
+
   const selectedOption = options.find((o) => o.value === value);
 
   return (
-    <div className="flex flex-col gap-2 relative" ref={dropdownRef}>
-      <label className={`text-xs font-bold text-zinc-500 uppercase tracking-widest ${disabled ? 'opacity-50' : ''}`}>{label}</label>
-      <button type="button" disabled={disabled} onClick={() => setIsOpen(!isOpen)} className={`w-full bg-[#0D0F15] text-white border border-[#FF3B3B]/10 p-3.5 flex justify-between items-center transition-colors text-sm font-bold rounded-lg ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#FF3B3B]/40'}`}>
+    <div className="flex flex-col gap-2 relative" ref={dropdownRef} onKeyDown={handleKeyDown}>
+      <label id={labelId} className={`text-xs font-bold text-zinc-500 uppercase tracking-widest ${disabled ? 'opacity-50' : ''}`}>{label}</label>
+      <button
+        ref={triggerRef}
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-labelledby={labelId}
+        className={`w-full bg-[#0D0F15] text-white border border-[#FF3B3B]/10 p-3.5 flex justify-between items-center transition-colors text-sm font-bold rounded-lg ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#FF3B3B]/40'}`}
+      >
         <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         <span className={`text-zinc-500 transition-transform duration-300 text-xs ${isOpen ? 'rotate-180 text-[#FF3B3B]' : ''}`}>▼</span>
       </button>
       {isOpen && !disabled && (
-        <div className="absolute top-[75px] left-0 w-full bg-[#0D0F15] border border-[#FF3B3B]/30 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 max-h-60 overflow-y-auto rounded-lg">
-          <button type="button" onClick={() => { onChange(''); setIsOpen(false); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] ${value === '' ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}>{placeholder}</button>
+        <div id={listboxId} role="listbox" aria-labelledby={labelId} className="absolute top-[75px] left-0 w-full bg-[#0D0F15] border border-[#FF3B3B]/30 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 max-h-60 overflow-y-auto rounded-lg">
+          <button type="button" role="option" aria-selected={value === ''} onClick={() => { onChange(''); closeAndRefocus(); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] ${value === '' ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}>{placeholder}</button>
           {options.map((opt) => (
-            <button key={opt.value} type="button" onClick={() => { onChange(opt.value); setIsOpen(false); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${value === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}>{opt.label}</button>
+            <button key={opt.value} type="button" role="option" aria-selected={value === opt.value} onClick={() => { onChange(opt.value); closeAndRefocus(); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${value === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}>{opt.label}</button>
           ))}
         </div>
       )}
@@ -120,7 +137,11 @@ export const Search = () => {
   
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef      = useRef<HTMLDivElement>(null);
+  const sortTriggerRef = useRef<HTMLButtonElement>(null);
+  const sortListboxId = useId();
   const discoverRef  = useRef<HTMLDivElement>(null);
+
+  const closeSortDropdown = () => { setShowSortDropdown(false); sortTriggerRef.current?.focus(); };
 
   const [localFilters, setLocalFilters] = useState({
     formats: [] as string[], status: '', year: '', season: '', studioId: '', studioName: '', genres: [] as string[]
@@ -442,20 +463,30 @@ export const Search = () => {
                 </h2>
               </div>
               <div className="flex items-center gap-2">
-                <div className="relative" ref={sortRef}>
+                <div
+                  className="relative"
+                  ref={sortRef}
+                  onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); closeSortDropdown(); } }}
+                >
                   <button
+                    ref={sortTriggerRef}
                     onClick={() => setShowSortDropdown(v => !v)}
+                    aria-haspopup="listbox"
+                    aria-expanded={showSortDropdown}
+                    aria-controls={sortListboxId}
                     className="flex items-center gap-2 px-4 py-2.5 bg-[#11131A] border border-[#FF3B3B]/15 text-zinc-400 hover:text-zinc-200 hover:border-[#FF3B3B]/30 transition-all text-xs font-bold uppercase tracking-widest rounded-xl"
                   >
                     <ArrowUpDown size={13} />
                     {currentSortLabel}
                   </button>
                   {showSortDropdown && (
-                    <div className="absolute right-0 top-full mt-2 bg-[#0D0F15] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 min-w-44 rounded-xl overflow-hidden">
+                    <div id={sortListboxId} role="listbox" className="absolute right-0 top-full mt-2 bg-[#0D0F15] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 min-w-44 rounded-xl overflow-hidden">
                       {SORT_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
-                          onClick={() => { setSortKey(opt.value as SortKey); setShowSortDropdown(false); }}
+                          role="option"
+                          aria-selected={sortKey === opt.value}
+                          onClick={() => { setSortKey(opt.value as SortKey); closeSortDropdown(); }}
                           className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${sortKey === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}
                         >
                           {opt.label}

@@ -64,12 +64,22 @@ export interface Character {
   favorites?: number;
 }
 
-// 4. Respuesta de la lista de personajes
-export interface AnimeCharactersResponse {
-  data: Character[];
+// Detalle ampliado de un personaje (panel), tal como lo devuelve la API
+// oficial de MAL. No repite nombre/imagen: el panel ya los tiene de la
+// tarjeta que lo abrió, así que se renderiza completo desde el primer frame
+// y solo estos campos llegan después.
+//
+// No incluye actor de voz porque MAL no lo expone; si algún día vuelve a
+// haber una fuente para ese dato, se agrega acá.
+export interface CharacterDetail {
+  description: string | null;
+  nicknames: string[];
+  favorites: number | null;
+  /** Galería de ilustraciones alternativas, sin incluir el retrato principal. */
+  pictures: string[];
 }
 
-// 5. Estructura extendida para el "Nodo de Datos" (Detalles completos)
+// 4. Estructura extendida para el "Nodo de Datos" (Detalles completos)
 export interface AnimeFull extends Anime {
   synopsis: string;
   year: number | null;

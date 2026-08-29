@@ -1,5 +1,5 @@
 import { cachedFetch } from '../utils/queryCache';
-import type { JikanResponse, JikanFullResponse, AnimeCharactersResponse } from '../types/anime';
+import type { JikanResponse, JikanFullResponse } from '../types/anime';
 
 const BASE_URL = 'https://api.jikan.moe/v4';
 
@@ -96,9 +96,6 @@ export const getCurrentSeason = () => {
 
 export const getAnimeById = (id: string): Promise<JikanFullResponse> =>
   cachedFetch(`anime:${id}`, () => jikanGet(`${BASE_URL}/anime/${id}/full`), 30 * 60 * 1000);
-
-export const getAnimeCharacters = (id: string): Promise<AnimeCharactersResponse> =>
-  cachedFetch(`chars:${id}`, () => jikanGet(`${BASE_URL}/anime/${id}/characters`), 30 * 60 * 1000, true);
 
 export const getAnimeStreaming = (id: string): Promise<{ data: { name: string; url: string }[] }> =>
   cachedFetch(

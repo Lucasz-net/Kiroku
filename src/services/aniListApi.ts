@@ -1,6 +1,6 @@
 // src/services/aniListApi.ts
 import { cachedFetch } from '../utils/queryCache';
-import type { Anime, AnimeFull, Character, AnimeRelationEntry } from '../types/anime';
+import type { Anime, AnimeFull, AnimeRelationEntry } from '../types/anime';
 
 const ANILIST_URL = 'https://graphql.anilist.co';
 
@@ -251,9 +251,6 @@ interface AniListMediaFull {
       node: { idMal: number | null; type: string; title: { romaji: string | null; english: string | null }; format: string | null };
     }[];
   } | null;
-  characters: {
-    edges: { role: string; node: { id: number; name: { full: string | null } | null; image: { large: string | null } | null; favourites: number | null } }[];
-  } | null;
   streamingEpisodes: { site: string | null; url: string | null }[] | null;
 }
 
@@ -272,11 +269,11 @@ const STATUS_LABELS: Record<string, string> = {
 const titleCaseRelation = (relationType: string) =>
   relationType.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
 
-const roleLabel = (role: string) => (role === 'MAIN' ? 'Main' : role === 'SUPPORTING' ? 'Supporting' : 'Background');
-
+// Los personajes ya no salen de acá: la sección de personajes usa la API
+// oficial de MAL (ver getAnimeCharactersMal en malApi.ts), que devuelve
+// ids de personaje de MyAnimeList — los mismos que guarda el perfil.
 export interface AniListAnimeBundle {
   anime: AnimeFull;
-  characters: Character[];
   streaming: { name: string; url: string }[];
 }
 
@@ -337,27 +334,12 @@ function mapAniListFull(media: AniListMediaFull): AniListAnimeBundle | null {
     relations: Array.from(relGroups, ([relation, entry]) => ({ relation, entry })),
   };
 
-  const characters: Character[] = (media.characters?.edges || []).map(e => ({
-    character: {
-      mal_id: e.node.id,
-      name: e.node.name?.full || '',
-      images: {
-        jpg: {
-          image_url: e.node.image?.large || '',
-          large_image_url: e.node.image?.large || '',
-        },
-      },
-    },
-    role: roleLabel(e.role),
-    favorites: e.node.favourites ?? 0,
-  }));
-
   const seenSites = new Set<string>();
   const streaming = (media.streamingEpisodes || [])
     .filter((ep): ep is { site: string; url: string } => !!ep.site && !!ep.url && !seenSites.has(ep.site) && (seenSites.add(ep.site), true))
     .map(ep => ({ name: ep.site, url: ep.url }));
 
-  return { anime, characters, streaming };
+  return { anime, streaming };
 }
 
 const ANIME_FULL_QUERY = `
@@ -382,9 +364,6 @@ const ANIME_FULL_QUERY = `
           relationType
           node { idMal type title { romaji english } format }
         }
-      }
-      characters(sort: [ROLE]) {
-        edges { role node { id name { full } image { large } favourites } }
       }
       streamingEpisodes { site url }
     }

@@ -5,17 +5,38 @@ interface CacheEntry<T> {
 
 const store = new Map<string, CacheEntry<unknown>>();
 const inflight = new Map<string, Promise<unknown>>();
-const LS_PREFIX = 'kiroku_c_';
+
+// Versión del ESQUEMA de lo cacheado, no de la app.
+//
+// Las entradas persistidas sobreviven a los deploys, así que cuando cambia
+// la forma de un payload cacheado el navegador de un usuario sigue sirviendo
+// la forma vieja — que ya no coincide con lo que el código espera. Pasó de
+// verdad: al sumarse `pictures` a CharacterDetail, las fichas cacheadas sin
+// ese campo hacían crashear el panel de personaje.
+//
+// Subir este número deja huérfanas todas las entradas previas de una, sin
+// tener que acordarse de invalidar clave por clave. HAY QUE SUBIRLO cada vez
+// que cambie la forma de algo que se cachea con `persist: true`.
+const SCHEMA_VERSION = 2;
+const LS_PREFIX = `kiroku_c${SCHEMA_VERSION}_`;
+const LEGACY_PREFIXES = ['kiroku_c_'];
 
 // Pre-warm memory cache from localStorage at import time so getCachedSync works immediately
 try {
+  const stale: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
-    if (k?.startsWith(LS_PREFIX)) {
+    if (!k) continue;
+    if (k.startsWith(LS_PREFIX)) {
       const raw = localStorage.getItem(k);
       if (raw) store.set(k.slice(LS_PREFIX.length), JSON.parse(raw) as CacheEntry<unknown>);
+    } else if (LEGACY_PREFIXES.some(p => k.startsWith(p))) {
+      // Se juntan y se borran después: sacarlas acá correría los índices
+      // de localStorage.key(i) en pleno recorrido.
+      stale.push(k);
     }
   }
+  stale.forEach(k => localStorage.removeItem(k));
 } catch { /* localStorage not available */ }
 
 /** Synchronous read — returns data only if present and fresh. */

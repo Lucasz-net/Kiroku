@@ -9,7 +9,7 @@ import {
 import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
 import { toWebP } from '../utils/imageUtils';
 import { ACHIEVEMENTS } from '../constants/profile';
-import { parseDurationToMinutes } from '../utils/animeUtils';
+import { computeUserStats } from '../utils/animeUtils';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { AchievementGallery } from '../components/profile/AchievementGallery';
 import { AnimeGrid } from '../components/profile/AnimeGrid';
@@ -20,11 +20,14 @@ import { StudioBarChart } from '../components/profile/StudioBarChart';
 import { ProfileComments } from '../components/profile/ProfileComments';
 import { ImportXMLModal } from '../components/profile/ImportXMLModal';
 import { FollowersModal } from '../components/profile/FollowersModal';
+import { UserSearchModal } from '../components/profile/UserSearchModal';
 import { DeleteAccountModal } from '../components/profile/DeleteAccountModal';
 import { Top10Section } from '../components/profile/Top10Section';
 import { Top10EditorModal } from '../components/profile/Top10EditorModal';
+import { FavoriteCharactersSection } from '../components/profile/FavoriteCharactersSection';
 import { useSocialProfile } from '../hooks/useSocialProfile';
 import { useTop10 } from '../hooks/useTop10';
+import { useFavoriteCharacters } from '../hooks/useFavoriteCharacters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 export const Profile = () => {
@@ -38,6 +41,7 @@ export const Profile = () => {
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
+  const [showUserSearch, setShowUserSearch] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showTop10Editor, setShowTop10Editor] = useState(false);
   const [followersInitialTab, setFollowersInitialTab] = useState<'followers' | 'following'>('followers');
@@ -48,6 +52,7 @@ export const Profile = () => {
 
   const social = useSocialProfile(profile?.id ?? null, profile?.id ?? null);
   const top10 = useTop10(profile?.id ?? null);
+  const favoriteCharacters = useFavoriteCharacters(profile?.id ?? null);
   useDocumentTitle(profile?.username ? `@${profile.username}` : 'Mi Perfil');
 
   useEffect(() => {
@@ -150,43 +155,7 @@ export const Profile = () => {
     if (animesData) setAnimes(animesData as SavedAnime[]);
   };
 
-  const stats: UserStats = useMemo(() => {
-    let episodes = 0, minutes = 0, completed = 0, favorites = 0, pending = 0, watching = 0;
-    const genreCounts: Record<string, number> = {};
-    const studioCounts: Record<string, number> = {};
-
-    animes.forEach(anime => {
-      if (anime.is_favorite) favorites++;
-      if (anime.status === 'Pendiente') pending++;
-      let epsWatched = 0;
-      if (anime.status === 'Completado') {
-        completed++;
-        epsWatched = anime.episodes_total || anime.progress || 1;
-        anime.genres?.forEach(g => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
-        anime.studios?.forEach(s => { studioCounts[s] = (studioCounts[s] || 0) + 1; });
-      } else if (anime.status === 'Mirando') {
-        watching++;
-        epsWatched = anime.progress || 0;
-      }
-      if (epsWatched > 0) {
-        episodes += epsWatched;
-        minutes += epsWatched * parseDurationToMinutes(anime.duration);
-      }
-    });
-
-    return {
-      episodes, minutes,
-      hours: Math.floor(minutes / 60),
-      days: (minutes / 1440).toFixed(1),
-      completed, pending, watching, favorites,
-      topGenres: Object.entries(genreCounts)
-        .map(([label, count]) => ({ label, count }))
-        .sort((a, b) => b.count - a.count).slice(0, 5),
-      topStudios: Object.entries(studioCounts)
-        .map(([label, count]) => ({ label, count }))
-        .sort((a, b) => b.count - a.count).slice(0, 5),
-    };
-  }, [animes]);
+  const stats: UserStats = useMemo(() => computeUserStats(animes), [animes]);
 
   const unlockedAchievements = ACHIEVEMENTS.filter(ach => ach.req(stats));
 
@@ -274,6 +243,7 @@ export const Profile = () => {
             onFollowersClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
             onFollowingClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
             onImportClick={() => setShowImportModal(true)}
+            onSearchUsersClick={() => setShowUserSearch(true)}
           />
         </div>
 
@@ -338,6 +308,9 @@ export const Profile = () => {
         <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${animes.length === 0 ? 'hidden' : ''}`}>
 
           <div className="lg:col-span-4 flex flex-col gap-5">
+            <div className="profile-section">
+              <FavoriteCharactersSection characters={favoriteCharacters.entries} />
+            </div>
             <GenrePieChart genres={stats.topGenres} />
             <StudioBarChart studios={stats.topStudios} />
             <ActivityFeed animes={animes} />
@@ -347,7 +320,7 @@ export const Profile = () => {
           </div>
 
           <div className="profile-section lg:col-span-8">
-            <AnimeGrid animes={animes} onRemove={handleRemove} />
+            <AnimeGrid animes={animes} onRemove={handleRemove} isOwner />
           </div>
         </div>
 
@@ -391,6 +364,13 @@ export const Profile = () => {
           profileUsername={profile.username}
           initialTab={followersInitialTab}
           onClose={() => setShowFollowersModal(false)}
+        />
+      )}
+
+      {showUserSearch && (
+        <UserSearchModal
+          excludeUserId={profile.id}
+          onClose={() => setShowUserSearch(false)}
         />
       )}
 

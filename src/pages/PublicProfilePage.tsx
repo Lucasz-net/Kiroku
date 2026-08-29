@@ -11,7 +11,7 @@ import {
   Users, UserCheck, UserPlus, UserMinus, Lock,
 } from 'lucide-react';
 import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
-import { parseDurationToMinutes } from '../utils/animeUtils';
+import { computeUserStats } from '../utils/animeUtils';
 import { ACHIEVEMENTS } from '../constants/profile';
 import { AchievementGallery } from '../components/profile/AchievementGallery';
 import { ActivityFeed } from '../components/profile/ActivityFeed';
@@ -21,8 +21,10 @@ import { StudioBarChart } from '../components/profile/StudioBarChart';
 import { ProfileComments } from '../components/profile/ProfileComments';
 import { FollowersModal } from '../components/profile/FollowersModal';
 import { Top10Section } from '../components/profile/Top10Section';
+import { FavoriteCharactersSection } from '../components/profile/FavoriteCharactersSection';
 import { useSocialProfile } from '../hooks/useSocialProfile';
 import { useTop10 } from '../hooks/useTop10';
+import { useFavoriteCharacters } from '../hooks/useFavoriteCharacters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const NotFound = ({ username }: { username?: string }) => (
@@ -100,44 +102,9 @@ export const PublicProfilePage = () => {
 
   const social = useSocialProfile(profile?.id ?? null, currentUserId);
   const top10 = useTop10(profile?.id ?? null);
+  const favoriteCharacters = useFavoriteCharacters(profile?.id ?? null);
 
-  const stats: UserStats = useMemo(() => {
-    let episodes = 0, minutes = 0, completed = 0, favorites = 0, pending = 0, watching = 0;
-    const genreCounts: Record<string, number> = {};
-    const studioCounts: Record<string, number> = {};
-
-    animes.forEach(anime => {
-      if (anime.is_favorite) favorites++;
-      if (anime.status === 'Pendiente') pending++;
-      let epsWatched = 0;
-      if (anime.status === 'Completado') {
-        completed++;
-        epsWatched = anime.episodes_total || anime.progress || 1;
-        anime.genres?.forEach(g => { genreCounts[g] = (genreCounts[g] || 0) + 1; });
-        anime.studios?.forEach(s => { studioCounts[s] = (studioCounts[s] || 0) + 1; });
-      } else if (anime.status === 'Mirando') {
-        watching++;
-        epsWatched = anime.progress || 0;
-      }
-      if (epsWatched > 0) {
-        episodes += epsWatched;
-        minutes += epsWatched * parseDurationToMinutes(anime.duration);
-      }
-    });
-
-    return {
-      episodes, minutes,
-      hours: Math.floor(minutes / 60),
-      days: (minutes / 1440).toFixed(1),
-      completed, pending, watching, favorites,
-      topGenres: Object.entries(genreCounts)
-        .map(([label, count]) => ({ label, count }))
-        .sort((a, b) => b.count - a.count).slice(0, 5),
-      topStudios: Object.entries(studioCounts)
-        .map(([label, count]) => ({ label, count }))
-        .sort((a, b) => b.count - a.count).slice(0, 5),
-    };
-  }, [animes]);
+  const stats: UserStats = useMemo(() => computeUserStats(animes), [animes]);
 
   const unlockedAchievements = ACHIEVEMENTS.filter(ach => ach.req(stats));
 
@@ -322,16 +289,6 @@ export const PublicProfilePage = () => {
           </div>
         ) : (
           <>
-            {/* Mi Top 10 + Métricas */}
-            <div className="mb-8">
-              <Top10Section
-                entries={top10.entries}
-                username={profile.username}
-                isOwner={false}
-                metrics={{ minutes: stats.minutes, days: stats.days, watching: stats.watching, pending: stats.pending }}
-              />
-            </div>
-
             {/* Hero stat bar */}
             <div className="profile-section grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
               {heroStats.map((stat, i) => (
@@ -354,9 +311,20 @@ export const PublicProfilePage = () => {
               ))}
             </div>
 
+            {/* Mi Top 10 + Métricas */}
+            <div className="mb-8">
+              <Top10Section
+                entries={top10.entries}
+                username={profile.username}
+                isOwner={false}
+                metrics={{ minutes: stats.minutes, days: stats.days, watching: stats.watching, pending: stats.pending }}
+              />
+            </div>
+
             {/* Main grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-4 flex flex-col gap-5">
+                <div className="profile-section"><FavoriteCharactersSection characters={favoriteCharacters.entries} /></div>
                 <GenrePieChart genres={stats.topGenres} />
                 <StudioBarChart studios={stats.topStudios} />
                 <div className="profile-section"><ActivityFeed animes={animes} /></div>

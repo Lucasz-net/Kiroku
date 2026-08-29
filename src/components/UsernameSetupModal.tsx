@@ -74,7 +74,7 @@ export const UsernameSetupModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#080A0F]/95 backdrop-blur-md font-sans">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#080A0F]/95 backdrop-blur-md font-sans overflow-hidden">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#FF3B3B]/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative w-full max-w-sm bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.9)] overflow-hidden">

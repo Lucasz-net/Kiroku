@@ -79,10 +79,10 @@ export const GenrePieChart = ({ genres }: Props) => {
         <Star size={14} className="text-[#FF3B3B]/60" /> Géneros Favoritos
       </p>
 
-      <div className="flex items-center gap-5">
+      <div className="flex flex-col sm:flex-row items-center gap-5">
 
         {/* ── Donut chart con hover por sector ── */}
-        <div className="shrink-0 w-[144px] h-[144px]">
+        <div className="shrink-0 w-[112px] h-[112px] sm:w-[144px] sm:h-[144px]">
           <svg
             viewBox="-50 -50 100 100"
             className="w-full h-full overflow-visible"

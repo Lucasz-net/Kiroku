@@ -1,5 +1,6 @@
 import { cachedFetch } from '../utils/queryCache';
-import type { Anime, JikanResponse } from '../types/anime';
+import { cleanCharacterBio } from '../utils/characterText';
+import type { Anime, JikanResponse, Character, CharacterDetail } from '../types/anime';
 
 // Client for MyAnimeList's official API v2, reached through our own
 // serverless proxy at /api/mal/* (see api/mal/ranking.ts, api/mal/anime.ts,
@@ -103,6 +104,82 @@ export const getTopAnime = (page = 1, filter?: 'bypopularity'): Promise<JikanRes
 
 export const getTopRatedAnime = (page = 1) => getTopAnime(page);
 export const getTopPopularAnime = (page = 1) => getTopAnime(page, 'bypopularity');
+
+// ── Personajes ─────────────────────────────────────────────────────────
+// Única fuente de la sección de personajes (grilla de AnimeDetails y panel
+// de detalle). Antes el primario era Jikan con MAL de respaldo, pero sus
+// endpoints de personaje (/characters/{id}/full, /characters/{id}/pictures)
+// devolvían 504 de forma sostenida, así que quedó solo MAL.
+//
+// Lo único que se pierde respecto de Jikan es el actor de voz: MAL no lo
+// expone bajo ningún nombre de campo (probado contra la API en vivo). El
+// resto —nombre, rol, favoritos, apodos, biografía y galería— sí está.
+
+interface MalCharacterNode {
+  id: number;
+  first_name?: string | null;
+  last_name?: string | null;
+  alternative_name?: string | null;
+  main_picture?: MalPicture;
+  biography?: string | null;
+  num_favorites?: number | null;
+  pictures?: MalPicture[] | null;
+}
+
+interface MalCharacterListResponse {
+  data: { node: MalCharacterNode; role?: string | null }[];
+}
+
+const malCharacterName = (node: MalCharacterNode) =>
+  [node.first_name, node.last_name].filter(Boolean).join(' ').trim();
+
+export const getAnimeCharactersMal = (malId: number): Promise<Character[]> =>
+  cachedFetch(
+    `mal:chars:${malId}`,
+    async () => {
+      const res = await malGet<MalCharacterListResponse>(`/characters?anime_id=${malId}`);
+      return (res.data || []).map((entry): Character => {
+        // Ojo: para personajes el CDN de MAL no tiene variante "l" (da 404),
+        // a diferencia de las portadas de anime — no pasar esto por
+        // getHighResImageUrl.
+        const image = entry.node.main_picture?.large || entry.node.main_picture?.medium || '';
+        return {
+          character: {
+            mal_id: entry.node.id,
+            name: malCharacterName(entry.node),
+            images: { jpg: { image_url: image, large_image_url: image } },
+          },
+          role: entry.role || 'Supporting',
+          favorites: entry.node.num_favorites ?? 0,
+        };
+      });
+    },
+    30 * 60 * 1000,
+    true,
+  );
+
+export const getCharacterDetailMal = (characterId: number): Promise<CharacterDetail | null> =>
+  cachedFetch(
+    `mal:char:${characterId}`,
+    async () => {
+      const node = await malGet<MalCharacterNode>(`/characters?id=${characterId}`);
+      if (!node) return null;
+      const portrait = node.main_picture?.large || node.main_picture?.medium;
+      return {
+        description: cleanCharacterBio(node.biography),
+        nicknames: node.alternative_name
+          ? node.alternative_name.split(',').map(n => n.trim()).filter(Boolean)
+          : [],
+        favorites: node.num_favorites ?? null,
+        // `pictures` repite el retrato principal entre las alternativas.
+        pictures: (node.pictures || [])
+          .map(p => p.large || p.medium || '')
+          .filter(url => url && url !== portrait),
+      };
+    },
+    30 * 60 * 1000,
+    true,
+  );
 
 // Single-title rank/score/popularity lookup for AnimeDetails — patches
 // those three fields with MyAnimeList's own numbers after the page's

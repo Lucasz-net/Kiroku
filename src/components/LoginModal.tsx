@@ -1,6 +1,7 @@
 import { X, Loader2, Mail, Lock, User, AtSign } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -25,23 +26,27 @@ const InputField = ({
   placeholder: string;
   required?: boolean;
   minLength?: number;
-}) => (
-  <div>
-    <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">{label}</label>
-    <div className="relative">
-      <Icon size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        required={required}
-        minLength={minLength}
-        className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
-      />
+}) => {
+  const id = useId();
+  return (
+    <div>
+      <label htmlFor={id} className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">{label}</label>
+      <div className="relative">
+        <Icon size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+        <input
+          id={id}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required={required}
+          minLength={minLength}
+          className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -55,6 +60,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const passwordFieldId = useId();
 
   if (!isOpen) return null;
 
@@ -360,7 +366,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Contraseña</label>
+                      <label htmlFor={passwordFieldId} className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest">Contraseña</label>
                       {isLogin && (
                         <button
                           type="button"
@@ -374,15 +380,18 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     <div className="relative">
                       <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
                       <input
+                        id={passwordFieldId}
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required
-                        minLength={6}
+                        minLength={isLogin ? undefined : 8}
+                        autoComplete={isLogin ? 'current-password' : 'new-password'}
                         className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                       />
                     </div>
+                    {!isLogin && <PasswordStrengthMeter password={password} />}
                   </div>
 
                   <button

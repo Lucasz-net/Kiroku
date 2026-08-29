@@ -95,7 +95,7 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        <div className="flex-1 overflow-y-auto md:overflow-hidden grid grid-cols-1 md:grid-cols-2">
           {/* Pool de animes completados */}
           <div className="flex flex-col overflow-hidden border-b md:border-b-0 md:border-r border-[#FF3B3B]/10">
             <div className="p-4 shrink-0">

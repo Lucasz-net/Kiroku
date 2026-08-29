@@ -51,7 +51,7 @@ export const StudioBarChart = ({ studios }: Props) => {
       </p>
 
       {/* Escala superior */}
-      <div className="flex mb-3 ml-[calc(1.25rem+0.75rem+6rem+0.75rem)]">
+      <div className="flex mb-3 ml-[calc(1.25rem+0.75rem+4rem+0.75rem)] sm:ml-[calc(1.25rem+0.75rem+6rem+0.75rem)]">
         {[0, 25, 50, 75, 100].map(tick => (
           <div key={tick} className="flex-1 text-right" style={{ width: `${tick === 0 ? 0 : 25}%` }}>
             {tick > 0 && (
@@ -87,11 +87,8 @@ export const StudioBarChart = ({ studios }: Props) => {
 
               {/* Label */}
               <span
-                className="text-xs font-bold text-zinc-400 group-hover:text-zinc-200 shrink-0 truncate text-right"
-                style={{
-                  width:      '6rem',
-                  transition: 'color 150ms ease-out',
-                }}
+                className="text-xs font-bold text-zinc-400 group-hover:text-zinc-200 shrink-0 truncate text-right w-16 sm:w-24"
+                style={{ transition: 'color 150ms ease-out' }}
                 title={studio.label}
               >
                 {studio.label}

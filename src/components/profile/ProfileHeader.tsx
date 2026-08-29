@@ -1,7 +1,7 @@
 import { useState, useRef, type ChangeEvent } from 'react';
 import {
   Loader2, Camera, Edit2, X, LogOut, Share2, Check,
-  ImagePlus, Users, UserCheck, Heart, Upload, AtSign, Lock, Unlock,
+  ImagePlus, Users, UserCheck, Heart, Upload, AtSign, Lock, Unlock, Search,
 } from 'lucide-react';
 import type { UserProfile, SocialCounts } from '../../types/profile';
 import { supabase } from '../../lib/supabase';
@@ -29,6 +29,7 @@ interface ProfileHeaderProps {
   onFollowingClick?: () => void;
   onImportClick?: () => void;
   onPrivacyToggle?: (isPrivate: boolean) => void;
+  onSearchUsersClick?: () => void;
 }
 
 export const ProfileHeader = ({
@@ -37,7 +38,7 @@ export const ProfileHeader = ({
   onBioChange, onEditBio, onBioSave, onBioCancel,
   onAvatarUpload, onBannerUpload, onSignOut,
   onUsernameUpdate,
-  onFollowersClick, onFollowingClick, onImportClick, onPrivacyToggle,
+  onFollowersClick, onFollowingClick, onImportClick, onPrivacyToggle, onSearchUsersClick,
 }: ProfileHeaderProps) => {
   const [copied, setCopied] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -289,6 +290,19 @@ export const ProfileHeader = ({
                 <span className="text-white font-black">{socialCounts.likesCount}</span>
                 Me gustas
               </span>
+              {onSearchUsersClick && (
+                <>
+                  <span className="text-zinc-700">·</span>
+                  <button
+                    onClick={onSearchUsersClick}
+                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                    title="Buscar usuarios"
+                  >
+                    <Search size={13} className="text-[#FF3B3B]/40" />
+                    Buscar usuarios
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
