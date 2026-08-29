@@ -66,6 +66,7 @@ export const FollowersModal = ({
       .from('profile_followers')
       .select(idColumn[t])
       .eq(filterColumn[t], profileId)
+      .eq('status', 'accepted')
       .order('created_at', { ascending: false })
       .range(offset, offset + PAGE_SIZE - 1);
 
@@ -80,7 +81,8 @@ export const FollowersModal = ({
       supabase
         .from('profile_followers')
         .select('*', { count: 'exact', head: true })
-        .eq(filterColumn[t], profileId),
+        .eq(filterColumn[t], profileId)
+        .eq('status', 'accepted'),
       fetchPage(t, 0),
     ]);
     const state: TabState = { items, count: count ?? 0, hasMore: items.length < (count ?? 0), loaded: true };

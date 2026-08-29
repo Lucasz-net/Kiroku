@@ -20,6 +20,7 @@ import { StudioBarChart } from '../components/profile/StudioBarChart';
 import { ProfileComments } from '../components/profile/ProfileComments';
 import { ImportXMLModal } from '../components/profile/ImportXMLModal';
 import { FollowersModal } from '../components/profile/FollowersModal';
+import { FollowRequests } from '../components/profile/FollowRequests';
 import { UserSearchModal } from '../components/profile/UserSearchModal';
 import { DeleteAccountModal } from '../components/profile/DeleteAccountModal';
 import { Top10Section } from '../components/profile/Top10Section';
@@ -292,6 +293,12 @@ export const Profile = () => {
             onImportClick={() => setShowImportModal(true)}
             onSearchUsersClick={() => setShowUserSearch(true)}
           />
+        </div>
+
+        {/* ── SOLICITUDES DE SEGUIMIENTO ─────────────────────────────── */}
+        {/* Se renderiza a sí misma como null si no hay ninguna pendiente. */}
+        <div className="mb-8">
+          <FollowRequests profileId={profile.id} onAccepted={social.refetch} />
         </div>
 
         {/* ── HERO STATS BAR ─────────────────────────────────────────── */}

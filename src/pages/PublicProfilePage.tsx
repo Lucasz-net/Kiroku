@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 import {
   Loader2, Tv, CheckCircle, Heart, Hourglass,
   Activity, ArrowLeft,
-  Users, UserCheck, UserPlus, UserMinus, Lock,
+  Users, UserCheck, UserPlus, UserMinus, Lock, Clock,
 } from 'lucide-react';
 import type { UserProfile, SavedAnime, UserStats } from '../types/profile';
 import { computeUserStats } from '../utils/animeUtils';
@@ -242,14 +242,19 @@ export const PublicProfilePage = () => {
                 <button
                   onClick={social.toggleFollow}
                   disabled={social.loading}
+                  title={social.followState === 'pending' ? 'Solicitud enviada — tocá para cancelarla' : undefined}
                   className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
-                    social.isFollowing
+                    social.followState === 'accepted'
                       ? 'bg-[#FF3B3B]/10 border border-[#FF3B3B]/30 text-[#FF3B3B] hover:bg-[#FF3B3B]/20'
-                      : 'bg-[#FF3B3B] text-white hover:bg-[#FF6B6B]'
+                      : social.followState === 'pending'
+                        ? 'bg-[#0D0F15] border border-[#FF3B3B]/20 text-zinc-400 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/40'
+                        : 'bg-[#FF3B3B] text-white hover:bg-[#FF6B6B]'
                   } disabled:opacity-50`}
                 >
-                  {social.isFollowing ? (
+                  {social.followState === 'accepted' ? (
                     <><UserMinus size={14} /> Siguiendo</>
+                  ) : social.followState === 'pending' ? (
+                    <><Clock size={14} /> Solicitado</>
                   ) : (
                     <><UserPlus size={14} /> Seguir</>
                   )}
@@ -283,7 +288,9 @@ export const PublicProfilePage = () => {
             <div>
               <h2 className="text-lg font-black text-white mb-1">Este perfil es privado</h2>
               <p className="text-zinc-500 text-sm max-w-sm">
-                Seguí a @{profile.username} para ver su actividad, estadísticas, listas y comentarios.
+                {social.followState === 'pending'
+                  ? `Tu solicitud está esperando que @${profile.username} la acepte. Cuando lo haga vas a ver su actividad, estadísticas, listas y comentarios.`
+                  : `Pedile seguirlo a @${profile.username}. Cuando acepte tu solicitud vas a ver su actividad, estadísticas, listas y comentarios.`}
               </p>
             </div>
           </div>

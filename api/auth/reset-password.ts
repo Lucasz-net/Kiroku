@@ -1,5 +1,5 @@
 import {
-  clientIp, getClients, rateLimit, readJsonBody, resolveEmail, sendJson, siteUrl,
+  clientIp, getClients, missingEnvMessage, rateLimit, readJsonBody, resolveEmail, sendJson, siteUrl,
   type AuthReq, type AuthRes,
 } from '../_lib/auth.js';
 
@@ -32,11 +32,12 @@ export default async function handler(req: AuthReq, res: AuthRes) {
   const body = await readJsonBody(req);
   const identifier = typeof body.identifier === 'string' ? body.identifier.trim() : '';
 
-  const clients = getClients();
-  if (!clients) {
-    sendJson(res, 500, { error: 'El servidor no tiene configuradas las credenciales de Supabase.' });
+  const config = getClients();
+  if ('missing' in config) {
+    sendJson(res, 500, { error: missingEnvMessage(config.missing) });
     return;
   }
+  const clients = config.clients;
 
   if (identifier && identifier.length <= 320) {
     const email = await resolveEmail(clients.admin, identifier);

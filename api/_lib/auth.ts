@@ -117,18 +117,40 @@ interface Clients { admin: SupabaseClient; anon: SupabaseClient }
  * Service-role client for the username→email lookup, plus a plain anon client
  * for the actual GoTrue call. The sign-in has to go through the anon client so
  * the session it returns is an ordinary user session, not a privileged one.
+ *
+ * Returns the list of MISSING variable names instead of a bare null: a generic
+ * "credentials not configured" 500 sent us chasing the wrong variable once
+ * already. Naming a config key leaks nothing — the values never appear.
+ *
+ * The anon key is read under either name because it's the one variable whose
+ * `VITE_` prefix is there for the browser build, not for this function; a
+ * project that names it without the prefix server-side is just as correct.
  */
-export function getClients(): Clients | null {
+export function getClients(): { clients: Clients } | { missing: string[] } {
   const url = process.env.VITE_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !serviceRoleKey || !anonKey) return null;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+  const missing: string[] = [];
+  if (!url) missing.push('VITE_SUPABASE_URL');
+  if (!serviceRoleKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (!anonKey) missing.push('VITE_SUPABASE_ANON_KEY');
+  if (missing.length > 0) return { missing };
 
   const opts = { auth: { autoRefreshToken: false, persistSession: false } };
   return {
-    admin: createClient(url, serviceRoleKey, opts),
-    anon: createClient(url, anonKey, opts),
+    clients: {
+      admin: createClient(url!, serviceRoleKey!, opts),
+      anon: createClient(url!, anonKey!, opts),
+    },
   };
+}
+
+/** Mensaje de 500 que nombra la variable que falta, para no adivinar. */
+export function missingEnvMessage(missing: string[]): string {
+  return `Faltan variables de entorno en el servidor: ${missing.join(', ')}. `
+    + 'Definilas en Vercel → Settings → Environment Variables y volvé a desplegar '
+    + '(los cambios de variables no se aplican a deploys ya existentes).';
 }
 
 /**
