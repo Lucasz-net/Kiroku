@@ -73,3 +73,14 @@ create trigger favorite_characters_limit
 -- (select ...) se evalúa una sola vez por consulta. Después de esto el
 -- advisor de rendimiento quedó sin avisos. Ver la migración
 -- `phase8_rls_initplan` para el listado completo.
+
+
+-- ── Corrección posterior: quitarle las funciones a `anon` ────────────
+-- El `revoke ... from public` de arriba no alcanzaba: Supabase concede
+-- execute a anon/authenticated por privilegios por defecto, y ese permiso
+-- es aparte del de PUBLIC. Las funciones no filtraban nada (todo cuelga de
+-- auth.uid(), que para un anónimo es NULL — comprobado: 0 filas), pero son
+-- SECURITY DEFINER expuestas en la API pública, que es exactamente la forma
+-- del agujero que fue S-1. Se revoca por defensa en profundidad.
+revoke execute on function public.get_notifications(int, int) from anon;
+revoke execute on function public.count_unread_notifications() from anon;

@@ -1,12 +1,12 @@
-import { useEffect, useState, useRef, type ChangeEvent } from 'react';
+import { useState, useRef, type ChangeEvent } from 'react';
 import {
-  Loader2, Camera, Edit2, X, LogOut, Share2, Check,
-  ImagePlus, Users, UserCheck, Heart, Upload, AtSign, Lock, Unlock, Search,
-  MessageSquare, MessageSquareOff, Download,
+  Loader2, Camera, Edit2, X, Share2, Check,
+  ImagePlus, Users, UserCheck, Heart, AtSign, Search,
 } from 'lucide-react';
 import type { UserProfile, SocialCounts } from '../../types/profile';
 import { supabase } from '../../lib/supabase';
 import { useUserData } from '../../contexts/UserDataContext';
+import { ProfileSettingsMenu } from './ProfileSettingsMenu';
 
 const USERNAME_RE = /^[a-zA-Z0-9_-]{3,20}$/;
 type UsernameCheck = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -44,45 +44,13 @@ export const ProfileHeader = ({
   onFollowersClick, onFollowingClick, onImportClick, onExport, onPrivacyToggle, onCommentsToggle,
   onSearchUsersClick,
 }: ProfileHeaderProps) => {
-  const [exportOpen, setExportOpen] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!exportOpen) return;
-    const close = (e: MouseEvent) => {
-      if (exportRef.current && !exportRef.current.contains(e.target as Node)) setExportOpen(false);
-    };
-    document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [exportOpen]);
-
   const [copied, setCopied] = useState(false);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState(profile.username);
   const [usernameCheck, setUsernameCheck] = useState<UsernameCheck>('idle');
   const [savingUsername, setSavingUsername] = useState(false);
-  const [togglingPrivacy, setTogglingPrivacy] = useState(false);
-  const [togglingComments, setTogglingComments] = useState(false);
   const { applyUsername } = useUserData();
   const usernameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handlePrivacyToggle = async () => {
-    const next = !profile.is_private;
-    setTogglingPrivacy(true);
-    const { error } = await supabase.from('profiles').update({ is_private: next }).eq('id', profile.id);
-    if (!error) onPrivacyToggle?.(next);
-    setTogglingPrivacy(false);
-  };
-
-  const commentsEnabled = profile.comments_enabled !== false;
-
-  const handleCommentsToggle = async () => {
-    const next = !commentsEnabled;
-    setTogglingComments(true);
-    const { error } = await supabase.from('profiles').update({ comments_enabled: next }).eq('id', profile.id);
-    if (!error) onCommentsToggle?.(next);
-    setTogglingComments(false);
-  };
 
   const handleUsernameChange = (val: string) => {
     const clean = val.replace(/\s/g, '');
@@ -127,29 +95,34 @@ export const ProfileHeader = ({
   };
 
   return (
-    <div className="relative mb-12 rounded-2xl border border-[#FF3B3B]/20 overflow-hidden [transform:translateZ(0)]">
+    // El recorte va en las capas del banner y no en la raíz: con
+    // `overflow-hidden` acá arriba, el menú de configuración quedaba cortado
+    // por el borde de la tarjeta al desplegarse.
+    <div className="relative mb-12 rounded-2xl border border-[#FF3B3B]/20 [transform:translateZ(0)]">
 
       {/* Banner */}
       {profile.banner_url && (
-        <img src={profile.banner_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+        <img src={profile.banner_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
       )}
-      <div className={`absolute inset-0 ${profile.banner_url ? 'bg-[#0D0F15]/70 backdrop-blur-[2px]' : 'bg-[#11131A]'}`} />
+      <div className={`absolute inset-0 rounded-2xl ${profile.banner_url ? 'bg-[#0D0F15]/70 backdrop-blur-[2px]' : 'bg-[#11131A]'}`} />
 
-      {/* Change banner */}
-      <label className="absolute top-3 right-3 z-20 flex items-center gap-2 px-3 py-2 bg-[#0D0F15]/70 backdrop-blur-sm border border-white/10 text-zinc-300 hover:text-white hover:bg-[#0D0F15]/90 cursor-pointer transition-all rounded-lg text-xs font-bold uppercase tracking-widest">
-        {uploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
-        <span className="hidden sm:inline">{uploadingBanner ? 'Subiendo...' : 'Cambiar banner'}</span>
-        <input type="file" accept="image/*" className="hidden" onChange={onBannerUpload} disabled={uploadingBanner} />
-      </label>
+      {/* Banner + configuración */}
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+        <label className="flex items-center gap-2 px-3 h-[34px] bg-[#0D0F15]/70 backdrop-blur-sm border border-white/10 text-zinc-300 hover:text-white hover:bg-[#0D0F15]/90 cursor-pointer transition-all rounded-lg text-xs font-bold uppercase tracking-widest">
+          {uploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
+          <span className="hidden sm:inline">{uploadingBanner ? 'Subiendo...' : 'Cambiar banner'}</span>
+          <input type="file" accept="image/*" className="hidden" onChange={onBannerUpload} disabled={uploadingBanner} />
+        </label>
 
-      {/* Sign out */}
-      <button
-        onClick={onSignOut}
-        title="Cerrar sesión"
-        className="absolute bottom-4 right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 bg-[#0D0F15]/70 backdrop-blur-sm hover:bg-[#FF3B3B]/10 text-zinc-500 hover:text-[#FF3B3B] border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-all rounded-lg text-[10px] font-bold uppercase tracking-widest"
-      >
-        <LogOut size={12} /> Salir
-      </button>
+        <ProfileSettingsMenu
+          profile={profile}
+          onImportClick={onImportClick}
+          onExport={onExport}
+          onPrivacyToggle={onPrivacyToggle}
+          onCommentsToggle={onCommentsToggle}
+          onSignOut={onSignOut}
+        />
+      </div>
 
       {/* Content */}
       <div className="relative z-10 px-4 py-8 pb-6 md:px-8 md:py-12 flex flex-col md:flex-row items-center gap-6 md:gap-10">
@@ -234,79 +207,6 @@ export const ProfileHeader = ({
                 {copied ? '¡Copiado!' : 'Compartir perfil'}
               </button>
             )}
-            {onImportClick && (
-              <button
-                onClick={onImportClick}
-                className="flex items-center gap-1 text-[10px] font-bold text-zinc-600 hover:text-[#FF3B3B] uppercase tracking-widest transition-colors"
-              >
-                <Upload size={11} /> Importar lista
-              </button>
-            )}
-            {onExport && (
-              <div className="relative" ref={exportRef}>
-                <button
-                  onClick={() => setExportOpen(v => !v)}
-                  aria-expanded={exportOpen}
-                  className="flex items-center gap-1 text-[10px] font-bold text-zinc-600 hover:text-[#FF3B3B] uppercase tracking-widest transition-colors"
-                >
-                  <Download size={11} /> Exportar lista
-                </button>
-                {exportOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-[#0D0F15] border border-[#FF3B3B]/25 rounded-xl shadow-[0_16px_50px_rgba(0,0,0,0.7)] overflow-hidden z-30 normal-case">
-                    <button
-                      onClick={() => { onExport('xml'); setExportOpen(false); }}
-                      className="w-full text-left px-4 py-3 hover:bg-[#11131A] transition-colors border-b border-[#FF3B3B]/[0.07]"
-                    >
-                      <span className="block text-xs font-black text-white tracking-normal">XML de MyAnimeList</span>
-                      <span className="block text-[10px] text-zinc-600 tracking-normal font-medium mt-0.5">
-                        Para llevártela a MAL, AniList u otra app
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => { onExport('json'); setExportOpen(false); }}
-                      className="w-full text-left px-4 py-3 hover:bg-[#11131A] transition-colors"
-                    >
-                      <span className="block text-xs font-black text-white tracking-normal">JSON completo</span>
-                      <span className="block text-[10px] text-zinc-600 tracking-normal font-medium mt-0.5">
-                        Respaldo con favoritos, géneros y portadas
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-            <button
-              onClick={handlePrivacyToggle}
-              disabled={togglingPrivacy}
-              title={profile.is_private ? 'Tu perfil es privado — solo tus seguidores ven tu actividad' : 'Tu perfil es público — cualquiera puede ver tu actividad'}
-              className="flex items-center gap-1 text-[10px] font-bold text-zinc-600 hover:text-[#FF3B3B] uppercase tracking-widest transition-colors disabled:opacity-50"
-            >
-              {togglingPrivacy ? (
-                <Loader2 size={11} className="animate-spin" />
-              ) : profile.is_private ? (
-                <Lock size={11} />
-              ) : (
-                <Unlock size={11} />
-              )}
-              {profile.is_private ? 'Perfil privado' : 'Perfil público'}
-            </button>
-            <button
-              onClick={handleCommentsToggle}
-              disabled={togglingComments}
-              title={commentsEnabled
-                ? 'Cualquiera puede dejarte comentarios en el perfil'
-                : 'Nadie puede escribirte comentarios nuevos — los que ya están siguen visibles'}
-              className="flex items-center gap-1 text-[10px] font-bold text-zinc-600 hover:text-[#FF3B3B] uppercase tracking-widest transition-colors disabled:opacity-50"
-            >
-              {togglingComments ? (
-                <Loader2 size={11} className="animate-spin" />
-              ) : commentsEnabled ? (
-                <MessageSquare size={11} />
-              ) : (
-                <MessageSquareOff size={11} />
-              )}
-              {commentsEnabled ? 'Comentarios abiertos' : 'Comentarios cerrados'}
-            </button>
           </div>
 
           <div className="bg-[#0D0F15]/60 backdrop-blur-sm p-5 rounded-lg border-l-2 border-[#FF3B3B]/30 hover:border-[#FF3B3B]/70 transition-colors mb-4">

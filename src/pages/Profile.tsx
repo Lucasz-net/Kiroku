@@ -281,7 +281,10 @@ export const Profile = () => {
       <div className="relative z-10 container mx-auto px-4 md:px-8 pt-32 md:pt-36 pb-24 max-w-[1400px]">
 
         {/* ── PROFILE HEADER ─────────────────────────────────────────── */}
-        <div className="profile-section mb-10">
+        {/* z-20: el menú de configuración se despliega fuera de la tarjeta y
+            las tarjetas de stats de abajo son `relative`, así que sin esto
+            quedarían pintadas por encima. */}
+        <div className="profile-section relative z-20 mb-10">
           <ProfileHeader
             profile={profile}
             isEditingBio={isEditingBio}
