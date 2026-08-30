@@ -4,6 +4,7 @@ import { Loader2, Lock, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
+import { PASSWORD_MIN_LENGTH, validatePassword, weakPasswordMessage } from '../utils/passwordStrength';
 
 export const ResetPasswordPage = () => {
   useDocumentTitle('Restablecer contraseña');
@@ -33,8 +34,11 @@ export const ResetPasswordPage = () => {
     e.preventDefault();
     setError(null);
 
-    if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.');
+    // Misma política que el registro, del dashboard de Supabase: no alcanza
+    // con la longitud, GoTrue también exige letras y dígitos.
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     if (password !== confirmPassword) {
@@ -49,7 +53,10 @@ export const ResetPasswordPage = () => {
       setSuccess(true);
       setTimeout(() => navigate('/profile'), 2000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Ocurrió un error inesperado.');
+      setError(
+        weakPasswordMessage(err)
+        ?? (err instanceof Error ? err.message : 'Ocurrió un error inesperado.'),
+      );
     } finally {
       setLoading(false);
     }
@@ -116,7 +123,7 @@ export const ResetPasswordPage = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      minLength={8}
+                      minLength={PASSWORD_MIN_LENGTH}
                       autoComplete="new-password"
                       autoFocus
                       className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
@@ -136,7 +143,7 @@ export const ResetPasswordPage = () => {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      minLength={8}
+                      minLength={PASSWORD_MIN_LENGTH}
                       autoComplete="new-password"
                       className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                     />

@@ -2,6 +2,7 @@ import { X, Loader2, Mail, Lock, User, AtSign } from 'lucide-react';
 import { useId, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
+import { PASSWORD_MIN_LENGTH, validatePassword, weakPasswordMessage } from '../utils/passwordStrength';
 
 // Mismo formato que exige la base (profiles_username_format) y que ya validan
 // UsernameSetupModal y ProfileHeader.
@@ -137,6 +138,11 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
       } else {
         // La base ahora exige este formato (constraint profiles_username_format).
+        // Antes que nada y sin ir a la red: la política de contraseñas del
+        // dashboard rechaza en inglés y sin traducir. Ver passwordStrength.ts.
+        const passwordError = validatePassword(password);
+        if (passwordError) throw new Error(passwordError);
+
         // Sin este chequeo, un nombre inválido revienta dentro del trigger
         // handle_new_user y Supabase devuelve un "Database error saving new
         // user" que no le dice nada a nadie.
@@ -171,8 +177,11 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
       // desde /api/auth/login ("Usuario o contraseña incorrectos"). No lo
       // afines a "contraseña incorrecta": eso confirmaría que la cuenta
       // existe, que es justo lo que el endpoint evita revelar.
+      const weak = weakPasswordMessage(err);
       if (errorMessage.includes('User already registered')) {
         setError('Este correo ya está registrado.');
+      } else if (weak) {
+        setError(weak);
       } else {
         setError(errorMessage);
       }
@@ -389,7 +398,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required
-                        minLength={isLogin ? undefined : 8}
+                        minLength={isLogin ? undefined : PASSWORD_MIN_LENGTH}
                         autoComplete={isLogin ? 'current-password' : 'new-password'}
                         className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                       />

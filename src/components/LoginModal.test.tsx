@@ -145,10 +145,30 @@ describe('LoginModal - login flow', () => {
     await user.click(screen.getByRole('button', { name: 'Registrarse' }));
     await user.type(screen.getByLabelText(/Nombre de Usuario/i), 'ab');
     await user.type(screen.getByLabelText(/Correo Electrónico/i), 'lucas@example.com');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret');
+    // Con dígito: la contraseña se valida antes que el username, así que una
+    // que no cumpla la política taparía el error que este test busca.
+    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret1');
     await user.click(screen.getByRole('button', { name: 'Crear Cuenta' }));
 
     expect(await screen.findByText(/entre 3 y 20 caracteres/i)).toBeInTheDocument();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  // La política del dashboard de Supabase pide letras y dígitos. Sin este
+  // guardia, GoTrue rechaza el registro con un mensaje en inglés que enumera
+  // el alfabeto entero — después de que el formulario dijo que estaba bien.
+  it('rejects a password that meets the length but not the character policy', async () => {
+    const user = userEvent.setup();
+
+    render(<LoginModal isOpen onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Registrarse' }));
+    await user.type(screen.getByLabelText(/Nombre de Usuario/i), 'lucas');
+    await user.type(screen.getByLabelText(/Correo Electrónico/i), 'lucas@example.com');
+    await user.type(screen.getByPlaceholderText('••••••••'), 'contraseña');
+    await user.click(screen.getByRole('button', { name: 'Crear Cuenta' }));
+
+    expect(await screen.findByText(/letras y números/i)).toBeInTheDocument();
     expect(rpc).not.toHaveBeenCalled();
   });
 
