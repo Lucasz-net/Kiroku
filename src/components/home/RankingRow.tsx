@@ -8,8 +8,8 @@ const getRankStyle = (index: number) => {
   switch (index) {
     case 0: return 'bg-gradient-to-b from-amber-400 to-yellow-600 text-amber-950';
     case 1: return 'bg-gradient-to-b from-slate-300 to-slate-500 text-slate-950';
-    case 2: return 'bg-gradient-to-b from-amber-700 to-orange-800 text-white';
-    default: return 'bg-[#0D0F15] text-zinc-500';
+    case 2: return 'bg-gradient-to-b from-amber-700 to-orange-800 text-[var(--kr-text)]';
+    default: return 'bg-[var(--kr-surface-sunken)] text-zinc-500';
   }
 };
 
@@ -20,7 +20,7 @@ export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) =>
   return (
   <Link
     to={`/anime/${anime.mal_id}`}
-    className="ranking-row group flex bg-[#0D0F15] rounded-xl border border-[#FF3B3B]/[0.07] hover:border-[#FF3B3B]/30 hover:bg-[#11131A] transition-all duration-300 overflow-hidden"
+    className="ranking-row group flex bg-[var(--kr-surface-sunken)] rounded-xl border border-[#FF3B3B]/[0.07] hover:border-[#FF3B3B]/30 hover:bg-[var(--kr-surface)] transition-all duration-300 overflow-hidden"
   >
     <div className={`w-14 flex items-center justify-center text-base font-black shrink-0 ${getRankStyle(index)}`}>
       {index + 1}
@@ -36,14 +36,14 @@ export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) =>
     </div>
 
     <div className="p-4 md:p-5 flex flex-col justify-center flex-1 min-w-0">
-      <h3 className="text-white text-sm md:text-base font-bold truncate mb-2 group-hover:text-[#FF3B3B] transition-colors">
+      <h3 className="text-[var(--kr-text)] text-sm md:text-base font-bold truncate mb-2 group-hover:text-[#FF3B3B] transition-colors">
         {anime.title}
       </h3>
       <div className="flex flex-wrap gap-1.5 mb-3">
         {anime.genres?.slice(0, 2).map(genre => (
           <span
             key={genre.mal_id}
-            className="text-[11px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md bg-[#11131A] text-zinc-600 border border-[#FF3B3B]/[0.07]"
+            className="text-[11px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-md bg-[var(--kr-surface)] text-zinc-600 border border-[#FF3B3B]/[0.07]"
           >
             {translateGenre(genre.name)}
           </span>
@@ -53,9 +53,9 @@ export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) =>
         <span className="text-zinc-600 text-xs font-bold uppercase tracking-widest">
           {anime.episodes ? `${anime.episodes} Eps.` : 'En Emisión'}
         </span>
-        <div className="flex items-center gap-1.5 bg-[#11131A] px-2.5 py-1 rounded-lg border border-[#FF3B3B]/10 group-hover:border-[#FF3B3B]/30 transition-colors">
+        <div className="flex items-center gap-1.5 bg-[var(--kr-surface)] px-2.5 py-1 rounded-lg border border-[#FF3B3B]/10 group-hover:border-[#FF3B3B]/30 transition-colors">
           <span className="text-[#FF3B3B] text-xs">★</span>
-          <span className="text-white font-black text-xs">{anime.score || 'N/A'}</span>
+          <span className="text-[var(--kr-text)] font-black text-xs">{anime.score || 'N/A'}</span>
         </div>
       </div>
     </div>

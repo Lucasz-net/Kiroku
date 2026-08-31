@@ -75,7 +75,7 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
     >
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => !saving && onClose()} />
 
-      <div className="relative z-10 w-full max-w-4xl max-h-[88vh] bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] flex flex-col">
+      <div className="relative z-10 w-full max-w-4xl max-h-[88vh] bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#FF3B3B]/10 shrink-0">
           <div className="flex items-center gap-3">
@@ -83,12 +83,12 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
               <Trophy size={16} className="text-[#FF3B3B]" />
             </div>
             <div>
-              <h2 className="font-black text-white text-lg leading-tight">Armá tu Top 10</h2>
+              <h2 className="font-black text-[var(--kr-text)] text-lg leading-tight">Armá tu Top 10</h2>
               <p className="text-xs text-zinc-600 font-bold mt-0.5">Solo animes completados · {selected.length}/{MAX_SLOTS}</p>
             </div>
           </div>
           {!saving && (
-            <button onClick={onClose} className="p-2 text-zinc-500 hover:text-white transition-colors rounded-lg hover:bg-white/5 shrink-0">
+            <button onClick={onClose} className="p-2 text-zinc-500 hover:text-[var(--kr-text)] transition-colors rounded-lg hover:bg-[var(--kr-text)]/5 shrink-0">
               <X size={18} />
             </button>
           )}
@@ -106,7 +106,7 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Buscar en tus completados..."
-                  className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 text-white rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none transition-all"
+                  className="w-full bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 text-[var(--kr-text)] rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none transition-all"
                 />
               </div>
             </div>
@@ -137,13 +137,13 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
                       >
                         <img src={anime.image_url} alt={anime.title} loading="lazy" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                        <span className="absolute bottom-1 left-1 right-1 text-[10px] font-bold text-white line-clamp-2 leading-tight">
+                        <span className="absolute bottom-1 left-1 right-1 text-[10px] font-bold text-[var(--kr-text)] line-clamp-2 leading-tight">
                           {anime.title}
                         </span>
                         {isSelected && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
                             <div className="w-7 h-7 rounded-full bg-[#FF3B3B] flex items-center justify-center">
-                              <Check size={14} className="text-white" />
+                              <Check size={14} className="text-[var(--kr-text)]" />
                             </div>
                           </div>
                         )}
@@ -168,15 +168,15 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
               ) : (
                 <div className="flex flex-col gap-2">
                   {selected.map((entry, i) => (
-                    <div key={entry.anime_id} className="flex items-center gap-3 bg-[#0D0F15] border border-[#FF3B3B]/[0.08] rounded-xl p-2 pr-3">
+                    <div key={entry.anime_id} className="flex items-center gap-3 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.08] rounded-xl p-2 pr-3">
                       <span className="w-6 shrink-0 text-center font-black text-[#FF3B3B] text-sm tabular-nums">{i + 1}</span>
                       <img src={entry.image_url} alt={entry.title} className="w-10 h-14 object-cover rounded-md shrink-0" />
-                      <span className="flex-1 min-w-0 text-xs font-bold text-white line-clamp-2 leading-tight">{entry.title}</span>
+                      <span className="flex-1 min-w-0 text-xs font-bold text-[var(--kr-text)] line-clamp-2 leading-tight">{entry.title}</span>
                       <div className="flex flex-col gap-1 shrink-0">
-                        <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="p-1 text-zinc-600 hover:text-white disabled:opacity-20 transition-colors">
+                        <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="p-1 text-zinc-600 hover:text-[var(--kr-text)] disabled:opacity-20 transition-colors">
                           <ArrowUp size={13} />
                         </button>
-                        <button type="button" onClick={() => move(i, 1)} disabled={i === selected.length - 1} className="p-1 text-zinc-600 hover:text-white disabled:opacity-20 transition-colors">
+                        <button type="button" onClick={() => move(i, 1)} disabled={i === selected.length - 1} className="p-1 text-zinc-600 hover:text-[var(--kr-text)] disabled:opacity-20 transition-colors">
                           <ArrowDown size={13} />
                         </button>
                       </div>
@@ -197,7 +197,7 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex-1 py-3 bg-[#0D0F15] border border-[#FF3B3B]/15 text-zinc-400 hover:text-white font-black text-xs uppercase tracking-widest rounded-xl transition-colors disabled:opacity-50"
+            className="flex-1 py-3 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 text-zinc-400 hover:text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -205,7 +205,7 @@ export const Top10EditorModal = ({ animes, initialEntries, onClose, onSave }: To
             type="button"
             onClick={handleSave}
             disabled={selected.length === 0 || saving}
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-30 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-widest rounded-xl transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-30 disabled:cursor-not-allowed text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl transition-colors"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             Guardar Top 10

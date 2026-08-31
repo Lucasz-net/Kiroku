@@ -18,7 +18,7 @@ export const FavoriteCharactersSection = ({ characters }: FavoriteCharactersSect
   const isExpanded = visibleCount > ROW_SIZE;
 
   return (
-    <div className="bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+    <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
         <Heart size={14} className="text-[#FF3B3B]/50" /> Personajes favoritos
         {characters.length > 0 && (
@@ -36,14 +36,14 @@ export const FavoriteCharactersSection = ({ characters }: FavoriteCharactersSect
                 title={`${char.name} — ${char.anime_title}`}
                 className="group flex flex-col gap-2"
               >
-                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-[#0D0F15] border border-[#FF3B3B]/15 group-hover:border-[#FF3B3B]/40 transition-colors">
+                <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 group-hover:border-[#FF3B3B]/40 transition-colors">
                   <img
                     src={char.image_url}
                     alt={char.name}
                     loading="lazy"
                     className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--kr-surface)] via-transparent to-transparent opacity-80" />
                 </div>
                 <span className="text-[10px] font-bold text-zinc-400 leading-tight line-clamp-2 group-hover:text-zinc-200 transition-colors">
                   {char.name}

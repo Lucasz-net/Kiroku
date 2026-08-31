@@ -47,7 +47,7 @@ export const GenrePieChart = ({ genres }: Props) => {
 
   if (total === 0) {
     return (
-      <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+      <div className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
           <Star size={14} className="text-[#FF3B3B]/60" /> Géneros Favoritos
         </p>
@@ -73,7 +73,7 @@ export const GenrePieChart = ({ genres }: Props) => {
   const maxCount = top[0]?.count ?? 1;
 
   return (
-    <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+    <div className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
 
       <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
         <Star size={14} className="text-[#FF3B3B]/60" /> Géneros Favoritos
@@ -173,7 +173,7 @@ export const GenrePieChart = ({ genres }: Props) => {
                 </div>
 
                 {/* Barra proporcional */}
-                <div className="h-[2px] bg-[#0D0F15] rounded-full overflow-hidden ml-9">
+                <div className="h-[2px] bg-[var(--kr-surface-sunken)] rounded-full overflow-hidden ml-9">
                   <div
                     className="h-full rounded-full"
                     style={{

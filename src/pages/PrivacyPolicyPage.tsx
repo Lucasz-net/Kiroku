@@ -2,7 +2,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <section className="mb-10">
-    <h2 className="text-xl font-black text-white mb-4">{title}</h2>
+    <h2 className="text-xl font-black text-[var(--kr-text)] mb-4">{title}</h2>
     <div className="text-zinc-400 text-sm leading-relaxed flex flex-col gap-3">{children}</div>
   </section>
 );
@@ -10,10 +10,10 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
 export const PrivacyPolicyPage = () => {
   useDocumentTitle('Política de Privacidad');
   return (
-    <div className="min-h-screen bg-[#080A0F] font-sans pt-28 md:pt-36 pb-24 px-4">
+    <div className="min-h-screen bg-[var(--kr-bg)] font-sans pt-28 md:pt-36 pb-24 px-4">
       <div className="container mx-auto max-w-3xl">
         <p className="text-xs font-bold uppercase tracking-widest text-[#FF3B3B]/60 mb-3">Legal</p>
-        <h1 className="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">Política de Privacidad</h1>
+        <h1 className="text-3xl md:text-4xl font-black text-[var(--kr-text)] mb-2 tracking-tight">Política de Privacidad</h1>
         <p className="text-zinc-600 text-xs font-bold uppercase tracking-widest mb-12">Última actualización: 29/08/2026</p>
 
         <Section title="1. Qué datos recopilamos">
@@ -41,7 +41,7 @@ export const PrivacyPolicyPage = () => {
         <Section title="3. Qué es público y qué no">
           <p>
             Tu nombre de usuario, avatar, banner, biografía y tu lista de anime son visibles públicamente
-            en tu perfil (<code className="text-zinc-300 bg-[#11131A] px-1.5 py-0.5 rounded text-xs">kiroku.pro/u/tu-usuario</code>),
+            en tu perfil (<code className="text-zinc-300 bg-[var(--kr-surface)] px-1.5 py-0.5 rounded text-xs">kiroku.pro/u/tu-usuario</code>),
             incluso para visitantes sin cuenta. Tu email nunca se muestra públicamente ni se comparte con otros usuarios.
           </p>
           <p>

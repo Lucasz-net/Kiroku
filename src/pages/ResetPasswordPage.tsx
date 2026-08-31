@@ -63,11 +63,11 @@ export const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080A0F] flex items-center justify-center px-4 font-sans pt-24 md:pt-0">
+    <div className="min-h-screen bg-[var(--kr-bg)] flex items-center justify-center px-4 font-sans pt-24 md:pt-0">
       <div className="relative w-full max-w-md">
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-48 h-6 bg-[#FF3B3B] blur-2xl opacity-20 rounded-full pointer-events-none" />
 
-        <div className="relative bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden">
+        <div className="relative bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/50 to-transparent" />
 
           <div className="p-8">
@@ -76,7 +76,7 @@ export const ResetPasswordPage = () => {
                 <span className="text-[#FF3B3B] font-black text-lg leading-none">K</span>
               </div>
               <div>
-                <div className="text-white font-black text-lg leading-tight tracking-tight">KIROKU</div>
+                <div className="text-[var(--kr-text)] font-black text-lg leading-tight tracking-tight">KIROKU</div>
                 <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Restablecer contraseña</div>
               </div>
             </div>
@@ -88,7 +88,7 @@ export const ResetPasswordPage = () => {
                 </p>
                 <button
                   onClick={() => navigate('/')}
-                  className="w-full bg-[#FF3B3B] text-white font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all text-sm uppercase tracking-widest"
+                  className="w-full bg-[#FF3B3B] text-[var(--kr-text)] font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all text-sm uppercase tracking-widest"
                 >
                   Volver al inicio
                 </button>
@@ -126,7 +126,7 @@ export const ResetPasswordPage = () => {
                       minLength={PASSWORD_MIN_LENGTH}
                       autoComplete="new-password"
                       autoFocus
-                      className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
+                      className="w-full bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 text-[var(--kr-text)] rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                     />
                   </div>
                   <PasswordStrengthMeter password={password} />
@@ -145,7 +145,7 @@ export const ResetPasswordPage = () => {
                       required
                       minLength={PASSWORD_MIN_LENGTH}
                       autoComplete="new-password"
-                      className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
+                      className="w-full bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 text-[var(--kr-text)] rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                     />
                   </div>
                 </div>
@@ -153,7 +153,7 @@ export const ResetPasswordPage = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-white font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
+                  className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-[var(--kr-text)] font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
                 >
                   {loading && <Loader2 size={16} className="animate-spin" />}
                   Guardar contraseña

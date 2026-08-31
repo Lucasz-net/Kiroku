@@ -68,7 +68,7 @@ export const HeroSection = () => {
 
           <Link
             to="/search"
-            className="hero-cta inline-flex items-center gap-3 px-8 py-4 bg-[#FF3B3B] text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-[#FF5555] transition-colors shadow-[0_0_28px_rgba(255,59,59,0.4)] hover:shadow-[0_0_36px_rgba(255,59,59,0.55)]"
+            className="hero-cta inline-flex items-center gap-3 px-8 py-4 bg-[#FF3B3B] text-[var(--kr-text)] font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-[#FF5555] transition-colors shadow-[0_0_28px_rgba(255,59,59,0.4)] hover:shadow-[0_0_36px_rgba(255,59,59,0.55)]"
           >
             <Search size={17} />
             Iniciar Búsqueda

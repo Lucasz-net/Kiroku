@@ -36,7 +36,7 @@ export const ActivityFeed = ({ animes }: ActivityFeedProps) => {
     .slice(0, 5);
 
   return (
-    <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+    <div className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
         <Activity size={14} className="text-[#FF3B3B]/50" /> Actividad Reciente
       </p>
@@ -50,9 +50,9 @@ export const ActivityFeed = ({ animes }: ActivityFeedProps) => {
               <Link
                 key={anime.id}
                 to={`/anime/${anime.anime_id}`}
-                className="flex items-center gap-3 group hover:bg-[#0D0F15] p-2 rounded-xl transition-colors border border-transparent hover:border-[#FF3B3B]/10"
+                className="flex items-center gap-3 group hover:bg-[var(--kr-surface-sunken)] p-2 rounded-xl transition-colors border border-transparent hover:border-[#FF3B3B]/10"
               >
-                <div className="w-8 h-11 shrink-0 overflow-hidden rounded-md bg-[#0D0F15] border border-[#FF3B3B]/10">
+                <div className="w-8 h-11 shrink-0 overflow-hidden rounded-md bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10">
                   <img
                     src={anime.image_url}
                     alt={anime.title}
@@ -61,7 +61,7 @@ export const ActivityFeed = ({ animes }: ActivityFeedProps) => {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-xs font-bold truncate group-hover:text-[#FF3B3B] transition-colors">
+                  <p className="text-[var(--kr-text)] text-xs font-bold truncate group-hover:text-[#FF3B3B] transition-colors">
                     {anime.title}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">

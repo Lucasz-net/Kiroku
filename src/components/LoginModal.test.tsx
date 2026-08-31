@@ -54,7 +54,7 @@ describe('LoginModal - login flow', () => {
     render(<LoginModal isOpen onClose={onClose} />);
 
     await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'Lucasz');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret');
+    await user.type(screen.getByLabelText('Contraseña'), 'supersecret');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
@@ -74,7 +74,7 @@ describe('LoginModal - login flow', () => {
     render(<LoginModal isOpen onClose={vi.fn()} />);
 
     await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'lucas@example.com');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret');
+    await user.type(screen.getByLabelText('Contraseña'), 'supersecret');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     await waitFor(() => expect(setSession).toHaveBeenCalledWith({
@@ -93,7 +93,7 @@ describe('LoginModal - login flow', () => {
     render(<LoginModal isOpen onClose={vi.fn()} />);
 
     await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'lucas@example.com');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'wrongpass');
+    await user.type(screen.getByLabelText('Contraseña'), 'wrongpass');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(await screen.findByText('Usuario o contraseña incorrectos.')).toBeInTheDocument();
@@ -107,7 +107,7 @@ describe('LoginModal - login flow', () => {
     render(<LoginModal isOpen onClose={vi.fn()} />);
 
     await user.type(screen.getByLabelText(/Usuario o Correo Electrónico/i), 'lucas@example.com');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'whatever');
+    await user.type(screen.getByLabelText('Contraseña'), 'whatever');
     await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(await screen.findByText(/Demasiados intentos/i)).toBeInTheDocument();
@@ -146,11 +146,29 @@ describe('LoginModal - login flow', () => {
     await user.type(screen.getByLabelText(/Nombre de Usuario/i), 'ab');
     await user.type(screen.getByLabelText(/Correo Electrónico/i), 'lucas@example.com');
     // Con dígito: la contraseña se valida antes que el username, así que una
-    // que no cumpla la política taparía el error que este test busca.
-    await user.type(screen.getByPlaceholderText('••••••••'), 'supersecret1');
+    // que no cumpla la política (o que no coincida con la confirmación)
+    // taparía el error que este test busca.
+    await user.type(screen.getByLabelText('Contraseña'), 'supersecret1');
+    await user.type(screen.getByLabelText('Confirmar Contraseña'), 'supersecret1');
     await user.click(screen.getByRole('button', { name: 'Crear Cuenta' }));
 
     expect(await screen.findByText(/entre 3 y 20 caracteres/i)).toBeInTheDocument();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('rejects signup when the password confirmation does not match', async () => {
+    const user = userEvent.setup();
+
+    render(<LoginModal isOpen onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Registrarse' }));
+    await user.type(screen.getByLabelText(/Nombre de Usuario/i), 'lucas');
+    await user.type(screen.getByLabelText(/Correo Electrónico/i), 'lucas@example.com');
+    await user.type(screen.getByLabelText('Contraseña'), 'supersecret1');
+    await user.type(screen.getByLabelText('Confirmar Contraseña'), 'supersecret2');
+    await user.click(screen.getByRole('button', { name: 'Crear Cuenta' }));
+
+    expect(await screen.findByText('Las contraseñas no coinciden.')).toBeInTheDocument();
     expect(rpc).not.toHaveBeenCalled();
   });
 
@@ -165,7 +183,8 @@ describe('LoginModal - login flow', () => {
     await user.click(screen.getByRole('button', { name: 'Registrarse' }));
     await user.type(screen.getByLabelText(/Nombre de Usuario/i), 'lucas');
     await user.type(screen.getByLabelText(/Correo Electrónico/i), 'lucas@example.com');
-    await user.type(screen.getByPlaceholderText('••••••••'), 'contraseña');
+    await user.type(screen.getByLabelText('Contraseña'), 'contraseña');
+    await user.type(screen.getByLabelText('Confirmar Contraseña'), 'contraseña');
     await user.click(screen.getByRole('button', { name: 'Crear Cuenta' }));
 
     expect(await screen.findByText(/letras y números/i)).toBeInTheDocument();

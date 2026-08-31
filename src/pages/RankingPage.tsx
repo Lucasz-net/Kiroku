@@ -27,16 +27,16 @@ const MODES = [
 ] as const;
 
 const SkeletonRow = () => (
-  <div className="flex bg-[#0D0F15] rounded-xl border border-[#FF3B3B]/[0.07] overflow-hidden animate-pulse">
-    <div className="w-14 bg-[#1A1C24] shrink-0" />
-    <div className="w-28 md:w-40 h-40 md:h-52 bg-[#1A1C24] shrink-0" />
+  <div className="flex bg-[var(--kr-surface-sunken)] rounded-xl border border-[#FF3B3B]/[0.07] overflow-hidden animate-pulse">
+    <div className="w-14 bg-[var(--kr-surface-2)] shrink-0" />
+    <div className="w-28 md:w-40 h-40 md:h-52 bg-[var(--kr-surface-2)] shrink-0" />
     <div className="p-4 md:p-5 flex flex-col justify-center flex-1 gap-3">
-      <div className="h-4 bg-[#1A1C24] rounded-lg w-3/4" />
+      <div className="h-4 bg-[var(--kr-surface-2)] rounded-lg w-3/4" />
       <div className="flex gap-2">
-        <div className="h-3 bg-[#1A1C24] rounded-lg w-16" />
-        <div className="h-3 bg-[#1A1C24] rounded-lg w-16" />
+        <div className="h-3 bg-[var(--kr-surface-2)] rounded-lg w-16" />
+        <div className="h-3 bg-[var(--kr-surface-2)] rounded-lg w-16" />
       </div>
-      <div className="h-3 bg-[#1A1C24] rounded-lg w-28" />
+      <div className="h-3 bg-[var(--kr-surface-2)] rounded-lg w-28" />
     </div>
   </div>
 );
@@ -126,7 +126,7 @@ export const RankingPage = () => {
   }, [currentPage, loadingMore, loading, hasMore, animes.length, fetchRankings]);
 
   return (
-    <div className="min-h-screen bg-[#080A0F] pt-28 md:pt-32 pb-24 px-4 font-sans">
+    <div className="min-h-screen bg-[var(--kr-bg)] pt-28 md:pt-32 pb-24 px-4 font-sans">
       <div ref={headerRef} className="container mx-auto max-w-[860px]">
 
         {/* ── Header ── */}
@@ -135,13 +135,13 @@ export const RankingPage = () => {
             <activeMode.icon size={15} className="text-[#FF3B3B]/50" />
             {isPopular ? 'Tendencias' : 'Mejor puntuados'}
           </p>
-          <h1 className="rk-title text-4xl md:text-6xl font-black text-white tracking-tight">
+          <h1 className="rk-title text-4xl md:text-6xl font-black text-[var(--kr-text)] tracking-tight">
             {activeMode.label}
           </h1>
         </div>
 
         {/* ── Selector de ranking ── */}
-        <div className="rk-selector relative grid grid-cols-2 bg-[#11131A] border border-[#FF3B3B]/15 rounded-2xl p-1.5 gap-1.5 mb-8 overflow-hidden">
+        <div className="rk-selector relative grid grid-cols-2 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 rounded-2xl p-1.5 gap-1.5 mb-8 overflow-hidden">
           {/* Hairline top accent */}
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/25 to-transparent pointer-events-none" />
 
@@ -154,23 +154,23 @@ export const RankingPage = () => {
                 className={`group flex items-center gap-3 px-4 md:px-6 py-4 rounded-xl transition-all duration-200 text-left ${
                   active
                     ? 'bg-[#FF3B3B] shadow-[0_4px_24px_rgba(255,59,59,0.30)]'
-                    : 'hover:bg-[#0D0F15]'
+                    : 'hover:bg-[var(--kr-surface-sunken)]'
                 }`}
               >
                 <mode.icon
                   size={22}
                   className={`shrink-0 transition-colors ${
-                    active ? 'text-white' : 'text-[#FF3B3B]/35 group-hover:text-[#FF3B3B]/60'
+                    active ? 'text-[var(--kr-text)]' : 'text-[#FF3B3B]/35 group-hover:text-[#FF3B3B]/60'
                   }`}
                 />
                 <div className="min-w-0">
                   <p className={`text-xs md:text-sm font-black uppercase tracking-widest leading-tight transition-colors ${
-                    active ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'
+                    active ? 'text-[var(--kr-text)]' : 'text-zinc-400 group-hover:text-zinc-200'
                   }`}>
                     {mode.label}
                   </p>
                   <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 transition-colors hidden sm:block ${
-                    active ? 'text-white/55' : 'text-zinc-600 group-hover:text-zinc-500'
+                    active ? 'text-[var(--kr-text)]/55' : 'text-zinc-600 group-hover:text-zinc-500'
                   }`}>
                     {mode.sub}
                   </p>
@@ -181,7 +181,7 @@ export const RankingPage = () => {
         </div>
 
         {/* ── Lista ── */}
-        <div className="bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-4 md:p-6 relative">
+        <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-4 md:p-6 relative">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent rounded-t-2xl" />
 
           <div className="flex flex-col gap-3">
@@ -198,7 +198,7 @@ export const RankingPage = () => {
               <p className="text-zinc-400 text-sm font-bold">No se pudo cargar el ranking. Puede que la API de MyAnimeList esté temporalmente caída.</p>
               <button
                 onClick={() => fetchRankings(1, false)}
-                className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"
+                className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[var(--kr-surface-sunken)] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all rounded-xl"
               >
                 <RefreshCw size={13} /> Reintentar
               </button>

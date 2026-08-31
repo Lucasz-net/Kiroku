@@ -106,12 +106,12 @@ export const CharacterDetailModal = ({
       {/* Tamaño fijo a propósito: el panel mide siempre lo mismo, sea el
           personaje que sea. Ni la imagen ni el largo de la biografía lo
           mueven. Solo se achica si la ventana es más chica. */}
-      <div className="relative z-10 w-full max-w-5xl h-[42rem] max-h-[calc(100dvh-2rem)] bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] flex flex-col sm:flex-row animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative z-10 w-full max-w-5xl h-[42rem] max-h-[calc(100dvh-2rem)] bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)] flex flex-col sm:flex-row animate-in fade-in zoom-in-95 duration-200">
 
         <button
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute top-3 right-3 z-30 p-2 bg-[#0D0F15]/85 backdrop-blur-sm border border-white/10 text-zinc-300 hover:text-white hover:bg-[#0D0F15] transition-colors rounded-lg"
+          className="absolute top-3 right-3 z-30 p-2 bg-[var(--kr-glass-2)] backdrop-blur-sm border border-[var(--kr-text)]/10 text-zinc-300 hover:text-[var(--kr-text)] hover:bg-[var(--kr-surface-sunken)] transition-colors rounded-lg"
         >
           <X size={16} />
         </button>
@@ -121,10 +121,10 @@ export const CharacterDetailModal = ({
             En móvil se apila arriba, así que va a alto natural y la galería
             pasa a una tira horizontal: si creciera hacia abajo empujaría el
             nombre y la biografía fuera del panel. */}
-        <div className="shrink-0 w-full sm:w-[19rem] flex flex-col bg-[#0D0F15]/50 sm:border-r border-b sm:border-b-0 border-[#FF3B3B]/10 min-h-0">
+        <div className="shrink-0 w-full sm:w-[19rem] flex flex-col bg-[var(--kr-glass-4)] sm:border-r border-b sm:border-b-0 border-[#FF3B3B]/10 min-h-0">
           {/* Retrato a tamaño contenido, no estirado a todo el panel */}
           <div className="p-4 sm:p-5 pb-3 sm:pb-4 shrink-0">
-            <div className="relative w-32 sm:w-full mx-auto aspect-[3/4] rounded-xl overflow-hidden border border-[#FF3B3B]/15 bg-[#0D0F15] shadow-[0_8px_28px_rgba(0,0,0,0.5)]">
+            <div className="relative w-32 sm:w-full mx-auto aspect-[3/4] rounded-xl overflow-hidden border border-[#FF3B3B]/15 bg-[var(--kr-surface-sunken)] shadow-[0_8px_28px_rgba(0,0,0,0.5)]">
               <img
                 key={activeImage}
                 src={activeImage}
@@ -132,7 +132,7 @@ export const CharacterDetailModal = ({
                 className="w-full h-full object-cover object-top animate-in fade-in duration-200"
               />
               {isFavorite && savedImage === activeImage && (
-                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#FF3B3B] bg-[#0D0F15]/90 backdrop-blur-sm border border-[#FF3B3B]/30 px-2 py-1 rounded-md whitespace-nowrap">
+                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[#FF3B3B] bg-[var(--kr-glass-1)] backdrop-blur-sm border border-[#FF3B3B]/30 px-2 py-1 rounded-md whitespace-nowrap">
                   <Check size={9} /> En tu perfil
                 </span>
               )}
@@ -181,7 +181,7 @@ export const CharacterDetailModal = ({
           <div className="shrink-0 px-6 pt-6 pb-4 border-b border-[#FF3B3B]/10">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 pr-6">
-                <h2 className="text-2xl font-black text-white tracking-tight leading-tight mb-2">
+                <h2 className="text-2xl font-black text-[var(--kr-text)] tracking-tight leading-tight mb-2">
                   {c.name}
                 </h2>
                 <div className="flex items-center gap-2.5 flex-wrap">
@@ -239,7 +239,7 @@ export const CharacterDetailModal = ({
                       {detail.nicknames.slice(0, 8).map(nick => (
                         <span
                           key={nick}
-                          className="text-[11px] font-bold text-zinc-300 bg-[#0D0F15] border border-[#FF3B3B]/15 px-2.5 py-1 rounded-lg"
+                          className="text-[11px] font-bold text-zinc-300 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 px-2.5 py-1 rounded-lg"
                         >
                           {nick}
                         </span>

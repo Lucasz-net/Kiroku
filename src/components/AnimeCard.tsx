@@ -44,11 +44,11 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
       to={`/anime/${anime.mal_id}`}
       className="flex flex-col bg-transparent group font-sans h-full cursor-pointer"
     >
-      <div className="relative w-full aspect-[3/4] overflow-hidden rounded-xl bg-[#11131A] border border-[#FF3B3B]/10 group-hover:border-[#FF3B3B]/40 transition-all duration-500 shadow-sm group-hover:shadow-[0_0_24px_rgba(255,59,59,0.12)]">
+      <div className="relative w-full aspect-[3/4] overflow-hidden rounded-xl bg-[var(--kr-surface)] border border-[#FF3B3B]/10 group-hover:border-[#FF3B3B]/40 transition-all duration-500 shadow-sm group-hover:shadow-[0_0_24px_rgba(255,59,59,0.12)]">
 
         {/* Blur placeholder mientras carga */}
         {!imgLoaded && (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1A1C24] to-[#0D0F15] animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--kr-surface-2)] to-[var(--kr-surface-sunken)] animate-pulse" />
         )}
 
         <img
@@ -65,9 +65,9 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
 
         {/* Score badge */}
         {anime.score && (
-          <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-[#0D0F15]/80 backdrop-blur-sm px-2 py-1 rounded-lg border border-[#FF3B3B]/25">
+          <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-[var(--kr-glass-2)] backdrop-blur-sm px-2 py-1 rounded-lg border border-[#FF3B3B]/25">
             <span className="text-[#FF3B3B] text-[10px] leading-none">★</span>
-            <span className="text-white font-black text-[11px] tabular-nums leading-none">{anime.score}</span>
+            <span className="text-[var(--kr-text)] font-black text-[11px] tabular-nums leading-none">{anime.score}</span>
           </div>
         )}
 
@@ -80,7 +80,7 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
         )}
 
         {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0D0F15]/95 via-[#0D0F15]/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-3 gap-2">
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--kr-surface-sunken)]/95 via-[var(--kr-surface-sunken)]/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-3 gap-2">
 
           {/* Géneros */}
           {anime.genres && anime.genres.length > 0 && (
@@ -94,7 +94,7 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
           )}
 
           {/* Botón Ver Detalles */}
-          <span className="text-center text-white text-xs font-bold uppercase tracking-widest bg-[#0D0F15]/80 backdrop-blur-md border border-[#FF3B3B]/50 px-3 py-1.5 rounded-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-100">
+          <span className="text-center text-[var(--kr-text)] text-xs font-bold uppercase tracking-widest bg-[var(--kr-glass-2)] backdrop-blur-md border border-[#FF3B3B]/50 px-3 py-1.5 rounded-lg transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-100">
             Ver Detalles
           </span>
         </div>
@@ -102,7 +102,7 @@ export const AnimeCard = ({ anime }: AnimeCardProps) => {
 
       <div className="pt-3 flex flex-col flex-1">
         <h3
-          className="font-bold text-white text-sm line-clamp-2 leading-tight group-hover:text-[#FF3B3B] transition-colors"
+          className="font-bold text-[var(--kr-text)] text-sm line-clamp-2 leading-tight group-hover:text-[#FF3B3B] transition-colors"
           title={anime.title}
         >
           {anime.title}

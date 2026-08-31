@@ -166,7 +166,7 @@ export const ProfileComments = ({
   };
 
   return (
-    <section className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl overflow-hidden">
+    <section className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="px-6 py-5 border-b border-[#FF3B3B]/10 flex items-center gap-2">
         <MessageSquare size={15} className="text-[#FF3B3B]/50" />
@@ -191,7 +191,7 @@ export const ProfileComments = ({
           </p>
         </div>
       ) : currentUserId ? (
-        <div className="px-6 py-4 border-b border-[#FF3B3B]/[0.07] bg-[#0D0F15]/40">
+        <div className="px-6 py-4 border-b border-[#FF3B3B]/[0.07] bg-[var(--kr-glass-4)]">
           <div className="flex gap-3">
             <textarea
               ref={textareaRef}
@@ -206,12 +206,12 @@ export const ProfileComments = ({
               placeholder="Escribe un comentario... (Enter para enviar)"
               maxLength={500}
               rows={1}
-              className="flex-1 bg-[#11131A] border border-[#FF3B3B]/15 focus:border-[#FF3B3B]/40 text-white placeholder:text-zinc-600 rounded-xl px-4 py-3 text-sm resize-none outline-none transition-colors leading-relaxed"
+              className="flex-1 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 focus:border-[#FF3B3B]/40 text-[var(--kr-text)] placeholder:text-zinc-600 rounded-xl px-4 py-3 text-sm resize-none outline-none transition-colors leading-relaxed"
             />
             <button
               onClick={handleSubmit}
               disabled={!text.trim() || submitting}
-              className="shrink-0 self-end px-4 py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
+              className="shrink-0 self-end px-4 py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-30 disabled:cursor-not-allowed text-[var(--kr-text)] rounded-xl transition-colors"
             >
               {submitting ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -254,7 +254,7 @@ export const ProfileComments = ({
                 {/* Avatar */}
                 <Link
                   to={`/u/${c.author?.username}`}
-                  className="shrink-0 w-9 h-9 rounded-lg bg-[#0D0F15] border border-[#FF3B3B]/10 overflow-hidden flex items-center justify-center font-black text-white text-xs hover:border-[#FF3B3B]/30 transition-colors"
+                  className="shrink-0 w-9 h-9 rounded-lg bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10 overflow-hidden flex items-center justify-center font-black text-[var(--kr-text)] text-xs hover:border-[#FF3B3B]/30 transition-colors"
                 >
                   {c.author?.avatar_url ? (
                     <img
@@ -272,7 +272,7 @@ export const ProfileComments = ({
                   <div className="flex items-center gap-2 mb-1">
                     <Link
                       to={`/u/${c.author?.username}`}
-                      className="text-xs font-black text-white hover:text-[#FF3B3B] transition-colors"
+                      className="text-xs font-black text-[var(--kr-text)] hover:text-[#FF3B3B] transition-colors"
                     >
                       @{c.author?.username ?? 'usuario'}
                     </Link>
@@ -311,7 +311,7 @@ export const ProfileComments = ({
           <button
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-[var(--kr-text)] transition-colors disabled:opacity-50"
           >
             {loadingMore && <Loader2 size={13} className="animate-spin" />}
             Cargar más

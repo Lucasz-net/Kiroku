@@ -59,7 +59,7 @@ const Medal = ({ ach, sizePx }: { ach: Achievement; sizePx: number }) => {
         />
         <ach.icon
           size={iconSize}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[var(--kr-text)]"
           style={{ zIndex: 2, filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.45))' }}
         />
       </div>
@@ -121,7 +121,7 @@ export const AchievementGallery = ({ unlockedAchievements }: AchievementGalleryP
     <>
       <style>{KEYFRAMES}</style>
 
-      <div className="bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+      <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
 
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
           <Trophy size={14} className="text-[#FF3B3B]/50" /> Vitrina de Logros
@@ -136,7 +136,7 @@ export const AchievementGallery = ({ unlockedAchievements }: AchievementGalleryP
                 <div
                   key={ach.id}
                   onClick={() => setSelected(ach)}
-                  className="relative py-4 px-2 transition-all duration-200 flex flex-col items-center text-center group cursor-pointer rounded-xl bg-[#0D0F15] hover:bg-[#13151C]"
+                  className="relative py-4 px-2 transition-all duration-200 flex flex-col items-center text-center group cursor-pointer rounded-xl bg-[var(--kr-surface-sunken)] hover:bg-[#13151C]"
                   style={{
                     borderLeft:   `3px solid ${accentColor}`,
                     borderTop:    '1px solid rgba(255,255,255,0.04)',
@@ -144,7 +144,7 @@ export const AchievementGallery = ({ unlockedAchievements }: AchievementGalleryP
                     borderBottom: '1px solid rgba(255,255,255,0.04)',
                   }}
                 >
-                  <div className="absolute bottom-[105%] left-1/2 -translate-x-1/2 hidden group-hover:block w-max max-w-[160px] bg-[#11131A] border border-[#FF3B3B]/20 text-zinc-300 text-[10px] px-3 py-2 shadow-lg z-20 animate-in fade-in pointer-events-none rounded-lg">
+                  <div className="absolute bottom-[105%] left-1/2 -translate-x-1/2 hidden group-hover:block w-max max-w-[160px] bg-[var(--kr-surface)] border border-[#FF3B3B]/20 text-zinc-300 text-[10px] px-3 py-2 shadow-lg z-20 animate-in fade-in pointer-events-none rounded-lg">
                     {ach.desc}
                   </div>
 
@@ -165,7 +165,7 @@ export const AchievementGallery = ({ unlockedAchievements }: AchievementGalleryP
           {hasMore && (
             <button
               onClick={() => setExpanded(e => !e)}
-              className="mt-4 w-full py-2 text-[11px] font-bold uppercase tracking-widest text-zinc-500 hover:text-[#FF3B3B] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 bg-[#0D0F15] transition-all rounded-xl"
+              className="mt-4 w-full py-2 text-[11px] font-bold uppercase tracking-widest text-zinc-500 hover:text-[#FF3B3B] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 bg-[var(--kr-surface-sunken)] transition-all rounded-xl"
             >
               {expanded ? 'Ver menos' : `Ver más (${unlockedAchievements.length - GRID_LIMIT} más)`}
             </button>
@@ -184,16 +184,16 @@ export const AchievementGallery = ({ unlockedAchievements }: AchievementGalleryP
       {/* ── Modal ── */}
       {selected && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#080A0F]/80 backdrop-blur-md animate-in fade-in"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--kr-glass-2)] backdrop-blur-md animate-in fade-in"
           onClick={() => setSelected(null)}
         >
           <div
-            className="bg-[#11131A] border border-[#FF3B3B]/20 p-10 max-w-sm w-full shadow-2xl relative animate-in zoom-in-95 rounded-2xl overflow-hidden"
+            className="bg-[var(--kr-surface)] border border-[#FF3B3B]/20 p-10 max-w-sm w-full shadow-2xl relative animate-in zoom-in-95 rounded-2xl overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <button
               onClick={() => setSelected(null)}
-              className="absolute top-4 right-4 text-zinc-500 hover:text-[#FF3B3B] transition-colors bg-[#0D0F15] border border-[#FF3B3B]/15 p-2 z-10 rounded-lg"
+              className="absolute top-4 right-4 text-zinc-500 hover:text-[#FF3B3B] transition-colors bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 p-2 z-10 rounded-lg"
             >
               <X size={16} />
             </button>
@@ -203,9 +203,9 @@ export const AchievementGallery = ({ unlockedAchievements }: AchievementGalleryP
                 <Medal ach={selected} sizePx={144} />
               </div>
 
-              <h3 className="text-2xl font-black text-white mb-5">{selected.name}</h3>
+              <h3 className="text-2xl font-black text-[var(--kr-text)] mb-5">{selected.name}</h3>
 
-              <div className="bg-[#0D0F15] p-5 border border-[#FF3B3B]/15 w-full relative text-left rounded-xl">
+              <div className="bg-[var(--kr-surface-sunken)] p-5 border border-[#FF3B3B]/15 w-full relative text-left rounded-xl">
                 <Info size={16} className="absolute top-5 left-4 text-[#FF3B3B]/60" />
                 <p className="text-[#FF3B3B]/70 font-bold text-[10px] uppercase tracking-widest mb-2 ml-7">
                   Requisito desbloqueado

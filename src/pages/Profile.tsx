@@ -256,17 +256,17 @@ export const Profile = () => {
   }, { scope: pageRef, dependencies: [loading] });
 
   if (loading) return (
-    <div className="relative min-h-screen bg-[#080A0F] font-sans">
+    <div className="relative min-h-screen bg-[var(--kr-bg)] font-sans">
       <div className="container mx-auto px-4 md:px-8 pt-32 md:pt-36 pb-24 max-w-[1400px]">
-        <div className="mb-10 h-56 bg-[#11131A] rounded-2xl border border-[#FF3B3B]/10 animate-pulse" />
+        <div className="mb-10 h-56 bg-[var(--kr-surface)] rounded-2xl border border-[#FF3B3B]/10 animate-pulse" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-[#11131A] rounded-xl border border-[#FF3B3B]/10 animate-pulse" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-[var(--kr-surface)] rounded-xl border border-[#FF3B3B]/10 animate-pulse" />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-4 flex flex-col gap-5">
-            {[...Array(3)].map((_, i) => <div key={i} className="h-44 bg-[#11131A] rounded-2xl border border-[#FF3B3B]/10 animate-pulse" />)}
+            {[...Array(3)].map((_, i) => <div key={i} className="h-44 bg-[var(--kr-surface)] rounded-2xl border border-[#FF3B3B]/10 animate-pulse" />)}
           </div>
-          <div className="lg:col-span-8 h-[500px] bg-[#11131A] rounded-2xl border border-[#FF3B3B]/10 animate-pulse" />
+          <div className="lg:col-span-8 h-[500px] bg-[var(--kr-surface)] rounded-2xl border border-[#FF3B3B]/10 animate-pulse" />
         </div>
       </div>
     </div>
@@ -277,7 +277,7 @@ export const Profile = () => {
   const existingAnimeIds = new Set(animes.map(a => a.anime_id));
 
   return (
-    <div ref={pageRef} className="relative min-h-screen bg-[#080A0F] font-sans">
+    <div ref={pageRef} className="relative min-h-screen bg-[var(--kr-bg)] font-sans">
       <div className="relative z-10 container mx-auto px-4 md:px-8 pt-32 md:pt-36 pb-24 max-w-[1400px]">
 
         {/* ── PROFILE HEADER ─────────────────────────────────────────── */}
@@ -325,7 +325,7 @@ export const Profile = () => {
           {heroStats.map((stat, i) => (
             <div
               key={stat.label}
-              className="relative bg-[#11131A] border border-[#FF3B3B]/10 rounded-xl px-5 py-4 overflow-hidden cursor-default select-none flex items-center gap-4"
+              className="relative bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-xl px-5 py-4 overflow-hidden cursor-default select-none flex items-center gap-4"
               style={{ transition: spring }}
               onMouseEnter={e => {
                 const el = e.currentTarget as HTMLElement;
@@ -348,7 +348,7 @@ export const Profile = () => {
                 </p>
                 <span
                   ref={el => { counterRefs.current[i] = el; }}
-                  className="block text-3xl xl:text-4xl font-black text-white tracking-tight leading-none tabular-nums"
+                  className="block text-3xl xl:text-4xl font-black text-[var(--kr-text)] tracking-tight leading-none tabular-nums"
                 >
                   0
                 </span>
@@ -413,14 +413,14 @@ export const Profile = () => {
         </div>
 
         {/* ── DANGER ZONE ────────────────────────────────────────────── */}
-        <div className="mt-8 bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
+        <div className="mt-8 bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-sm font-black text-white mb-1">Eliminar cuenta</p>
+            <p className="text-sm font-black text-[var(--kr-text)] mb-1">Eliminar cuenta</p>
             <p className="text-xs text-zinc-500">Borra tu cuenta y todos tus datos de forma permanente.</p>
           </div>
           <button
             onClick={() => setShowDeleteModal(true)}
-            className="px-4 py-2.5 bg-[#0D0F15] border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-[#FF7777] hover:text-[#FF3B3B] font-black text-xs uppercase tracking-widest rounded-xl transition-colors shrink-0"
+            className="px-4 py-2.5 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-[#FF7777] hover:text-[#FF3B3B] font-black text-xs uppercase tracking-widest rounded-xl transition-colors shrink-0"
           >
             Eliminar cuenta
           </button>

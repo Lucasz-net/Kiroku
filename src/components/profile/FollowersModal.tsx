@@ -124,13 +124,13 @@ export const FollowersModal = ({
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative z-10 w-full max-w-md bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.8)]">
+      <div className="relative z-10 w-full max-w-md bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.8)]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#FF3B3B]/10">
-          <h2 className="font-black text-white text-lg">@{profileUsername}</h2>
+          <h2 className="font-black text-[var(--kr-text)] text-lg">@{profileUsername}</h2>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+            className="p-2 text-zinc-500 hover:text-[var(--kr-text)] transition-colors rounded-lg hover:bg-[var(--kr-text)]/5"
           >
             <X size={18} />
           </button>
@@ -177,9 +177,9 @@ export const FollowersModal = ({
                     <Link
                       to={`/u/${user.username}`}
                       onClick={onClose}
-                      className="flex items-center gap-4 px-6 py-4 hover:bg-white/[0.03] transition-colors"
+                      className="flex items-center gap-4 px-6 py-4 hover:bg-[var(--kr-text)]/[0.03] transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-[#0D0F15] border border-[#FF3B3B]/10 overflow-hidden shrink-0 flex items-center justify-center font-black text-white text-sm">
+                      <div className="w-10 h-10 rounded-xl bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10 overflow-hidden shrink-0 flex items-center justify-center font-black text-[var(--kr-text)] text-sm">
                         {user.avatar_url ? (
                           <img
                             src={user.avatar_url}
@@ -190,7 +190,7 @@ export const FollowersModal = ({
                           user.username?.charAt(0).toUpperCase()
                         )}
                       </div>
-                      <span className="font-bold text-white text-sm">@{user.username}</span>
+                      <span className="font-bold text-[var(--kr-text)] text-sm">@{user.username}</span>
                     </Link>
                   </li>
                 ))}
@@ -200,7 +200,7 @@ export const FollowersModal = ({
                   <button
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500 hover:text-[var(--kr-text)] transition-colors disabled:opacity-50"
                   >
                     {loadingMore && <Loader2 size={13} className="animate-spin" />}
                     Cargar más

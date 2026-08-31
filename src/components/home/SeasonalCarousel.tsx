@@ -13,10 +13,10 @@ interface SeasonalCarouselProps {
 
 const SkeletonAnimeCard = () => (
   <div className="w-56 shrink-0">
-    <div className="aspect-[3/4] bg-[#1A1C24] rounded-xl animate-pulse border border-[#FF3B3B]/[0.05]" />
+    <div className="aspect-[3/4] bg-[var(--kr-surface-2)] rounded-xl animate-pulse border border-[#FF3B3B]/[0.05]" />
     <div className="pt-3 flex flex-col gap-2">
-      <div className="h-3.5 bg-[#1A1C24] rounded animate-pulse w-4/5" />
-      <div className="h-2.5 bg-[#1A1C24] rounded animate-pulse w-2/5" />
+      <div className="h-3.5 bg-[var(--kr-surface-2)] rounded animate-pulse w-4/5" />
+      <div className="h-2.5 bg-[var(--kr-surface-2)] rounded animate-pulse w-2/5" />
     </div>
   </div>
 );
@@ -95,7 +95,7 @@ export const SeasonalCarousel = ({ upcoming, hasError, onRetry }: SeasonalCarous
   const handleMouseLeave = () => { isHovered.current = false; };
 
   return (
-    <section className="estrenos-section reveal-section relative z-20 bg-[#11131A] -mt-[120px] pt-[160px] pb-40">
+    <section className="estrenos-section reveal-section relative z-20 bg-[var(--kr-surface)] -mt-[120px] pt-[160px] pb-40">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/15 to-transparent" />
 
       <div
@@ -110,10 +110,10 @@ export const SeasonalCarousel = ({ upcoming, hasError, onRetry }: SeasonalCarous
           </p>
           <div className="seasonal-title flex items-end justify-between gap-4">
             <div className="flex items-end gap-4">
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight leading-none">
+              <h2 className="text-3xl md:text-5xl font-black text-[var(--kr-text)] tracking-tight leading-none">
                 Estrenos
               </h2>
-              <span className="text-xs font-bold uppercase tracking-widest text-zinc-500 border border-[#FF3B3B]/20 bg-[#11131A] px-3 py-1.5 rounded-lg mb-0.5">
+              <span className="text-xs font-bold uppercase tracking-widest text-zinc-500 border border-[#FF3B3B]/20 bg-[var(--kr-surface)] px-3 py-1.5 rounded-lg mb-0.5">
                 {label} {year}
               </span>
             </div>
@@ -139,7 +139,7 @@ export const SeasonalCarousel = ({ upcoming, hasError, onRetry }: SeasonalCarous
                 <p className="text-zinc-500 text-sm font-bold">No se pudieron cargar los estrenos.</p>
                 <button
                   onClick={onRetry}
-                  className="flex items-center gap-2 px-5 py-2 border border-[#FF3B3B]/20 bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"
+                  className="flex items-center gap-2 px-5 py-2 border border-[#FF3B3B]/20 bg-[var(--kr-surface-sunken)] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all rounded-xl"
                 >
                   <RefreshCw size={13} /> Reintentar
                 </button>
@@ -157,28 +157,28 @@ export const SeasonalCarousel = ({ upcoming, hasError, onRetry }: SeasonalCarous
             }
           </div>
 
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 md:w-40 bg-gradient-to-r from-[#11131A] via-[#11131A]/60 to-transparent z-10" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 md:w-40 bg-gradient-to-l from-[#11131A] via-[#11131A]/60 to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-24 md:w-40 bg-gradient-to-r from-[var(--kr-surface)] via-[var(--kr-surface)]/60 to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-24 md:w-40 bg-gradient-to-l from-[var(--kr-surface)] via-[var(--kr-surface)]/60 to-transparent z-10" />
         </div>
 
         {/* ── NUEVO COMPONENTE INTEGRADO (Sin romper la animación GSAP) ── */}
         <div className="container mx-auto px-4 md:px-8 max-w-[1400px]">
           <Link 
             to={`/seasonal?year=${nextSeason.year}&season=${nextSeason.season}`}
-            className="group block relative w-full bg-[#0D0F15]/60 backdrop-blur-sm border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 rounded-2xl p-6 md:p-8 overflow-hidden transition-all duration-300 shadow-md"
+            className="group block relative w-full bg-[var(--kr-glass-3)] backdrop-blur-sm border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 rounded-2xl p-6 md:p-8 overflow-hidden transition-all duration-300 shadow-md"
           >
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent" />
             
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-[#11131A] border border-[#FF3B3B]/15 text-[#FF3B3B] rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                <div className="p-3 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 text-[#FF3B3B] rounded-xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
                   <Calendar size={22} />
                 </div>
                 <div>
                   <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1">
                     Próxima parada
                   </p>
-                  <h3 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                  <h3 className="text-xl md:text-2xl font-black text-[var(--kr-text)] tracking-tight">
                     Ver estrenos de la siguiente temporada:{' '}
                     <span className="text-[#FF3B3B] group-hover:text-[#FF5555] transition-colors">
                       {nextSeason.label} {nextSeason.year}
@@ -187,7 +187,7 @@ export const SeasonalCarousel = ({ upcoming, hasError, onRetry }: SeasonalCarous
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 self-end sm:self-center bg-[#11131A] border border-[#FF3B3B]/15 group-hover:bg-[#FF3B3B] group-hover:text-white group-hover:border-[#FF3B3B] text-zinc-400 px-5 py-2.5 font-bold uppercase tracking-widest text-[11px] rounded-xl transition-all duration-300">
+              <div className="flex items-center gap-2 self-end sm:self-center bg-[var(--kr-surface)] border border-[#FF3B3B]/15 group-hover:bg-[#FF3B3B] group-hover:text-[var(--kr-text)] group-hover:border-[#FF3B3B] text-zinc-400 px-5 py-2.5 font-bold uppercase tracking-widest text-[11px] rounded-xl transition-all duration-300">
                 Explorar <ArrowRight size={14} className="transform group-hover:translate-x-1 transition-transform" />
               </div>
             </div>

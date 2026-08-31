@@ -102,7 +102,7 @@ export const Home = () => {
   }, { scope: mainRef, dependencies: [upcoming, topRated, topPopular] });
 
   return (
-    <div ref={mainRef} className="block font-sans bg-[#0D0F15] overflow-hidden relative w-full">
+    <div ref={mainRef} className="block font-sans bg-[var(--kr-surface-sunken)] overflow-hidden relative w-full">
       <HeroSection />
       <SeasonalCarousel upcoming={upcoming} hasError={errors.upcoming && upcoming.length === 0} onRetry={loadHomeData} />
       <RankingsSection

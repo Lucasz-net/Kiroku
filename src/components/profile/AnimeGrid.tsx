@@ -77,7 +77,7 @@ const EmptyGridState = ({ tab }: { tab: string }) => (
     </p>
     <Link
       to="/search"
-      className="mt-2 text-[#FF3B3B] font-bold hover:bg-[#FF3B3B]/10 bg-[#11131A] border border-[#FF3B3B]/30 hover:border-[#FF3B3B]/60 px-8 py-3 uppercase tracking-widest transition-all rounded-lg text-xs flex items-center gap-2"
+      className="mt-2 text-[#FF3B3B] font-bold hover:bg-[#FF3B3B]/10 bg-[var(--kr-surface)] border border-[#FF3B3B]/30 hover:border-[#FF3B3B]/60 px-8 py-3 uppercase tracking-widest transition-all rounded-lg text-xs flex items-center gap-2"
     >
       <Search size={13} /> Explorar Catálogo
     </Link>
@@ -129,9 +129,9 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
 
   return (
     <div className="lg:col-span-8 xl:col-span-8">
-      <div className="bg-[#11131A]/90 backdrop-blur-xl rounded-2xl border border-[#FF3B3B]/20 min-h-[800px] flex flex-col">
+      <div className="bg-[var(--kr-glass-1)] backdrop-blur-xl rounded-2xl border border-[#FF3B3B]/20 min-h-[800px] flex flex-col">
         {/* Tabs */}
-        <div className="flex overflow-x-auto border-b border-[#FF3B3B]/15 bg-[#11131A]/50 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0 pt-4 px-4 rounded-t-2xl">
+        <div className="flex overflow-x-auto border-b border-[#FF3B3B]/15 bg-[var(--kr-glass-4)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden shrink-0 pt-4 px-4 rounded-t-2xl">
           {PROFILE_TABS.map(tab => (
             <button
               key={tab.id}
@@ -158,20 +158,20 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
                 aria-haspopup="listbox"
                 aria-expanded={showSortDropdown}
                 aria-controls={sortListboxId}
-                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors"
               >
                 <ArrowUpDown size={12} className="text-[#FF3B3B]/40" />
                 {currentSortLabel}
               </button>
               {showSortDropdown && (
-                <div id={sortListboxId} role="listbox" className="absolute right-0 top-full mt-2 bg-[#0D0F15] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 min-w-52 rounded-xl overflow-hidden">
+                <div id={sortListboxId} role="listbox" className="absolute right-0 top-full mt-2 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 min-w-52 rounded-xl overflow-hidden">
                   {SORT_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       role="option"
                       aria-selected={sortKey === opt.value}
                       onClick={() => handleSortChange(opt.value)}
-                      className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${sortKey === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}
+                      className={`w-full text-left px-4 py-2.5 text-xs font-bold transition-colors hover:bg-[var(--kr-surface)] border-b border-[#FF3B3B]/[0.07] last:border-0 ${sortKey === opt.value ? 'text-[#FF3B3B] bg-[var(--kr-glass-2)]' : 'text-zinc-400'}`}
                     >
                       {opt.label}
                     </button>
@@ -196,7 +196,7 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
                   const StatusIcon = sCfg.icon;
 
                   return (
-                    <div key={anime.id} className="group relative bg-[#11131A] overflow-hidden rounded-lg border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-all duration-300">
+                    <div key={anime.id} className="group relative bg-[var(--kr-surface)] overflow-hidden rounded-lg border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-all duration-300">
                       <Link to={`/anime/${anime.anime_id}`} className="block relative aspect-[3/4] overflow-hidden">
                         <SavedAnimeCover
                           animeId={anime.anime_id}
@@ -205,9 +205,9 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
                           rowId={anime.id}
                           className="w-full h-full overflow-hidden transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent opacity-90" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--kr-surface)] via-transparent to-transparent opacity-90" />
                         <div className="absolute bottom-0 left-0 w-full p-3">
-                          <h4 className="text-white text-xs md:text-sm font-bold line-clamp-2 leading-tight mb-2">{anime.title}</h4>
+                          <h4 className="text-[var(--kr-text)] text-xs md:text-sm font-bold line-clamp-2 leading-tight mb-2">{anime.title}</h4>
                           <span className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${sCfg.color}`}>
                             <StatusIcon size={11} />
                             {anime.status}
@@ -218,23 +218,23 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
                       {onRemove && (
                         <button
                           onClick={() => onRemove(anime.id)}
-                          className="absolute top-2 right-2 w-8 h-8 bg-[#11131A]/80 backdrop-blur-md flex items-center justify-center text-zinc-500 hover:text-[#FF3B3B] hover:bg-[#FF3B3B]/10 border border-[#FF3B3B]/15 opacity-0 group-hover:opacity-100 transition-all rounded-lg"
+                          className="absolute top-2 right-2 w-8 h-8 bg-[var(--kr-glass-2)] backdrop-blur-md flex items-center justify-center text-zinc-500 hover:text-[#FF3B3B] hover:bg-[#FF3B3B]/10 border border-[#FF3B3B]/15 opacity-0 group-hover:opacity-100 transition-all rounded-lg"
                         >
                           <Trash2 size={14} />
                         </button>
                       )}
 
                       {anime.is_favorite && (
-                        <div className="absolute top-2 left-2 w-8 h-8 bg-[#11131A]/80 backdrop-blur-md flex items-center justify-center border border-[#FF3B3B]/15 rounded-lg">
+                        <div className="absolute top-2 left-2 w-8 h-8 bg-[var(--kr-glass-2)] backdrop-blur-md flex items-center justify-center border border-[#FF3B3B]/15 rounded-lg">
                           <Heart size={14} className="fill-[#FF3B3B] text-[#FF7777]" />
                         </div>
                       )}
 
                       {/* Puntuación del usuario (#2) */}
                       {anime.user_score && (
-                        <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-[#0D0F15]/90 backdrop-blur-sm border border-[#FF3B3B]/20 px-1.5 py-1 rounded-md">
+                        <div className="absolute bottom-2 right-2 flex items-center gap-0.5 bg-[var(--kr-glass-1)] backdrop-blur-sm border border-[#FF3B3B]/20 px-1.5 py-1 rounded-md">
                           <Star size={11} className="fill-[#FF3B3B] text-[#FF3B3B]" />
-                          <span className="text-white text-xs font-black tabular-nums">{anime.user_score}</span>
+                          <span className="text-[var(--kr-text)] text-xs font-black tabular-nums">{anime.user_score}</span>
                         </div>
                       )}
                     </div>
@@ -244,17 +244,17 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
 
               {totalPages > 1 && (
                 <div className="mt-auto pt-6 border-t border-[#FF3B3B]/15 flex justify-center items-center gap-2">
-                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={effectivePage === 1} className="p-2 bg-[#11131A] border border-[#FF3B3B]/15 text-zinc-500 hover:text-[#FF3B3B] disabled:opacity-30 transition-colors rounded-lg">
+                  <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={effectivePage === 1} className="p-2 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 text-zinc-500 hover:text-[#FF3B3B] disabled:opacity-30 transition-colors rounded-lg">
                     <ChevronLeft size={18} />
                   </button>
                   <div className="flex gap-1 px-2">
                     {Array.from({ length: totalPages }).map((_, i) => (
-                      <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 flex items-center justify-center font-bold text-xs transition-all rounded-lg ${effectivePage === i + 1 ? 'bg-[#FF3B3B] text-white' : 'bg-[#11131A] border border-[#FF3B3B]/15 text-zinc-500 hover:bg-[#FF3B3B]/10 hover:text-zinc-200'}`}>
+                      <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 flex items-center justify-center font-bold text-xs transition-all rounded-lg ${effectivePage === i + 1 ? 'bg-[#FF3B3B] text-[var(--kr-text)]' : 'bg-[var(--kr-surface)] border border-[#FF3B3B]/15 text-zinc-500 hover:bg-[#FF3B3B]/10 hover:text-zinc-200'}`}>
                         {i + 1}
                       </button>
                     ))}
                   </div>
-                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={effectivePage === totalPages} className="p-2 bg-[#11131A] border border-[#FF3B3B]/15 text-zinc-500 hover:text-[#FF3B3B] disabled:opacity-30 transition-colors rounded-lg">
+                  <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={effectivePage === totalPages} className="p-2 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 text-zinc-500 hover:text-[#FF3B3B] disabled:opacity-30 transition-colors rounded-lg">
                     <ChevronRight size={18} />
                   </button>
                 </div>

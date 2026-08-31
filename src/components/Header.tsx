@@ -76,7 +76,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
 
   return (
     <>
-      <header className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-[1200px] flex items-center gap-4 md:gap-6 px-4 md:px-6 py-3 md:py-4 bg-[#11131A]/90 backdrop-blur-xl border border-[#FF3B3B]/20 shadow-[0_10px_40px_rgba(0,0,0,0.5)] font-sans rounded-2xl">
+      <header className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-[1200px] flex items-center gap-4 md:gap-6 px-4 md:px-6 py-3 md:py-4 bg-[var(--kr-glass-1)] backdrop-blur-xl border border-[#FF3B3B]/20 shadow-[0_10px_40px_rgba(0,0,0,0.5)] font-sans rounded-2xl">
 
         {/* ── Logo ── */}
         <div className="flex items-center gap-3 md:gap-5 shrink-0">
@@ -101,7 +101,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
                   key={to}
                   to={to}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    active ? 'text-[#FF3B3B] bg-[#FF3B3B]/8' : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.04]'
+                    active ? 'text-[#FF3B3B] bg-[#FF3B3B]/8' : 'text-zinc-500 hover:text-zinc-200 hover:bg-[var(--kr-text)]/[0.04]'
                   }`}
                 >
                   {label}
@@ -123,7 +123,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
               placeholder="Buscar animes, películas..."
               value={searchTerm}
               onChange={handleInputChange}
-              className="w-full py-2.5 pl-5 pr-12 text-white bg-[#11131A]/80 border border-[#FF3B3B]/20 focus:border-[#FF3B3B] focus:outline-none focus:ring-1 focus:ring-[#FF3B3B]/50 transition-all placeholder:text-zinc-600 text-xs font-bold tracking-widest rounded-lg"
+              className="w-full py-2.5 pl-5 pr-12 text-[var(--kr-text)] bg-[var(--kr-glass-2)] border border-[#FF3B3B]/20 focus:border-[#FF3B3B] focus:outline-none focus:ring-1 focus:ring-[#FF3B3B]/50 transition-all placeholder:text-zinc-600 text-xs font-bold tracking-widest rounded-lg"
             />
             <button type="submit" className="absolute right-4 text-zinc-500 hover:text-[#FF3B3B] transition-colors">
               <Search size={16} />
@@ -131,19 +131,19 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
           </div>
 
           {instantResults.length > 0 && (
-            <div className="absolute top-full left-0 w-full bg-[#11131A] border border-[#FF3B3B]/30 mt-4 shadow-[0_0_30px_rgba(255,59,59,0.1)] max-h-72 overflow-y-auto z-10 p-2 rounded-lg">
+            <div className="absolute top-full left-0 w-full bg-[var(--kr-surface)] border border-[#FF3B3B]/30 mt-4 shadow-[0_0_30px_rgba(255,59,59,0.1)] max-h-72 overflow-y-auto z-10 p-2 rounded-lg">
               {instantResults.map((anime) => (
                 <Link
                   key={anime.mal_id}
                   to={`/anime/${anime.mal_id}`}
                   onClick={() => setInstantResults([])}
-                  className="flex items-center gap-3 p-2 hover:bg-[#1A1C24] border border-transparent hover:border-[#FF3B3B]/20 transition-colors rounded-lg"
+                  className="flex items-center gap-3 p-2 hover:bg-[var(--kr-surface-2)] border border-transparent hover:border-[#FF3B3B]/20 transition-colors rounded-lg"
                 >
-                  <div className="w-10 h-14 bg-[#1A1C24] shrink-0 overflow-hidden rounded">
+                  <div className="w-10 h-14 bg-[var(--kr-surface-2)] shrink-0 overflow-hidden rounded">
                     <img src={anime.images.jpg.image_url} alt={anime.title} className="w-full h-full object-cover opacity-80" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-xs font-bold truncate tracking-wide">{anime.title}</p>
+                    <p className="text-[var(--kr-text)] text-xs font-bold truncate tracking-wide">{anime.title}</p>
                     <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">
                       {anime.episodes ? `${anime.episodes} eps` : 'En emisión'}
                     </p>
@@ -162,9 +162,9 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
           {session ? (
             <Link
               to={username ? `/u/${username}` : '/profile'}
-              className="flex items-center gap-2 md:gap-3 bg-[#11131A]/80 px-3 md:px-4 py-2 border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 hover:shadow-[0_0_15px_rgba(255,59,59,0.15)] transition-all cursor-pointer group rounded-lg"
+              className="flex items-center gap-2 md:gap-3 bg-[var(--kr-glass-2)] px-3 md:px-4 py-2 border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 hover:shadow-[0_0_15px_rgba(255,59,59,0.15)] transition-all cursor-pointer group rounded-lg"
             >
-              <div className="w-6 h-6 md:w-7 md:h-7 overflow-hidden flex items-center justify-center font-black text-white text-[10px] uppercase bg-[#FF3B3B] rounded-md shrink-0">
+              <div className="w-6 h-6 md:w-7 md:h-7 overflow-hidden flex items-center justify-center font-black text-[var(--kr-text)] text-[10px] uppercase bg-[#FF3B3B] rounded-md shrink-0">
                 {avatarUrl
                   ? <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                   : (username?.charAt(0) || session.user.email?.charAt(0))
@@ -177,7 +177,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
           ) : (
             <button
               onClick={onOpenLogin}
-              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#11131A]/80 border border-[#FF3B3B]/20 text-zinc-400 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/50 transition-colors rounded-lg"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[var(--kr-glass-2)] border border-[#FF3B3B]/20 text-zinc-400 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/50 transition-colors rounded-lg"
             >
               <UserCircle size={18} />
               <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-widest">Entrar</span>
@@ -187,7 +187,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
           {/* Mobile menu toggle */}
           <button
             onClick={() => setIsMobileMenuOpen(p => !p)}
-            className="md:hidden flex items-center justify-center w-9 h-9 bg-[#0D0F15] border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 text-zinc-400 hover:text-[#FF3B3B] transition-all rounded-lg"
+            className="md:hidden flex items-center justify-center w-9 h-9 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 text-zinc-400 hover:text-[#FF3B3B] transition-all rounded-lg"
           >
             {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -196,7 +196,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
 
       {/* ── Mobile dropdown menu ── */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed top-[72px] left-1/2 -translate-x-1/2 w-[95%] max-w-[1200px] z-[99] bg-[#11131A]/95 backdrop-blur-xl border border-[#FF3B3B]/20 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="md:hidden fixed top-[72px] left-1/2 -translate-x-1/2 w-[95%] max-w-[1200px] z-[99] bg-[var(--kr-glass-1)] backdrop-blur-xl border border-[#FF3B3B]/20 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.6)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Search bar mobile */}
           <form
             onSubmit={(e) => { handleSearchSubmit(e); setIsMobileMenuOpen(false); }}
@@ -208,7 +208,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
                 placeholder="Buscar animes, películas..."
                 value={searchTerm}
                 onChange={handleInputChange}
-                className="w-full py-3 pl-5 pr-12 text-white bg-[#0D0F15] border border-[#FF3B3B]/20 focus:border-[#FF3B3B] focus:outline-none transition-all placeholder:text-zinc-600 text-sm font-bold rounded-lg"
+                className="w-full py-3 pl-5 pr-12 text-[var(--kr-text)] bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 focus:border-[#FF3B3B] focus:outline-none transition-all placeholder:text-zinc-600 text-sm font-bold rounded-lg"
               />
               <button type="submit" className="absolute right-4 text-zinc-500 hover:text-[#FF3B3B] transition-colors">
                 <Search size={16} />
@@ -230,7 +230,7 @@ export const Header = ({ onOpenLogin }: HeaderProps) => {
                   className={`px-4 py-3 rounded-xl text-sm font-bold uppercase tracking-widest transition-all ${
                     active
                       ? 'text-[#FF3B3B] bg-[#FF3B3B]/8 border border-[#FF3B3B]/20'
-                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04] border border-transparent'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-[var(--kr-text)]/[0.04] border border-transparent'
                   }`}
                 >
                   {label}

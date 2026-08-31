@@ -13,7 +13,7 @@ export const BottomNav = ({ onOpenLogin }: BottomNavProps) => {
   const isActive = (path: string) => pathname === path || (path !== '/' && pathname.startsWith(path));
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[98] bg-[#11131A]/95 backdrop-blur-xl border-t border-[#FF3B3B]/20 flex safe-area-inset-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[98] bg-[var(--kr-glass-1)] backdrop-blur-xl border-t border-[#FF3B3B]/20 flex safe-area-inset-bottom">
       <Link
         to="/"
         className={`flex-1 flex flex-col items-center justify-center py-3 gap-1 transition-colors ${isActive('/') && pathname === '/' ? 'text-[#FF3B3B]' : 'text-zinc-500'}`}

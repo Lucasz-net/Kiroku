@@ -31,7 +31,7 @@ const COMPACT_CFG: PodiumCfg = {
   1: {
     order: 'order-3', colWidth: 'w-24 sm:w-28 md:w-32', imgSize: 'w-24 h-36 sm:w-28 sm:h-40 md:w-32 md:h-44',
     barHeight: 'h-9 sm:h-10 md:h-12', barFrom: 'from-[#4A0A0A]', barTo: 'to-[#FF3B3B]/40',
-    borderColor: 'border-[#FF3B3B]/70', numberColor: 'text-white', glow: 'shadow-[0_0_30px_rgba(255,59,59,0.35)]', numberSize: 'text-lg md:text-xl',
+    borderColor: 'border-[#FF3B3B]/70', numberColor: 'text-[var(--kr-text)]', glow: 'shadow-[0_0_30px_rgba(255,59,59,0.35)]', numberSize: 'text-lg md:text-xl',
   },
   3: {
     order: 'order-4', colWidth: 'w-20 sm:w-24 md:w-28', imgSize: 'w-20 h-32 sm:w-24 sm:h-36 md:w-28 md:h-40',
@@ -59,7 +59,7 @@ const LARGE_CFG: PodiumCfg = {
   1: {
     order: 'order-3', colWidth: 'w-32 sm:w-40 md:w-48', imgSize: 'w-32 h-48 sm:w-40 sm:h-56 md:w-48 md:h-64',
     barHeight: 'h-32 sm:h-36 md:h-40', barFrom: 'from-[#4A0A0A]', barTo: 'to-[#FF3B3B]/40',
-    borderColor: 'border-[#FF3B3B]/70', numberColor: 'text-white', glow: 'shadow-[0_0_30px_rgba(255,59,59,0.35)]', numberSize: 'text-3xl md:text-4xl',
+    borderColor: 'border-[#FF3B3B]/70', numberColor: 'text-[var(--kr-text)]', glow: 'shadow-[0_0_30px_rgba(255,59,59,0.35)]', numberSize: 'text-3xl md:text-4xl',
   },
   3: {
     order: 'order-4', colWidth: 'w-28 sm:w-32 md:w-40', imgSize: 'w-28 h-40 sm:w-32 sm:h-48 md:w-40 md:h-56',
@@ -104,7 +104,7 @@ export const Top10Podium = ({ entries, size = 'compact' }: Top10PodiumProps) => 
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
             </Link>
             {showTitle && (
-              <p className={`${size === 'large' ? 'text-xs md:text-sm mb-2 h-8' : 'text-[11px] md:text-xs mb-1 h-7'} font-bold text-white text-center line-clamp-2 leading-tight px-1`}>
+              <p className={`${size === 'large' ? 'text-xs md:text-sm mb-2 h-8' : 'text-[11px] md:text-xs mb-1 h-7'} font-bold text-[var(--kr-text)] text-center line-clamp-2 leading-tight px-1`}>
                 {entry.title}
               </p>
             )}

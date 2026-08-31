@@ -210,17 +210,17 @@ export const ImportXMLModal = ({
     >
       <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => phase !== 'importing' && phase !== 'enriching' && onClose()} />
 
-      <div className="relative z-10 w-full max-w-lg bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)]">
+      <div className="relative z-10 w-full max-w-lg bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#FF3B3B]/10">
           <div>
-            <h2 className="font-black text-white text-lg leading-tight">Importar lista de anime</h2>
+            <h2 className="font-black text-[var(--kr-text)] text-lg leading-tight">Importar lista de anime</h2>
             <p className="text-xs text-zinc-600 font-bold mt-0.5">Compatible con MyAnimeList y otros exportadores XML</p>
           </div>
           {phase !== 'importing' && phase !== 'enriching' && (
             <button
               onClick={onClose}
-              className="p-2 text-zinc-500 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              className="p-2 text-zinc-500 hover:text-[var(--kr-text)] transition-colors rounded-lg hover:bg-[var(--kr-text)]/5"
             >
               <X size={18} />
             </button>
@@ -239,13 +239,13 @@ export const ImportXMLModal = ({
                 <div className="w-14 h-14 rounded-2xl bg-[#FF3B3B]/10 flex items-center justify-center group-hover:bg-[#FF3B3B]/20 transition-colors">
                   <Upload size={24} className="text-[#FF3B3B]" />
                 </div>
-                <p className="text-white font-bold text-sm text-center">
+                <p className="text-[var(--kr-text)] font-bold text-sm text-center">
                   Seleccioná tu archivo XML o XML.GZ
                 </p>
                 <p className="text-zinc-600 text-xs text-center">
                   Exportá desde MyAnimeList → Perfil → Exportar lista de anime
                 </p>
-                <span className="px-4 py-2 bg-[#FF3B3B] text-white text-xs font-black uppercase tracking-widest rounded-lg">
+                <span className="px-4 py-2 bg-[#FF3B3B] text-[var(--kr-text)] text-xs font-black uppercase tracking-widest rounded-lg">
                   Elegir archivo
                 </span>
               </div>
@@ -262,7 +262,7 @@ export const ImportXMLModal = ({
                   {parseError}
                 </div>
               )}
-              <div className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4 text-xs text-zinc-600 leading-relaxed">
+              <div className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.07] rounded-xl p-4 text-xs text-zinc-600 leading-relaxed">
                 <p className="font-black text-zinc-500 mb-1 flex items-center gap-1.5">
                   <FileText size={12} /> ¿Cómo exportar desde MAL?
                 </p>
@@ -274,7 +274,7 @@ export const ImportXMLModal = ({
           {/* ── PHASE: preview ── */}
           {phase === 'preview' && (
             <div className="flex flex-col gap-5">
-              <div className="bg-[#0D0F15] border border-[#FF3B3B]/10 rounded-xl p-5">
+              <div className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10 rounded-xl p-5">
                 <p className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4">
                   Resumen del archivo
                 </p>
@@ -287,9 +287,9 @@ export const ImportXMLModal = ({
                     { label: 'Ya guardados', value: entries.length - toImport.length, icon: Tv },
                     { label: 'A importar', value: toImport.length, icon: Upload },
                   ].map(({ label, value, icon: Icon }) => (
-                    <div key={label} className="bg-[#11131A] border border-[#FF3B3B]/[0.07] rounded-lg p-3">
+                    <div key={label} className="bg-[var(--kr-surface)] border border-[#FF3B3B]/[0.07] rounded-lg p-3">
                       <Icon size={13} className="text-[#FF3B3B]/40 mb-2" />
-                      <span className="block text-xl font-black text-white tabular-nums">{value}</span>
+                      <span className="block text-xl font-black text-[var(--kr-text)] tabular-nums">{value}</span>
                       <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{label}</span>
                     </div>
                   ))}
@@ -330,7 +330,7 @@ export const ImportXMLModal = ({
                   Todos los animes del archivo ya están en tu lista.
                 </div>
               ) : (
-                <div className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4 text-xs text-zinc-600">
+                <div className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.07] rounded-xl p-4 text-xs text-zinc-600">
                   Los animes ya guardados se omitirán sin modificar tu progreso o puntajes actuales.
                 </div>
               )}
@@ -338,14 +338,14 @@ export const ImportXMLModal = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => { setPhase('pick'); setEntries([]); setToImport([]); }}
-                  className="flex-1 py-3 border border-[#FF3B3B]/20 text-zinc-400 hover:text-white font-black text-xs uppercase tracking-widest rounded-xl transition-colors hover:border-[#FF3B3B]/40"
+                  className="flex-1 py-3 border border-[#FF3B3B]/20 text-zinc-400 hover:text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl transition-colors hover:border-[#FF3B3B]/40"
                 >
                   Cambiar archivo
                 </button>
                 {toImport.length > 0 && (
                   <button
                     onClick={handleImport}
-                    className="flex-1 py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] text-white font-black text-xs uppercase tracking-widest rounded-xl transition-colors"
+                    className="flex-1 py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl transition-colors"
                   >
                     Importar {toImport.length} anime{toImport.length !== 1 ? 's' : ''}
                   </button>
@@ -360,7 +360,7 @@ export const ImportXMLModal = ({
               <div className="flex items-center gap-3">
                 <Loader2 size={20} className="animate-spin text-[#FF3B3B] shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white text-sm">
+                  <p className="font-bold text-[var(--kr-text)] text-sm">
                     {phase === 'importing' ? 'Guardando tu lista...' : 'Completando datos...'}
                   </p>
                   <p className="text-xs text-zinc-600 mt-0.5">
@@ -372,7 +372,7 @@ export const ImportXMLModal = ({
                 {phase === 'enriching' && (
                   <button
                     onClick={() => { abortRef.current = true; }}
-                    className="shrink-0 px-3 py-2 border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-zinc-400 hover:text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors"
+                    className="shrink-0 px-3 py-2 border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-zinc-400 hover:text-[var(--kr-text)] text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors"
                   >
                     Detener
                   </button>
@@ -385,7 +385,7 @@ export const ImportXMLModal = ({
                   <span>Progreso</span>
                   <span>{progress}%</span>
                 </div>
-                <div className="h-2 bg-[#0D0F15] rounded-full overflow-hidden">
+                <div className="h-2 bg-[var(--kr-surface-sunken)] rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-[#FF3B3B] to-[#FF6B6B] rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
@@ -406,7 +406,7 @@ export const ImportXMLModal = ({
                   <CheckCircle2 size={22} className="text-emerald-500" />
                 </div>
                 <div>
-                  <p className="font-black text-white text-base">¡Importación completada!</p>
+                  <p className="font-black text-[var(--kr-text)] text-base">¡Importación completada!</p>
                   <p className="text-xs text-zinc-600 mt-0.5">Tu lista fue actualizada exitosamente.</p>
                 </div>
               </div>
@@ -417,7 +417,7 @@ export const ImportXMLModal = ({
                   { label: 'Ya existían', value: result.skipped, color: 'text-zinc-400' },
                   { label: 'Fallidos', value: result.failed, color: result.failed > 0 ? 'text-red-400' : 'text-zinc-600' },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4 text-center">
+                  <div key={label} className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.07] rounded-xl p-4 text-center">
                     <span className={`block text-2xl font-black tabular-nums ${color}`}>{value}</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{label}</span>
                   </div>
@@ -434,9 +434,9 @@ export const ImportXMLModal = ({
                   horas vistas. Es opcional y lento por el límite de AniList, así
                   que se ofrece aparte en vez de retener la importación entera. */}
               {enriched === null && result.imported > 0 && (
-                <div className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4 flex flex-col gap-3">
+                <div className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.07] rounded-xl p-4 flex flex-col gap-3">
                   <div>
-                    <p className="text-sm font-bold text-white mb-1">Completar géneros y estudios</p>
+                    <p className="text-sm font-bold text-[var(--kr-text)] mb-1">Completar géneros y estudios</p>
                     <p className="text-xs text-zinc-600 leading-relaxed">
                       Tu lista ya está guardada y se puede usar. Esto agrega los datos que
                       alimentan los gráficos y las horas vistas. Tarda ~{enrichMinutes} minuto
@@ -446,7 +446,7 @@ export const ImportXMLModal = ({
                   </div>
                   <button
                     onClick={handleEnrich}
-                    className="w-full py-2.5 border border-[#FF3B3B]/25 hover:border-[#FF3B3B]/50 text-zinc-300 hover:text-white font-black text-[11px] uppercase tracking-widest rounded-lg transition-colors"
+                    className="w-full py-2.5 border border-[#FF3B3B]/25 hover:border-[#FF3B3B]/50 text-zinc-300 hover:text-[var(--kr-text)] font-black text-[11px] uppercase tracking-widest rounded-lg transition-colors"
                   >
                     Completar datos
                   </button>
@@ -462,7 +462,7 @@ export const ImportXMLModal = ({
 
               <button
                 onClick={onClose}
-                className="w-full py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] text-white font-black text-xs uppercase tracking-widest rounded-xl transition-colors"
+                className="w-full py-3 bg-[#FF3B3B] hover:bg-[#FF6B6B] text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl transition-colors"
               >
                 Cerrar
               </button>

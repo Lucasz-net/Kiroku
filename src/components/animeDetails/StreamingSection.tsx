@@ -13,7 +13,7 @@ export const StreamingSection = ({ streaming }: StreamingSectionProps) => {
   if (streaming.length === 0) return null;
   return (
     <section className="mb-16">
-      <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3">
+      <h3 className="text-2xl font-black text-[var(--kr-text)] mb-6 flex items-center gap-3">
         <Play size={24} className="text-[#FF3B3B]" /> Plataformas de Streaming
       </h3>
       <div className="flex flex-wrap gap-4">
@@ -26,11 +26,11 @@ export const StreamingSection = ({ streaming }: StreamingSectionProps) => {
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center gap-3 bg-[#11131A] border border-[#FF3B3B]/15 px-6 py-3 text-sm font-bold text-zinc-300 transition-all rounded-xl group ${
+              className={`flex items-center gap-3 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 px-6 py-3 text-sm font-bold text-zinc-300 transition-all rounded-xl group ${
                 isNetflix
-                  ? 'hover:text-white hover:border-red-600/60 hover:shadow-[0_0_15px_rgba(220,38,38,0.2)]'
+                  ? 'hover:text-[var(--kr-text)] hover:border-red-600/60 hover:shadow-[0_0_15px_rgba(220,38,38,0.2)]'
                   : isCrunchyroll
-                    ? 'hover:text-white hover:border-orange-500/50 hover:shadow-[0_0_15px_rgba(249,115,22,0.2)]'
+                    ? 'hover:text-[var(--kr-text)] hover:border-orange-500/50 hover:shadow-[0_0_15px_rgba(249,115,22,0.2)]'
                     : 'hover:text-[#FF3B3B] hover:border-[#FF3B3B]/40'
               }`}
             >

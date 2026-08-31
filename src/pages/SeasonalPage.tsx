@@ -52,9 +52,9 @@ const TYPE_TO_ANILIST_FORMATS: Record<string, string[]> = {
 
 const SkeletonCard = () => (
   <div className="flex flex-col gap-2 animate-pulse">
-    <div className="aspect-[3/4] bg-[#1A1C24] rounded-xl border border-[#FF3B3B]/[0.05]" />
-    <div className="h-3.5 bg-[#1A1C24] rounded-lg w-4/5" />
-    <div className="h-2.5 bg-[#1A1C24] rounded-lg w-2/5" />
+    <div className="aspect-[3/4] bg-[var(--kr-surface-2)] rounded-xl border border-[#FF3B3B]/[0.05]" />
+    <div className="h-3.5 bg-[var(--kr-surface-2)] rounded-lg w-4/5" />
+    <div className="h-2.5 bg-[var(--kr-surface-2)] rounded-lg w-2/5" />
   </div>
 );
 
@@ -149,7 +149,7 @@ export const SeasonalPage = () => {
   const canGoNext = !isSeasonBeyondNext(next.year, next.season);
 
   return (
-    <div className="min-h-screen bg-[#080A0F] pt-28 md:pt-32 pb-24 px-4 font-sans">
+    <div className="min-h-screen bg-[var(--kr-bg)] pt-28 md:pt-32 pb-24 px-4 font-sans">
       <div ref={headerRef} className="container mx-auto max-w-[1400px]">
 
         {/* ── Header ── */}
@@ -159,7 +159,7 @@ export const SeasonalPage = () => {
             Temporada
           </p>
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <h1 className="sea-title text-4xl md:text-6xl font-black text-white tracking-tight leading-none">
+            <h1 className="sea-title text-4xl md:text-6xl font-black text-[var(--kr-text)] tracking-tight leading-none">
               {getSeasonLabel(season)}{' '}
               <span className="text-zinc-600">{year}</span>
             </h1>
@@ -168,14 +168,14 @@ export const SeasonalPage = () => {
             <div className="sea-nav flex items-center gap-2">
               <button
                 onClick={() => navigateSeason('prev')}
-                className="flex items-center gap-1.5 px-4 py-2 border border-[#FF3B3B]/20 bg-[#11131A] text-zinc-400 font-bold text-[11px] uppercase tracking-widest hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"
+                className="flex items-center gap-1.5 px-4 py-2 border border-[#FF3B3B]/20 bg-[var(--kr-surface)] text-zinc-400 font-bold text-[11px] uppercase tracking-widest hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all rounded-xl"
               >
                 <ChevronLeft size={14} /> Anterior
               </button>
               <button
                 onClick={() => navigateSeason('next')}
                 disabled={!canGoNext}
-                className="flex items-center gap-1.5 px-4 py-2 border border-[#FF3B3B]/20 bg-[#11131A] text-zinc-400 font-bold text-[11px] uppercase tracking-widest hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-4 py-2 border border-[#FF3B3B]/20 bg-[var(--kr-surface)] text-zinc-400 font-bold text-[11px] uppercase tracking-widest hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all rounded-xl disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 Siguiente <ChevronRight size={14} />
               </button>
@@ -191,8 +191,8 @@ export const SeasonalPage = () => {
               onClick={() => setTypeFilter(f.value)}
               className={`px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest border transition-all ${
                 typeFilter === f.value
-                  ? 'bg-[#FF3B3B] text-white border-[#FF3B3B]'
-                  : 'bg-[#11131A] text-zinc-500 border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 hover:text-zinc-300'
+                  ? 'bg-[#FF3B3B] text-[var(--kr-text)] border-[#FF3B3B]'
+                  : 'bg-[var(--kr-surface)] text-zinc-500 border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 hover:text-zinc-300'
               }`}
             >
               {f.label}
@@ -228,7 +228,7 @@ export const SeasonalPage = () => {
             <button
               onClick={handleLoadMore}
               disabled={loadingMore}
-              className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[#11131A] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all disabled:opacity-40 rounded-xl"
+              className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[var(--kr-surface)] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all disabled:opacity-40 rounded-xl"
             >
               {loadingMore
                 ? <><Loader2 size={14} className="animate-spin" /> Cargando...</>

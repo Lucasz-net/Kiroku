@@ -24,7 +24,7 @@ export const DetailedMetrics = ({ minutes, days, watching, pending }: DetailedMe
         ] as const).map(({ label, value, icon: Icon }) => (
           <div
             key={label}
-            className="bg-[#0D0F15] border border-[#FF3B3B]/[0.07] rounded-xl p-4 cursor-default"
+            className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.07] rounded-xl p-4 cursor-default"
             style={{ transition: SPRING }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLElement;
@@ -38,7 +38,7 @@ export const DetailedMetrics = ({ minutes, days, watching, pending }: DetailedMe
             }}
           >
             <Icon size={16} className="text-[#FF3B3B]/50 mb-3" />
-            <span className="block text-2xl font-black text-white tracking-tight leading-none mb-2 tabular-nums">
+            <span className="block text-2xl font-black text-[var(--kr-text)] tracking-tight leading-none mb-2 tabular-nums">
               {value}
             </span>
             <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">{label}</span>

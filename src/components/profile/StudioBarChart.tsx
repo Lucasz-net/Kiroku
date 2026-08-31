@@ -34,7 +34,7 @@ export const StudioBarChart = ({ studios }: Props) => {
 
   if (top.length === 0) {
     return (
-      <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+      <div className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
           <Clapperboard size={14} className="text-[#FF3B3B]/60" /> Estudios Favoritos
         </p>
@@ -44,7 +44,7 @@ export const StudioBarChart = ({ studios }: Props) => {
   }
 
   return (
-    <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+    <div className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
 
       <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
         <Clapperboard size={14} className="text-[#FF3B3B]/60" /> Estudios Favoritos
@@ -95,7 +95,7 @@ export const StudioBarChart = ({ studios }: Props) => {
               </span>
 
               {/* Pista de barra */}
-              <div className="flex-1 relative h-5 bg-[#0D0F15] rounded-r-lg overflow-hidden">
+              <div className="flex-1 relative h-5 bg-[var(--kr-surface-sunken)] rounded-r-lg overflow-hidden">
                 {/* Grid lines */}
                 <div className="absolute inset-0 flex pointer-events-none">
                   {[25, 50, 75].map(tick => (

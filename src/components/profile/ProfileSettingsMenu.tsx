@@ -1,11 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import {
   Settings, Loader2, Lock, Unlock, MessageSquare, MessageSquareOff,
-  Upload, Download, LogOut,
+  Upload, Download, LogOut, Sun, Moon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { reportError } from '../../lib/monitoring';
+import { useTheme } from '../../contexts/ThemeContext';
 import type { UserProfile } from '../../types/profile';
 
 interface ProfileSettingsMenuProps {
@@ -76,7 +77,7 @@ const SettingSwitch = ({ checked, saving, label, description, icon: Icon, onTogg
       ? <Loader2 size={15} className="shrink-0 mt-0.5 text-[#FF3B3B] animate-spin" />
       : <Icon size={15} className={`shrink-0 mt-0.5 ${checked ? 'text-[#FF3B3B]' : 'text-zinc-600'}`} />}
     <span className="flex-1 min-w-0">
-      <span className="block text-xs font-black text-white">{label}</span>
+      <span className="block text-xs font-black text-[var(--kr-text)]">{label}</span>
       <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">{description}</span>
     </span>
     <span
@@ -109,6 +110,7 @@ export const ProfileSettingsMenu = ({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuId = useId();
+  const { theme, toggleTheme } = useTheme();
 
   const isPrivate = !!profile.is_private;
   const commentsEnabled = profile.comments_enabled !== false;
@@ -148,8 +150,8 @@ export const ProfileSettingsMenu = ({
         aria-controls={open ? menuId : undefined}
         className={`flex items-center gap-2 px-3 h-[34px] backdrop-blur-sm border cursor-pointer rounded-lg transition-all text-xs font-bold uppercase tracking-widest ${
           open
-            ? 'bg-[#0D0F15]/90 border-[#FF3B3B]/50 text-[#FF3B3B]'
-            : 'bg-[#0D0F15]/70 border-white/10 text-zinc-300 hover:text-white hover:bg-[#0D0F15]/90'
+            ? 'bg-[var(--kr-glass-1)] border-[#FF3B3B]/50 text-[#FF3B3B]'
+            : 'bg-[var(--kr-glass-3)] border-[var(--kr-text)]/10 text-zinc-300 hover:text-[var(--kr-text)] hover:bg-[var(--kr-glass-1)]'
         }`}
       >
         <Settings size={13} className={`shrink-0 transition-transform ${open ? 'rotate-45' : ''}`} />
@@ -160,7 +162,7 @@ export const ProfileSettingsMenu = ({
         <div
           id={menuId}
           aria-label="Configuración del perfil"
-          className="absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2.5rem))] bg-[#0D0F15] border border-[#FF3B3B]/25 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.75)] overflow-hidden z-50 text-left normal-case tracking-normal"
+          className="absolute top-full right-0 mt-2 w-[min(20rem,calc(100vw-2.5rem))] bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/25 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.75)] overflow-hidden z-50 text-left normal-case tracking-normal"
         >
           <p className={SECTION_LABEL}>Privacidad</p>
           <SettingSwitch
@@ -191,7 +193,7 @@ export const ProfileSettingsMenu = ({
               {onImportClick && (
                 <button onClick={runAndClose(onImportClick)} className={ACTION_ROW}>
                   <Upload size={15} className="shrink-0 text-zinc-600" />
-                  <span className="text-xs font-black text-white">Importar lista</span>
+                  <span className="text-xs font-black text-[var(--kr-text)]">Importar lista</span>
                 </button>
               )}
               {onExport && (
@@ -199,7 +201,7 @@ export const ProfileSettingsMenu = ({
                   <button onClick={runAndClose(() => onExport('xml'))} className={`${ACTION_ROW} items-start`}>
                     <Download size={15} className="shrink-0 mt-0.5 text-zinc-600" />
                     <span className="flex-1 min-w-0">
-                      <span className="block text-xs font-black text-white">Exportar XML de MyAnimeList</span>
+                      <span className="block text-xs font-black text-[var(--kr-text)]">Exportar XML de MyAnimeList</span>
                       <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">
                         Para llevártela a MAL, AniList u otra app
                       </span>
@@ -208,7 +210,7 @@ export const ProfileSettingsMenu = ({
                   <button onClick={runAndClose(() => onExport('json'))} className={`${ACTION_ROW} items-start`}>
                     <Download size={15} className="shrink-0 mt-0.5 text-zinc-600" />
                     <span className="flex-1 min-w-0">
-                      <span className="block text-xs font-black text-white">Exportar JSON completo</span>
+                      <span className="block text-xs font-black text-[var(--kr-text)]">Exportar JSON completo</span>
                       <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">
                         Respaldo con favoritos, géneros y portadas
                       </span>
@@ -218,6 +220,19 @@ export const ProfileSettingsMenu = ({
               )}
             </>
           )}
+
+          <div className="border-t border-[#FF3B3B]/10" />
+          <p className={SECTION_LABEL}>Apariencia</p>
+          <SettingSwitch
+            checked={theme === 'light'}
+            saving={false}
+            onToggle={toggleTheme}
+            icon={theme === 'light' ? Sun : Moon}
+            label="Modo claro"
+            description={theme === 'light'
+              ? 'Estás usando el tema claro.'
+              : 'Oscuro es el tema por defecto de Kiroku.'}
+          />
 
           <div className="border-t border-[#FF3B3B]/10" />
           <button

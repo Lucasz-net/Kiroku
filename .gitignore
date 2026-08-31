@@ -34,3 +34,10 @@ skills-lock.json
 *.njsproj
 *.sln
 *.sw?
+
+# Migraciones SQL sueltas en la raíz (ya aplicadas en Supabase vía MCP; no
+# hace falta versionarlas — index.html queda afuera de esto, es la app).
+/*.sql
+
+# Templates de email para copiar/pegar en Supabase (Authentication > Emails)
+supabase-email-*.html

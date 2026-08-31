@@ -58,7 +58,7 @@ export const SavedAnimeCover = ({
   }, [url, inView, animeId, rowId]);
 
   return (
-    <div ref={ref} className={`relative bg-[#0D0F15] ${className}`}>
+    <div ref={ref} className={`relative bg-[var(--kr-surface-sunken)] ${className}`}>
       {url ? (
         <img
           src={url}
@@ -69,7 +69,7 @@ export const SavedAnimeCover = ({
       ) : (
         <div
           aria-hidden
-          className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1A1C24] to-[#0D0F15] text-zinc-700 font-black select-none"
+          className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--kr-surface-2)] to-[var(--kr-surface-sunken)] text-zinc-700 font-black select-none"
         >
           {title.charAt(0).toUpperCase()}
         </div>

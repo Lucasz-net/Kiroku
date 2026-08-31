@@ -12,7 +12,7 @@ const steps = [
     to: '/search',
     accent: 'from-[#FF3B3B]/20 to-transparent',
     border: 'border-[#FF3B3B]/30',
-    btnClass: 'bg-[#FF3B3B] hover:bg-[#FF5555] text-white',
+    btnClass: 'bg-[#FF3B3B] hover:bg-[#FF5555] text-[var(--kr-text)]',
   },
   {
     num: '02',
@@ -23,7 +23,7 @@ const steps = [
     to: '/top/rated',
     accent: 'from-amber-500/10 to-transparent',
     border: 'border-amber-500/20',
-    btnClass: 'bg-[#11131A] hover:bg-amber-500/10 text-amber-400 border border-amber-500/20',
+    btnClass: 'bg-[var(--kr-surface)] hover:bg-amber-500/10 text-amber-400 border border-amber-500/20',
   },
   {
     num: '03',
@@ -34,12 +34,12 @@ const steps = [
     to: '/seasonal',
     accent: 'from-violet-500/10 to-transparent',
     border: 'border-violet-500/20',
-    btnClass: 'bg-[#11131A] hover:bg-violet-500/10 text-violet-400 border border-violet-500/20',
+    btnClass: 'bg-[var(--kr-surface)] hover:bg-violet-500/10 text-violet-400 border border-violet-500/20',
   },
 ];
 
 const HowItWorksCard = () => (
-  <div className="bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+  <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6 md:p-8 relative overflow-hidden">
     <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent" />
     <div className="flex items-center gap-3 mb-6">
       <BookOpen size={16} className="text-[#FF3B3B]/60" />
@@ -74,11 +74,11 @@ export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStar
   <div className="flex flex-col gap-6">
 
     {/* Bienvenida */}
-    <div className="bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl p-8 md:p-10 relative overflow-hidden">
+    <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl p-8 md:p-10 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/30 to-transparent" />
       <div className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-[#FF3B3B]/[0.04] blur-3xl pointer-events-none" />
       <p className="text-xs font-bold uppercase tracking-widest text-[#FF3B3B]/60 mb-3">Bienvenido</p>
-      <h2 className="text-3xl md:text-4xl font-black text-white mb-3 tracking-tight">
+      <h2 className="text-3xl md:text-4xl font-black text-[var(--kr-text)] mb-3 tracking-tight">
         Hola, <span className="text-[#FF3B3B]">{username}</span>
       </h2>
       <p className="text-zinc-400 text-base max-w-lg leading-relaxed">
@@ -92,7 +92,7 @@ export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStar
 
     {/* Importar desde MyAnimeList — destacado */}
     {onImportClick && (
-      <div className="bg-gradient-to-br from-[#FF3B3B]/15 via-[#11131A] to-[#11131A] border border-[#FF3B3B]/40 rounded-2xl p-8 md:p-10 relative overflow-hidden flex flex-col md:flex-row items-center gap-6 md:gap-10 justify-between">
+      <div className="bg-gradient-to-br from-[#FF3B3B]/15 via-[var(--kr-surface)] to-[var(--kr-surface)] border border-[#FF3B3B]/40 rounded-2xl p-8 md:p-10 relative overflow-hidden flex flex-col md:flex-row items-center gap-6 md:gap-10 justify-between">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/50 to-transparent" />
         <div className="absolute -left-20 -bottom-20 w-72 h-72 rounded-full bg-[#FF3B3B]/[0.08] blur-3xl pointer-events-none" />
         <div className="relative flex items-start gap-4">
@@ -103,7 +103,7 @@ export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStar
             <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#FF3B3B] mb-2">
               <Sparkles size={12} /> Atajo recomendado
             </p>
-            <h3 className="text-white font-black text-xl mb-2">¿Ya tenés una lista en MyAnimeList?</h3>
+            <h3 className="text-[var(--kr-text)] font-black text-xl mb-2">¿Ya tenés una lista en MyAnimeList?</h3>
             <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
               Importá tu lista exportada (.xml o .xml.gz) y armá tu perfil, estadísticas y logros al instante, sin agregar animes uno por uno.
             </p>
@@ -111,7 +111,7 @@ export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStar
         </div>
         <button
           onClick={onImportClick}
-          className="relative shrink-0 inline-flex items-center gap-2 px-6 py-3.5 bg-[#FF3B3B] hover:bg-[#FF5555] text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-[0_8px_30px_rgba(255,59,59,0.25)]"
+          className="relative shrink-0 inline-flex items-center gap-2 px-6 py-3.5 bg-[#FF3B3B] hover:bg-[#FF5555] text-[var(--kr-text)] rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-[0_8px_30px_rgba(255,59,59,0.25)]"
         >
           <Upload size={15} /> Importar mi lista
         </button>
@@ -123,17 +123,17 @@ export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStar
       {steps.map(({ num, icon: Icon, title, desc, cta, to, accent, border, btnClass }) => (
         <div
           key={num}
-          className={`bg-[#11131A] border ${border} rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden`}
+          className={`bg-[var(--kr-surface)] border ${border} rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden`}
         >
           <div className={`absolute inset-0 bg-gradient-to-br ${accent} pointer-events-none`} />
           <div className="relative flex items-start justify-between">
-            <div className="w-10 h-10 rounded-xl bg-[#0D0F15] border border-[#FF3B3B]/10 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10 flex items-center justify-center">
               <Icon size={18} className="text-zinc-400" />
             </div>
-            <span className="text-4xl font-black text-white/[0.04] select-none leading-none">{num}</span>
+            <span className="text-4xl font-black text-[var(--kr-text)]/[0.04] select-none leading-none">{num}</span>
           </div>
           <div className="relative flex-1">
-            <h3 className="text-white font-black text-base mb-2">{title}</h3>
+            <h3 className="text-[var(--kr-text)] font-black text-base mb-2">{title}</h3>
             <p className="text-zinc-500 text-sm leading-relaxed">{desc}</p>
           </div>
           <Link

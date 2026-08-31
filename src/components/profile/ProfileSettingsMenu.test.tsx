@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileSettingsMenu } from './ProfileSettingsMenu';
+import { ThemeProvider } from '../../contexts/ThemeContext';
 import type { UserProfile } from '../../types/profile';
 
 const mocks = vi.hoisted(() => ({
@@ -38,12 +39,14 @@ const BASE: UserProfile = {
 const Harness = () => {
   const [profile, setProfile] = useState(BASE);
   return (
-    <ProfileSettingsMenu
-      profile={profile}
-      onPrivacyToggle={v => setProfile(p => ({ ...p, is_private: v }))}
-      onCommentsToggle={v => setProfile(p => ({ ...p, comments_enabled: v }))}
-      onSignOut={() => {}}
-    />
+    <ThemeProvider>
+      <ProfileSettingsMenu
+        profile={profile}
+        onPrivacyToggle={v => setProfile(p => ({ ...p, is_private: v }))}
+        onCommentsToggle={v => setProfile(p => ({ ...p, comments_enabled: v }))}
+        onSignOut={() => {}}
+      />
+    </ThemeProvider>
   );
 };
 
@@ -100,11 +103,13 @@ describe('ProfileSettingsMenu', () => {
 
     const user = userEvent.setup();
     render(
-      <ProfileSettingsMenu
-        profile={BASE}
-        onImportClick={onImportClick}
-        onSignOut={() => {}}
-      />,
+      <ThemeProvider>
+        <ProfileSettingsMenu
+          profile={BASE}
+          onImportClick={onImportClick}
+          onSignOut={() => {}}
+        />
+      </ThemeProvider>,
     );
     await openMenu(user);
 
@@ -129,10 +134,12 @@ describe('ProfileSettingsMenu', () => {
   it('trata un perfil sin comments_enabled como comentarios abiertos', async () => {
     const user = userEvent.setup();
     render(
-      <ProfileSettingsMenu
-        profile={{ ...BASE, comments_enabled: undefined }}
-        onSignOut={() => {}}
-      />,
+      <ThemeProvider>
+        <ProfileSettingsMenu
+          profile={{ ...BASE, comments_enabled: undefined }}
+          onSignOut={() => {}}
+        />
+      </ThemeProvider>,
     );
     await openMenu(user);
 

@@ -3,6 +3,7 @@ import { useId, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { PasswordStrengthMeter } from './PasswordStrengthMeter';
 import { PASSWORD_MIN_LENGTH, validatePassword, weakPasswordMessage } from '../utils/passwordStrength';
+import { EmailConfirmationModal } from './EmailConfirmationModal';
 
 // Mismo formato que exige la base (profiles_username_format) y que ya validan
 // UsernameSetupModal y ProfileHeader.
@@ -46,7 +47,7 @@ const InputField = ({
           placeholder={placeholder}
           required={required}
           minLength={minLength}
-          className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
+          className="w-full bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 text-[var(--kr-text)] rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
         />
       </div>
     </div>
@@ -62,10 +63,13 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   const [email, setEmail] = useState('');
 
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [confirmedSignupEmail, setConfirmedSignupEmail] = useState<string | null>(null);
   const passwordFieldId = useId();
+  const confirmPasswordFieldId = useId();
 
   if (!isOpen) return null;
 
@@ -143,6 +147,10 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         const passwordError = validatePassword(password);
         if (passwordError) throw new Error(passwordError);
 
+        if (password !== confirmPassword) {
+          throw new Error('Las contraseñas no coinciden.');
+        }
+
         // Sin este chequeo, un nombre inválido revienta dentro del trigger
         // handle_new_user y Supabase devuelve un "Database error saving new
         // user" que no le dice nada a nadie.
@@ -168,6 +176,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         if (signUpError) throw signUpError;
 
         setMessage('¡Cuenta creada! Revisa tu correo electrónico para confirmar tu cuenta.');
+        setConfirmedSignupEmail(email);
       }
     } catch (err: unknown) {
       let errorMessage = 'Ocurrió un error inesperado.';
@@ -199,6 +208,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     setUsername('');
     setEmail('');
     setPassword('');
+    setConfirmPassword('');
   };
 
   const openForgotPassword = () => {
@@ -215,6 +225,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-[100] flex items-center justify-center font-sans">
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -225,7 +236,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         {/* Glow ambiental superior */}
         <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-48 h-6 bg-[#FF3B3B] blur-2xl opacity-20 rounded-full pointer-events-none" />
 
-        <div className="relative bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden">
+        <div className="relative bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.9)] overflow-hidden">
           {/* Línea de acento superior */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/50 to-transparent" />
 
@@ -237,27 +248,27 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                   <span className="text-[#FF3B3B] font-black text-lg leading-none">K</span>
                 </div>
                 <div>
-                  <div className="text-white font-black text-lg leading-tight tracking-tight">KIROKU</div>
+                  <div className="text-[var(--kr-text)] font-black text-lg leading-tight tracking-tight">KIROKU</div>
                   <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Tu colección de anime</div>
                 </div>
               </div>
               <button
                 onClick={onClose}
                 type="button"
-                className="text-zinc-600 hover:text-white transition-colors bg-[#0D0F15] hover:bg-[#1A1C24] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 p-2 rounded-lg"
+                className="text-zinc-600 hover:text-[var(--kr-text)] transition-colors bg-[var(--kr-surface-sunken)] hover:bg-[var(--kr-surface-2)] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 p-2 rounded-lg"
               >
                 <X size={18} />
               </button>
             </div>
 
             {!isForgotPassword && (
-              <div className="bg-[#0D0F15] border border-[#FF3B3B]/10 rounded-xl p-1 flex mb-7">
+              <div className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10 rounded-xl p-1 flex mb-7">
                 <button
                   type="button"
                   onClick={() => !isLogin && toggleMode()}
                   className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
                     isLogin
-                      ? 'bg-[#FF3B3B]/10 text-white border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
+                      ? 'bg-[#FF3B3B]/10 text-[var(--kr-text)] border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
                       : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
@@ -268,7 +279,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                   onClick={() => isLogin && toggleMode()}
                   className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 ${
                     !isLogin
-                      ? 'bg-[#FF3B3B]/10 text-white border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
+                      ? 'bg-[#FF3B3B]/10 text-[var(--kr-text)] border border-[#FF3B3B]/25 shadow-[0_0_10px_rgba(255,59,59,0.1)]'
                       : 'text-zinc-500 hover:text-zinc-300'
                   }`}
                 >
@@ -306,7 +317,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-white font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
+                  className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-[var(--kr-text)] font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
                 >
                   {loading && <Loader2 size={16} className="animate-spin" />}
                   Enviar Enlace
@@ -325,7 +336,10 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-100 text-zinc-900 font-bold py-3 rounded-xl border border-transparent transition-all duration-200 text-sm mb-5 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,59,59,0.2)] hover:border-[#FF3B3B]/30 active:scale-[0.98]"
+                  // El botón de Google mantiene sus colores de marca fijos en los
+                  // dos temas (hex literal, no los tokens de zinc/superficie que
+                  // sí cambian con el tema) — así lo pide su guía de marca.
+                  className="w-full flex items-center justify-center gap-3 bg-[#ffffff] hover:bg-[#f4f4f5] text-[#18181b] font-bold py-3 rounded-xl border border-transparent transition-all duration-200 text-sm mb-5 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,59,59,0.2)] hover:border-[#FF3B3B]/30 active:scale-[0.98]"
                 >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                     <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
@@ -400,16 +414,38 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                         required
                         minLength={isLogin ? undefined : PASSWORD_MIN_LENGTH}
                         autoComplete={isLogin ? 'current-password' : 'new-password'}
-                        className="w-full bg-[#0D0F15] border border-[#FF3B3B]/15 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
+                        className="w-full bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 text-[var(--kr-text)] rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
                       />
                     </div>
                     {!isLogin && <PasswordStrengthMeter password={password} />}
                   </div>
 
+                  {!isLogin && (
+                    <div>
+                      <label htmlFor={confirmPasswordFieldId} className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-2">
+                        Confirmar Contraseña
+                      </label>
+                      <div className="relative">
+                        <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 pointer-events-none" />
+                        <input
+                          id={confirmPasswordFieldId}
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="••••••••"
+                          required
+                          minLength={PASSWORD_MIN_LENGTH}
+                          autoComplete="new-password"
+                          className="w-full bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 text-[var(--kr-text)] rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-[#FF3B3B]/50 focus:ring-1 focus:ring-[#FF3B3B]/20 transition-all placeholder:text-zinc-700"
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-white font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
+                    className="w-full flex items-center justify-center gap-2 bg-[#FF3B3B] text-[var(--kr-text)] font-black py-3.5 rounded-xl hover:bg-[#e02d2d] transition-all shadow-[0_0_20px_rgba(255,59,59,0.25)] hover:shadow-[0_0_30px_rgba(255,59,59,0.4)] mt-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm uppercase tracking-widest"
                   >
                     {loading && <Loader2 size={16} className="animate-spin" />}
                     {isLogin ? 'Entrar' : 'Crear Cuenta'}
@@ -421,5 +457,13 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         </div>
       </div>
     </div>
+
+    {confirmedSignupEmail && (
+      <EmailConfirmationModal
+        email={confirmedSignupEmail}
+        onClose={() => setConfirmedSignupEmail(null)}
+      />
+    )}
+    </>
   );
 };

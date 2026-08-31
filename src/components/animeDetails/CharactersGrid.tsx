@@ -22,10 +22,10 @@ export const CharactersGrid = ({ characters, animeId, animeTitle, currentUserId 
 
   return (
     <section className="mb-12">
-      <h2 className="text-2xl font-black text-white mb-6 flex items-center gap-3">
+      <h2 className="text-2xl font-black text-[var(--kr-text)] mb-6 flex items-center gap-3">
         <Users size={24} className="text-[#FF3B3B]" /> Personajes
         {characters.length > 0 && (
-          <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/15 bg-[#11131A] px-3 py-1 rounded-lg">
+          <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/15 bg-[var(--kr-surface)] px-3 py-1 rounded-lg">
             {characters.length}
           </span>
         )}
@@ -42,7 +42,7 @@ export const CharactersGrid = ({ characters, animeId, animeTitle, currentUserId 
             />
           ))
         ) : (
-          <div className="col-span-full bg-[#11131A]/50 border border-[#FF3B3B]/15 rounded-xl p-8 flex justify-center text-center">
+          <div className="col-span-full bg-[var(--kr-glass-4)] border border-[#FF3B3B]/15 rounded-xl p-8 flex justify-center text-center">
             <p className="text-zinc-500 font-bold italic">No se encontraron personajes.</p>
           </div>
         )}
@@ -52,7 +52,7 @@ export const CharactersGrid = ({ characters, animeId, animeTitle, currentUserId 
         <div className="mt-6 flex justify-center">
           <button
             onClick={() => setShowAll(v => !v)}
-            className="px-6 py-2.5 border border-[#FF3B3B]/20 bg-[#11131A] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl"
+            className="px-6 py-2.5 border border-[#FF3B3B]/20 bg-[var(--kr-surface)] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all rounded-xl"
           >
             {showAll ? 'Mostrar menos' : `Ver todos (${characters.length})`}
           </button>
@@ -94,10 +94,10 @@ const CharacterCard = ({ char, isFavorite, onClick }: CharacterCardProps) => {
   return (
     <button
       onClick={onClick}
-      className="text-left bg-[#11131A] relative group border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,59,59,0.1)] rounded-xl overflow-hidden"
+      className="text-left bg-[var(--kr-surface)] relative group border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-all duration-300 hover:shadow-[0_0_20px_rgba(255,59,59,0.1)] rounded-xl overflow-hidden"
     >
-      <div className="aspect-[3/4] overflow-hidden relative bg-[#0D0F15]">
-        {!loaded && <div className="absolute inset-0 bg-[#1A1C24] animate-pulse" />}
+      <div className="aspect-[3/4] overflow-hidden relative bg-[var(--kr-surface-sunken)]">
+        {!loaded && <div className="absolute inset-0 bg-[var(--kr-surface-2)] animate-pulse" />}
         <img
           src={char.character.images.jpg.image_url}
           alt={char.character.name}
@@ -105,15 +105,15 @@ const CharacterCard = ({ char, isFavorite, onClick }: CharacterCardProps) => {
           onLoad={() => setLoaded(true)}
           className={`w-full h-full object-cover group-hover:scale-110 transition-all duration-500 ${loaded ? 'opacity-80 group-hover:opacity-100' : 'opacity-0'}`}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent opacity-90" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--kr-surface)] via-transparent to-transparent opacity-90" />
         {isFavorite && (
-          <div className="absolute top-2 left-2 w-7 h-7 bg-[#11131A]/80 backdrop-blur-md flex items-center justify-center border border-[#FF3B3B]/15 rounded-lg">
+          <div className="absolute top-2 left-2 w-7 h-7 bg-[var(--kr-glass-2)] backdrop-blur-md flex items-center justify-center border border-[#FF3B3B]/15 rounded-lg">
             <Heart size={12} className="fill-[#FF3B3B] text-[#FF7777]" />
           </div>
         )}
       </div>
-      <div className="absolute bottom-0 w-full p-3 bg-gradient-to-t from-[#11131A] to-transparent">
-        <h4 className="text-white text-xs font-bold truncate mb-1 drop-shadow-md">{char.character.name}</h4>
+      <div className="absolute bottom-0 w-full p-3 bg-gradient-to-t from-[var(--kr-surface)] to-transparent">
+        <h4 className="text-[var(--kr-text)] text-xs font-bold truncate mb-1 drop-shadow-md">{char.character.name}</h4>
         <p className="text-[#FF7777] text-[10px] font-bold">{translateRole(char.role)}</p>
       </div>
     </button>

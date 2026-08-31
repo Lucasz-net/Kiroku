@@ -38,27 +38,27 @@ const SORT_OPTIONS = [
 type SortKey = typeof SORT_OPTIONS[number]['value'];
 
 const WatchlistSkeleton = () => (
-  <div className="min-h-screen bg-[#080A0F] pt-28 md:pt-32 pb-24 font-sans">
+  <div className="min-h-screen bg-[var(--kr-bg)] pt-28 md:pt-32 pb-24 font-sans">
     <div className="container mx-auto px-4 md:px-8 max-w-[1400px]">
       <div className="mb-10">
-        <div className="h-2.5 w-20 bg-[#11131A] rounded-full animate-pulse mb-3" />
-        <div className="h-10 w-48 bg-[#11131A] rounded-xl animate-pulse" />
+        <div className="h-2.5 w-20 bg-[var(--kr-surface)] rounded-full animate-pulse mb-3" />
+        <div className="h-10 w-48 bg-[var(--kr-surface)] rounded-xl animate-pulse" />
       </div>
       <div className="flex gap-2 mb-4 overflow-hidden">
-        {[...Array(5)].map((_, i) => <div key={i} className="h-9 w-28 shrink-0 bg-[#11131A] rounded-xl animate-pulse" />)}
+        {[...Array(5)].map((_, i) => <div key={i} className="h-9 w-28 shrink-0 bg-[var(--kr-surface)] rounded-xl animate-pulse" />)}
       </div>
       <div className="flex gap-2 mb-8">
-        <div className="h-9 flex-1 bg-[#11131A] rounded-xl animate-pulse" />
-        <div className="h-9 w-32 bg-[#11131A] rounded-xl animate-pulse" />
-        <div className="h-9 w-9 bg-[#11131A] rounded-xl animate-pulse" />
+        <div className="h-9 flex-1 bg-[var(--kr-surface)] rounded-xl animate-pulse" />
+        <div className="h-9 w-32 bg-[var(--kr-surface)] rounded-xl animate-pulse" />
+        <div className="h-9 w-9 bg-[var(--kr-surface)] rounded-xl animate-pulse" />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-5">
         {[...Array(12)].map((_, i) => (
-          <div key={i} className="bg-[#11131A] rounded-xl overflow-hidden border border-[#FF3B3B]/10 animate-pulse">
-            <div className="aspect-[3/4] bg-[#0D0F15]" />
+          <div key={i} className="bg-[var(--kr-surface)] rounded-xl overflow-hidden border border-[#FF3B3B]/10 animate-pulse">
+            <div className="aspect-[3/4] bg-[var(--kr-surface-sunken)]" />
             <div className="p-3 space-y-2">
-              <div className="h-3 bg-[#0D0F15] rounded w-4/5" />
-              <div className="h-2.5 bg-[#0D0F15] rounded w-1/2" />
+              <div className="h-3 bg-[var(--kr-surface-sunken)] rounded w-4/5" />
+              <div className="h-2.5 bg-[var(--kr-surface-sunken)] rounded w-1/2" />
             </div>
           </div>
         ))}
@@ -77,7 +77,7 @@ const WatchlistEmpty = () => (
     </svg>
     <p className="text-zinc-300 text-xl font-black">Lista vacía</p>
     <p className="text-zinc-600 text-sm">Agrega animes desde su página de detalles para verlos aquí.</p>
-    <Link to="/search" className="mt-2 flex items-center gap-2 px-6 py-3 bg-[#FF3B3B] text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#FF6B6B] transition-colors">
+    <Link to="/search" className="mt-2 flex items-center gap-2 px-6 py-3 bg-[#FF3B3B] text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#FF6B6B] transition-colors">
       <Search size={14} /> Explorar
     </Link>
   </div>
@@ -230,7 +230,7 @@ export const WatchlistPage = () => {
   if (loading) return <WatchlistSkeleton />;
 
   return (
-    <div className="min-h-screen bg-[#080A0F] pt-28 md:pt-32 pb-24 font-sans">
+    <div className="min-h-screen bg-[var(--kr-bg)] pt-28 md:pt-32 pb-24 font-sans">
       <div className="container mx-auto px-4 md:px-8 max-w-[1400px]">
 
         {/* Header */}
@@ -238,7 +238,7 @@ export const WatchlistPage = () => {
           <p className="wl-label text-sm font-bold uppercase tracking-widest text-zinc-500 mb-3 flex items-center gap-2">
             <List size={15} className="text-[#FF3B3B]/50" /> Mi Colección
           </p>
-          <h1 className="wl-title text-4xl md:text-6xl font-black text-white tracking-tight leading-none">
+          <h1 className="wl-title text-4xl md:text-6xl font-black text-[var(--kr-text)] tracking-tight leading-none">
             Watchlist
           </h1>
         </div>
@@ -255,13 +255,13 @@ export const WatchlistPage = () => {
               onClick={() => setParam('tab', tab.id, 'Todos')}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-widest whitespace-nowrap transition-all ${
                 activeTab === tab.id
-                  ? 'bg-[#FF3B3B] text-white border-[#FF3B3B]'
-                  : 'bg-[#11131A] text-zinc-500 border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 hover:text-zinc-300'
+                  ? 'bg-[#FF3B3B] text-[var(--kr-text)] border-[#FF3B3B]'
+                  : 'bg-[var(--kr-surface)] text-zinc-500 border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 hover:text-zinc-300'
               }`}
             >
               <tab.icon size={12} />
               {tab.label}
-              <span className={`text-[11px] tabular-nums ${activeTab === tab.id ? 'text-white/70' : 'text-zinc-600'}`}>
+              <span className={`text-[11px] tabular-nums ${activeTab === tab.id ? 'text-[var(--kr-text)]/70' : 'text-zinc-600'}`}>
                 {counts[tab.id as keyof typeof counts]}
               </span>
             </button>
@@ -275,7 +275,7 @@ export const WatchlistPage = () => {
             placeholder="Buscar por nombre..."
             value={searchQ}
             onChange={e => setParam('q', e.target.value)}
-            className="flex-1 px-4 py-2 bg-[#11131A] border border-[#FF3B3B]/15 focus:border-[#FF3B3B] focus:outline-none text-white text-xs font-bold rounded-xl placeholder:text-zinc-600 transition-all"
+            className="flex-1 px-4 py-2 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 focus:border-[#FF3B3B] focus:outline-none text-[var(--kr-text)] text-xs font-bold rounded-xl placeholder:text-zinc-600 transition-all"
           />
           <div className="flex gap-2 shrink-0">
             {/* Sort dropdown */}
@@ -285,20 +285,20 @@ export const WatchlistPage = () => {
                 className={`flex items-center gap-2 px-4 py-2 border text-xs font-bold uppercase tracking-widest rounded-xl transition-all whitespace-nowrap ${
                   sortKey !== 'recent'
                     ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/40 text-[#FF3B3B]'
-                    : 'bg-[#11131A] border-[#FF3B3B]/15 text-zinc-400 hover:text-zinc-200 hover:border-[#FF3B3B]/30'
+                    : 'bg-[var(--kr-surface)] border-[#FF3B3B]/15 text-zinc-400 hover:text-zinc-200 hover:border-[#FF3B3B]/30'
                 }`}
               >
                 <ArrowUpDown size={13} />
                 <span className="hidden sm:inline">{currentSortLabel}</span>
               </button>
               {showSortDropdown && (
-                <div className="absolute right-0 top-full mt-2 bg-[#0D0F15] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 min-w-44 rounded-xl overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 min-w-44 rounded-xl overflow-hidden">
                   {SORT_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       onClick={() => { setParam('sort', opt.value, 'recent'); setShowSortDropdown(false); }}
-                      className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${
-                        sortKey === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'
+                      className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[var(--kr-surface)] border-b border-[#FF3B3B]/[0.07] last:border-0 ${
+                        sortKey === opt.value ? 'text-[#FF3B3B] bg-[var(--kr-glass-2)]' : 'text-zinc-400'
                       }`}
                     >
                       {opt.label}
@@ -312,7 +312,7 @@ export const WatchlistPage = () => {
             <button
               onClick={() => setParam('view', viewMode === 'grid' ? 'list' : 'grid', 'grid')}
               title={viewMode === 'grid' ? 'Vista lista' : 'Vista grid'}
-              className="px-3 py-2 bg-[#11131A] border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 text-zinc-500 hover:text-zinc-200 rounded-xl transition-all shrink-0"
+              className="px-3 py-2 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 text-zinc-500 hover:text-zinc-200 rounded-xl transition-all shrink-0"
             >
               {viewMode === 'grid' ? <AlignJustify size={16} /> : <LayoutGrid size={16} />}
             </button>
@@ -345,7 +345,7 @@ export const WatchlistPage = () => {
                   className={`shrink-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest border rounded-lg transition-all ${
                     !hasActiveGenres
                       ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]'
-                      : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-white'
+                      : 'bg-[var(--kr-surface-sunken)] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-[var(--kr-text)]'
                   }`}
                 >
                   Todos
@@ -357,7 +357,7 @@ export const WatchlistPage = () => {
                     className={`shrink-0 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest border rounded-lg transition-all whitespace-nowrap ${
                       selectedGenres.includes(genre)
                         ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]'
-                        : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-white'
+                        : 'bg-[var(--kr-surface-sunken)] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-[var(--kr-text)]'
                     }`}
                   >
                     {translateGenre(genre)}
@@ -365,7 +365,7 @@ export const WatchlistPage = () => {
                 ))}
               </div>
               {/* Gradiente indicador de scroll — solo mobile */}
-              <div className="md:hidden absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#080A0F] to-transparent pointer-events-none" />
+              <div className="md:hidden absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--kr-bg)] to-transparent pointer-events-none" />
             </div>
 
             {/* Texto indicador de scroll — solo mobile */}
@@ -397,7 +397,7 @@ export const WatchlistPage = () => {
                 <Link
                   key={anime.id}
                   to={`/anime/${anime.anime_id}`}
-                  className="group flex items-center gap-4 p-3 bg-[#11131A] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 rounded-xl transition-all"
+                  className="group flex items-center gap-4 p-3 bg-[var(--kr-surface)] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 rounded-xl transition-all"
                 >
                   <SavedAnimeCover
                     animeId={anime.anime_id}
@@ -407,7 +407,7 @@ export const WatchlistPage = () => {
                     className="w-11 h-16 shrink-0 overflow-hidden rounded-lg opacity-90 group-hover:opacity-100 transition-opacity"
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="text-white text-sm font-bold truncate group-hover:text-[#FF3B3B] transition-colors mb-1">{anime.title}</h4>
+                    <h4 className="text-[var(--kr-text)] text-sm font-bold truncate group-hover:text-[#FF3B3B] transition-colors mb-1">{anime.title}</h4>
                     <span className={`flex items-center gap-1 text-xs font-bold uppercase tracking-wide ${color}`}>
                       <Icon size={11} />{anime.status}
                     </span>
@@ -417,7 +417,7 @@ export const WatchlistPage = () => {
                           <span key={g} className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
                             selectedGenres.includes(g)
                               ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/30 text-[#FF7777]'
-                              : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-600'
+                              : 'bg-[var(--kr-surface-sunken)] border-[#FF3B3B]/[0.07] text-zinc-600'
                           }`}>
                             {translateGenre(g)}
                           </span>
@@ -428,9 +428,9 @@ export const WatchlistPage = () => {
                   <div className="flex items-center gap-3 shrink-0">
                     {anime.is_favorite && <Heart size={13} className="fill-[#FF3B3B] text-[#FF3B3B]" />}
                     {anime.user_score != null && (
-                      <div className="flex items-center gap-0.5 bg-[#0D0F15] border border-[#FF3B3B]/20 px-2 py-1 rounded-lg">
+                      <div className="flex items-center gap-0.5 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 px-2 py-1 rounded-lg">
                         <Star size={11} className="fill-[#FF3B3B] text-[#FF3B3B]" />
-                        <span className="text-white text-xs font-black tabular-nums">{anime.user_score}</span>
+                        <span className="text-[var(--kr-text)] text-xs font-black tabular-nums">{anime.user_score}</span>
                       </div>
                     )}
                   </div>
@@ -445,7 +445,7 @@ export const WatchlistPage = () => {
               <Link
                 key={anime.id}
                 to={`/anime/${anime.anime_id}`}
-                className="group relative bg-[#11131A] overflow-hidden rounded-xl border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-[border-color] duration-500"
+                className="group relative bg-[var(--kr-surface)] overflow-hidden rounded-xl border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 transition-[border-color] duration-500"
               >
                 <div className="relative aspect-[3/4] overflow-hidden">
                   <SavedAnimeCover
@@ -455,9 +455,9 @@ export const WatchlistPage = () => {
                     rowId={anime.id}
                     className="w-full h-full transition-opacity duration-500 opacity-90 group-hover:opacity-100"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#11131A] via-transparent to-transparent opacity-90" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[var(--kr-surface)] via-transparent to-transparent opacity-90" />
                   <div className="absolute bottom-0 left-0 w-full p-3">
-                    <h4 className="text-white text-xs font-bold line-clamp-2 leading-tight mb-1.5 group-hover:text-[#FF3B3B] transition-colors">
+                    <h4 className="text-[var(--kr-text)] text-xs font-bold line-clamp-2 leading-tight mb-1.5 group-hover:text-[#FF3B3B] transition-colors">
                       {anime.title}
                     </h4>
                     {(() => {
@@ -473,14 +473,14 @@ export const WatchlistPage = () => {
                     })()}
                   </div>
                   {anime.is_favorite && (
-                    <div className="absolute top-2 left-2 w-7 h-7 bg-[#11131A]/80 backdrop-blur-sm flex items-center justify-center border border-[#FF3B3B]/15 rounded-lg">
+                    <div className="absolute top-2 left-2 w-7 h-7 bg-[var(--kr-glass-2)] backdrop-blur-sm flex items-center justify-center border border-[#FF3B3B]/15 rounded-lg">
                       <Heart size={12} className="fill-[#FF3B3B] text-[#FF7777]" />
                     </div>
                   )}
                   {anime.user_score != null && (
-                    <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-[#0D0F15]/90 backdrop-blur-sm border border-[#FF3B3B]/20 px-1.5 py-1 rounded-md">
+                    <div className="absolute top-2 right-2 flex items-center gap-0.5 bg-[var(--kr-glass-1)] backdrop-blur-sm border border-[#FF3B3B]/20 px-1.5 py-1 rounded-md">
                       <Star size={11} className="fill-[#FF3B3B] text-[#FF3B3B]" />
-                      <span className="text-white text-xs font-black tabular-nums">{anime.user_score}</span>
+                      <span className="text-[var(--kr-text)] text-xs font-black tabular-nums">{anime.user_score}</span>
                     </div>
                   )}
                 </div>

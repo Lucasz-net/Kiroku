@@ -6,10 +6,70 @@
   --font-display: "Rajdhani", sans-serif;
 }
 
+/*
+ * Tokens de tema — oscuro es el default del sitio, claro es opt-in
+ * (interruptor en Configuración del perfil, ver ThemeContext).
+ *
+ * El rojo de marca (#FF3B3B y variantes) NO tiene token: es el mismo en los
+ * dos temas a propósito, funciona igual de bien sobre fondo claro que
+ * oscuro. Lo que sí cambia es la escala de superficies/fondo (--kr-*) y el
+ * texto — para el texto se reutiliza la escala `zinc` de Tailwind
+ * redefiniendo sus variables bajo [data-theme="light"], así que
+ * `text-zinc-400`, `border-zinc-700`, etc. se re-temizan solos en toda la
+ * app sin tocar archivo por archivo.
+ */
 :root {
+  --kr-bg: #080A0F;
+  --kr-surface-sunken: #0D0F15;
+  --kr-surface: #11131A;
+  --kr-surface-2: #1A1C24;
+  --kr-text: #F5F5F6;
+
+  /*
+   * "Vidrio" — superficies translúcidas con backdrop-blur (header, bottom
+   * nav, badges flotantes sobre portadas, etc). Van con alfa fijo en la
+   * variable en vez de el modificador /NN de Tailwind a propósito: con /NN
+   * el mismo porcentaje dejaba pasar mucho más "neblina" sobre fondo claro
+   * que sobre oscuro (blanco translúcido + blur se ve borroso/lechoso de
+   * una forma en la que el mismo % en oscuro no se nota), así que en claro
+   * el alfa arranca mucho más alto en las cuatro escalas.
+   */
+  --kr-glass-1: rgba(17,19,26,0.93);
+  --kr-glass-2: rgba(17,19,26,0.85);
+  --kr-glass-3: rgba(15,17,24,0.72);
+  --kr-glass-4: rgba(15,17,24,0.52);
+
   background-color: #030712;
   color: #ecfeff;
   font-family: var(--font-space-mono);
+}
+
+:root[data-theme="light"] {
+  --kr-bg: #F3F1ED;
+  --kr-surface-sunken: #EAE8E3;
+  --kr-surface: #FFFFFF;
+  --kr-surface-2: #EDEBE6;
+  --kr-text: #15161B;
+
+  --kr-glass-1: rgba(255,255,255,0.97);
+  --kr-glass-2: rgba(255,255,255,0.95);
+  --kr-glass-3: rgba(255,255,255,0.92);
+  --kr-glass-4: rgba(255,255,255,0.88);
+
+  /* Escala zinc invertida (misma distancia perceptual al fondo, en el
+     sentido opuesto) para que todo lo que ya usa text-zinc-N/border-zinc-N
+     siga leyéndose igual de bien sobre fondo claro. */
+  --color-zinc-50: #09090b;
+  --color-zinc-100: #18181b;
+  --color-zinc-200: #27272a;
+  --color-zinc-300: #3f3f46;
+  --color-zinc-400: #52525b;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #a1a1aa;
+  --color-zinc-700: #d4d4d8;
+  --color-zinc-800: #e4e4e7;
+  --color-zinc-900: #f4f4f5;
+  --color-zinc-950: #fafafa;
 }
 
 html, body, #root {

@@ -16,7 +16,7 @@ export const AnimeProgressHud = ({ anime, progress, isSaving, onDecrement, onInc
   const showGrid = total > 0 && total <= MAX_GRID_EPS;
 
   return (
-    <div className="flex flex-col gap-3 bg-[#1A1C24] rounded-xl border border-[#FF3B3B]/20 px-4 py-3 w-full">
+    <div className="flex flex-col gap-3 bg-[var(--kr-surface-2)] rounded-xl border border-[#FF3B3B]/20 px-4 py-3 w-full">
 
       {/* Barra de progreso numérica */}
       <div className="flex items-center justify-between">
@@ -28,22 +28,22 @@ export const AnimeProgressHud = ({ anime, progress, isSaving, onDecrement, onInc
           <button
             onClick={onDecrement}
             disabled={progress <= 0 || isSaving}
-            className="w-6 h-6 flex items-center justify-center bg-[#11131A] text-zinc-400 border border-[#FF3B3B]/15 hover:text-[#FF3B3B] disabled:opacity-50 transition-colors rounded-md"
+            className="w-6 h-6 flex items-center justify-center bg-[var(--kr-surface)] text-zinc-400 border border-[#FF3B3B]/15 hover:text-[#FF3B3B] disabled:opacity-50 transition-colors rounded-md"
           >-</button>
-          <span className="text-white font-mono text-sm font-bold w-16 text-center tabular-nums">
+          <span className="text-[var(--kr-text)] font-mono text-sm font-bold w-16 text-center tabular-nums">
             {progress} <span className="text-zinc-600 text-xs">/ {total || '?'}</span>
           </span>
           <button
             onClick={onIncrement}
             disabled={isSaving}
-            className="w-6 h-6 flex items-center justify-center bg-[#11131A] text-zinc-400 border border-[#FF3B3B]/15 hover:text-[#FF3B3B] disabled:opacity-50 transition-colors rounded-md"
+            className="w-6 h-6 flex items-center justify-center bg-[var(--kr-surface)] text-zinc-400 border border-[#FF3B3B]/15 hover:text-[#FF3B3B] disabled:opacity-50 transition-colors rounded-md"
           >+</button>
         </div>
       </div>
 
       {/* Barra de progreso visual */}
       {total > 0 && (
-        <div className="h-1 bg-[#0D0F15] rounded-full overflow-hidden">
+        <div className="h-1 bg-[var(--kr-surface-sunken)] rounded-full overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-[#FF3B3B] to-[#FF7777] rounded-full transition-all duration-500"
             style={{ width: `${pct}%` }}
@@ -71,7 +71,7 @@ export const AnimeProgressHud = ({ anime, progress, isSaving, onDecrement, onInc
                     ? 'bg-[#FF3B3B] border border-[#FF3B3B]/60'
                     : isCurrent
                       ? 'bg-[#FF3B3B]/30 border border-[#FF3B3B]/50 ring-1 ring-[#FF3B3B]/40'
-                      : 'bg-[#0D0F15] border border-[#FF3B3B]/[0.08]'
+                      : 'bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.08]'
                 }`}
               />
             );

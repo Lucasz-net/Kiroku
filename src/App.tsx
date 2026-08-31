@@ -13,6 +13,7 @@ import { LoginModal } from './components/LoginModal';
 import { UsernameSetupModal } from './components/UsernameSetupModal';
 import { Home } from './pages/Home';
 import { UserDataProvider } from './contexts/UserDataContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const Search = lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
 const AnimeDetails = lazy(() => import('./pages/AnimeDetails').then(m => ({ default: m.AnimeDetails })));
@@ -101,7 +102,7 @@ const AppContent = () => {
   // una pantalla interna (ver AnimeDetails: guardar un anime sin sesión).
   const { needsUsernameSetup, authReady, isLoginOpen, openLogin, closeLogin } = useUserData();
   return (
-    <div className="min-h-screen bg-[#080A0F] text-zinc-100 flex flex-col font-sans relative">
+    <div className="min-h-screen bg-[var(--kr-bg)] text-zinc-100 flex flex-col font-sans relative">
       <Header onOpenLogin={openLogin} />
       <main className="flex-1 w-full relative pb-16 md:pb-0">
         <AnimatedRoutes />
@@ -117,7 +118,7 @@ const AppContent = () => {
         position="bottom-right"
         toastOptions={{
           style: {
-            background: '#11131A',
+            background: 'var(--kr-surface)',
             border: '1px solid rgba(255,59,59,0.25)',
             color: '#fff',
             fontFamily: 'inherit',
@@ -132,12 +133,14 @@ const AppContent = () => {
 
 function App() {
   return (
-    <Router>
-      <UserDataProvider>
-        <ScrollToTop />
-        <AppContent />
-      </UserDataProvider>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <UserDataProvider>
+          <ScrollToTop />
+          <AppContent />
+        </UserDataProvider>
+      </Router>
+    </ThemeProvider>
   );
 }
 

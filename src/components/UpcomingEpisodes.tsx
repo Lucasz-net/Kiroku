@@ -82,9 +82,9 @@ export const UpcomingEpisodes = ({ animes }: UpcomingEpisodesProps) => {
           <Link
             key={entry.mal_id}
             to={`/anime/${entry.mal_id}`}
-            className="group shrink-0 w-56 flex items-center gap-3 bg-[#11131A] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/40 rounded-xl p-2.5 transition-colors"
+            className="group shrink-0 w-56 flex items-center gap-3 bg-[var(--kr-surface)] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/40 rounded-xl p-2.5 transition-colors"
           >
-            <div className="w-11 h-16 shrink-0 rounded-lg overflow-hidden bg-[#0D0F15]">
+            <div className="w-11 h-16 shrink-0 rounded-lg overflow-hidden bg-[var(--kr-surface-sunken)]">
               {entry.image_url && (
                 <img
                   src={entry.image_url}
@@ -96,7 +96,7 @@ export const UpcomingEpisodes = ({ animes }: UpcomingEpisodesProps) => {
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-white truncate group-hover:text-[#FF3B3B] transition-colors">
+              <p className="text-xs font-bold text-[var(--kr-text)] truncate group-hover:text-[#FF3B3B] transition-colors">
                 {entry.title}
               </p>
               <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mt-1">

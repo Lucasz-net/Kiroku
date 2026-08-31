@@ -104,16 +104,16 @@ const CustomDropdown = ({ label, value, options, onChange, disabled = false, pla
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-labelledby={labelId}
-        className={`w-full bg-[#0D0F15] text-white border border-[#FF3B3B]/10 p-3.5 flex justify-between items-center transition-colors text-sm font-bold rounded-lg ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#FF3B3B]/40'}`}
+        className={`w-full bg-[var(--kr-surface-sunken)] text-[var(--kr-text)] border border-[#FF3B3B]/10 p-3.5 flex justify-between items-center transition-colors text-sm font-bold rounded-lg ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#FF3B3B]/40'}`}
       >
         <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         <span className={`text-zinc-500 transition-transform duration-300 text-xs ${isOpen ? 'rotate-180 text-[#FF3B3B]' : ''}`}>▼</span>
       </button>
       {isOpen && !disabled && (
-        <div id={listboxId} role="listbox" aria-labelledby={labelId} className="absolute top-[75px] left-0 w-full bg-[#0D0F15] border border-[#FF3B3B]/30 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 max-h-60 overflow-y-auto rounded-lg">
-          <button type="button" role="option" aria-selected={value === ''} onClick={() => { onChange(''); closeAndRefocus(); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] ${value === '' ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}>{placeholder}</button>
+        <div id={listboxId} role="listbox" aria-labelledby={labelId} className="absolute top-[75px] left-0 w-full bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/30 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 max-h-60 overflow-y-auto rounded-lg">
+          <button type="button" role="option" aria-selected={value === ''} onClick={() => { onChange(''); closeAndRefocus(); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[var(--kr-surface)] border-b border-[#FF3B3B]/[0.07] ${value === '' ? 'text-[#FF3B3B] bg-[var(--kr-glass-2)]' : 'text-zinc-400'}`}>{placeholder}</button>
           {options.map((opt) => (
-            <button key={opt.value} type="button" role="option" aria-selected={value === opt.value} onClick={() => { onChange(opt.value); closeAndRefocus(); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${value === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}>{opt.label}</button>
+            <button key={opt.value} type="button" role="option" aria-selected={value === opt.value} onClick={() => { onChange(opt.value); closeAndRefocus(); }} className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[var(--kr-surface)] border-b border-[#FF3B3B]/[0.07] last:border-0 ${value === opt.value ? 'text-[#FF3B3B] bg-[var(--kr-glass-2)]' : 'text-zinc-400'}`}>{opt.label}</button>
           ))}
         </div>
       )}
@@ -122,7 +122,7 @@ const CustomDropdown = ({ label, value, options, onChange, disabled = false, pla
 };
 
 const EmptySearchState = ({ onClear }: { onClear: () => void }) => (
-  <div className="text-center py-20 bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl flex flex-col items-center gap-4">
+  <div className="text-center py-20 bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl flex flex-col items-center gap-4">
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="opacity-30">
       <circle cx="34" cy="34" r="20" stroke="#FF3B3B" strokeWidth="3" />
       <line x1="48" y1="48" x2="68" y2="68" stroke="#FF3B3B" strokeWidth="3" strokeLinecap="round" />
@@ -131,7 +131,7 @@ const EmptySearchState = ({ onClear }: { onClear: () => void }) => (
     </svg>
     <p className="text-zinc-300 text-lg font-black">Sin resultados</p>
     <p className="text-zinc-600 text-sm">Intenta con otros filtros o términos de búsqueda.</p>
-    <button onClick={onClear} className="px-6 py-2.5 border border-[#FF3B3B]/20 bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all rounded-xl">
+    <button onClick={onClear} className="px-6 py-2.5 border border-[#FF3B3B]/20 bg-[var(--kr-surface-sunken)] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all rounded-xl">
       Reiniciar Filtros
     </button>
   </div>
@@ -388,7 +388,7 @@ export const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080A0F] font-sans pt-28 md:pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--kr-bg)] font-sans pt-28 md:pt-32 pb-24">
       <div className="container mx-auto px-4 md:px-8 max-w-[1400px]">
 
         <div className={`max-w-4xl mx-auto transition-all duration-500 ${isDiscoverMode ? 'mt-4 mb-16' : 'mb-8'}`}>
@@ -397,7 +397,7 @@ export const Search = () => {
               <p className="src-label text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3 flex items-center justify-center gap-2">
                 <SearchIcon size={13} className="text-[#FF3B3B]/50" /> Catálogo
               </p>
-              <h1 className="src-title text-4xl md:text-5xl font-black text-white tracking-tight">
+              <h1 className="src-title text-4xl md:text-5xl font-black text-[var(--kr-text)] tracking-tight">
                 Encuentra tu próximo anime
               </h1>
             </div>
@@ -408,28 +408,28 @@ export const Search = () => {
               <input
                 type="text" value={query} onChange={handleInputChange}
                 placeholder="Buscar animes, películas..."
-                className="flex-1 p-4 pl-6 text-white bg-[#11131A] border border-[#FF3B3B]/15 focus:border-[#FF3B3B] focus:outline-none focus:ring-1 focus:ring-[#FF3B3B]/30 transition-all font-bold text-sm rounded-xl placeholder:text-zinc-600"
+                className="flex-1 p-4 pl-6 text-[var(--kr-text)] bg-[var(--kr-surface)] border border-[#FF3B3B]/15 focus:border-[#FF3B3B] focus:outline-none focus:ring-1 focus:ring-[#FF3B3B]/30 transition-all font-bold text-sm rounded-xl placeholder:text-zinc-600"
               />
               <div className="flex gap-2 shrink-0">
                 <button type="button" title="Filtros Advanced" onClick={() => setShowFilters(!showFilters)}
-                  className={`px-5 font-bold transition-all border flex items-center justify-center rounded-xl ${showFilters ? 'bg-[#FF3B3B]/15 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[#11131A] border-[#FF3B3B]/10 text-zinc-500 hover:text-white hover:border-[#FF3B3B]/30'}`}>
+                  className={`px-5 font-bold transition-all border flex items-center justify-center rounded-xl ${showFilters ? 'bg-[#FF3B3B]/15 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[var(--kr-surface)] border-[#FF3B3B]/10 text-zinc-500 hover:text-[var(--kr-text)] hover:border-[#FF3B3B]/30'}`}>
                   <Filter size={18} />
                 </button>
-                <button type="submit" className="bg-[#FF3B3B] text-white px-8 py-4 font-black uppercase tracking-widest hover:bg-[#FF5555] transition-colors text-sm rounded-xl">
+                <button type="submit" className="bg-[#FF3B3B] text-[var(--kr-text)] px-8 py-4 font-black uppercase tracking-widest hover:bg-[#FF5555] transition-colors text-sm rounded-xl">
                   Buscar
                 </button>
               </div>
             </div>
 
             {instantResults.length > 0 && !showFilters && (
-              <div className="absolute top-full left-0 w-full sm:w-[calc(100%-170px)] bg-[#11131A] mt-2 border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.6)] z-50 overflow-hidden rounded-xl">
+              <div className="absolute top-full left-0 w-full sm:w-[calc(100%-170px)] bg-[var(--kr-surface)] mt-2 border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.6)] z-50 overflow-hidden rounded-xl">
                 {instantResults.map((anime) => (
-                  <Link key={anime.mal_id} to={`/anime/${anime.mal_id}`} className="flex items-center gap-4 p-3 border-b border-[#FF3B3B]/[0.07] hover:bg-[#1A1C24] transition-colors last:border-0">
-                    <div className="w-10 h-14 bg-[#0D0F15] shrink-0 overflow-hidden rounded-lg">
+                  <Link key={anime.mal_id} to={`/anime/${anime.mal_id}`} className="flex items-center gap-4 p-3 border-b border-[#FF3B3B]/[0.07] hover:bg-[var(--kr-surface-2)] transition-colors last:border-0">
+                    <div className="w-10 h-14 bg-[var(--kr-surface-sunken)] shrink-0 overflow-hidden rounded-lg">
                       <img src={anime.images.jpg.image_url} alt={anime.title} className="w-full h-full object-cover opacity-80" loading="lazy" />
                     </div>
                     <div>
-                      <p className="text-white text-sm font-bold">{anime.title}</p>
+                      <p className="text-[var(--kr-text)] text-sm font-bold">{anime.title}</p>
                       <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">{anime.episodes ? `${anime.episodes} eps` : 'En emisión'}</p>
                     </div>
                   </Link>
@@ -438,13 +438,13 @@ export const Search = () => {
             )}
 
             {showFilters && (
-              <div className="mt-3 bg-[#11131A] border border-[#FF3B3B]/20 p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.4)] animate-in fade-in rounded-xl relative">
+              <div className="mt-3 bg-[var(--kr-surface)] border border-[#FF3B3B]/20 p-6 md:p-8 shadow-[0_8px_30px_rgba(0,0,0,0.4)] animate-in fade-in rounded-xl relative">
                 <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent rounded-t-xl" />
                 <div className="flex justify-between items-center mb-6 pb-4 border-b border-[#FF3B3B]/10">
                   <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                     <Filter size={13} className="text-[#FF3B3B]/50" /> Filtros de Búsqueda
                   </p>
-                  <button type="button" onClick={() => setShowFilters(false)} className="text-zinc-500 hover:text-white transition-colors bg-[#0D0F15] p-2 border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 rounded-lg">
+                  <button type="button" onClick={() => setShowFilters(false)} className="text-zinc-500 hover:text-[var(--kr-text)] transition-colors bg-[var(--kr-surface-sunken)] p-2 border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 rounded-lg">
                     <X size={15} />
                   </button>
                 </div>
@@ -460,7 +460,7 @@ export const Search = () => {
                   <div className="flex flex-wrap gap-2">
                     {ANIME_FORMATS.map(format => (
                       <button key={format.value} type="button" onClick={() => toggleFormat(format.value)}
-                        className={`px-3 py-1.5 text-xs font-bold transition-all border rounded-lg ${localFilters.formats.includes(format.value) ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-white'}`}>
+                        className={`px-3 py-1.5 text-xs font-bold transition-all border rounded-lg ${localFilters.formats.includes(format.value) ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[var(--kr-surface-sunken)] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-[var(--kr-text)]'}`}>
                         {format.label}
                       </button>
                     ))}
@@ -472,7 +472,7 @@ export const Search = () => {
                   <div className="flex flex-wrap gap-2">
                     {GENRES.map(genre => (
                       <button key={genre.id} type="button" onClick={() => toggleGenre(genre.id)}
-                        className={`px-3 py-1.5 text-xs font-bold transition-all border rounded-lg ${localFilters.genres.includes(genre.id.toString()) ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-white'}`}>
+                        className={`px-3 py-1.5 text-xs font-bold transition-all border rounded-lg ${localFilters.genres.includes(genre.id.toString()) ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[var(--kr-surface-sunken)] border-[#FF3B3B]/[0.07] text-zinc-500 hover:border-[#FF3B3B]/30 hover:text-[var(--kr-text)]'}`}>
                         {genre.name}
                       </button>
                     ))}
@@ -483,12 +483,12 @@ export const Search = () => {
                   <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest block mb-3">Estudios</label>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => setLocalFilters({...localFilters, studioId: '', studioName: ''})}
-                      className={`px-3 py-1.5 border text-xs font-bold transition-colors rounded-lg ${!localFilters.studioId ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-500 hover:text-white hover:border-[#FF3B3B]/30'}`}>
+                      className={`px-3 py-1.5 border text-xs font-bold transition-colors rounded-lg ${!localFilters.studioId ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[var(--kr-surface-sunken)] border-[#FF3B3B]/[0.07] text-zinc-500 hover:text-[var(--kr-text)] hover:border-[#FF3B3B]/30'}`}>
                       Todos
                     </button>
                     {TOP_STUDIOS.map(studio => (
                       <button key={studio.value} type="button" onClick={() => setLocalFilters({...localFilters, studioId: studio.value, studioName: studio.label})}
-                        className={`px-3 py-1.5 border text-xs font-bold transition-colors rounded-lg ${localFilters.studioId === studio.value ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[#0D0F15] border-[#FF3B3B]/[0.07] text-zinc-500 hover:bg-[#11131A] hover:text-white hover:border-[#FF3B3B]/30'}`}>
+                        className={`px-3 py-1.5 border text-xs font-bold transition-colors rounded-lg ${localFilters.studioId === studio.value ? 'bg-[#FF3B3B]/10 border-[#FF3B3B]/60 text-[#FF3B3B]' : 'bg-[var(--kr-surface-sunken)] border-[#FF3B3B]/[0.07] text-zinc-500 hover:bg-[var(--kr-surface)] hover:text-[var(--kr-text)] hover:border-[#FF3B3B]/30'}`}>
                         {studio.label}
                       </button>
                     ))}
@@ -524,9 +524,9 @@ export const Search = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 pb-4 border-b border-[#FF3B3B]/10 gap-3">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Búsqueda</p>
-                <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <h2 className="text-2xl font-black text-[var(--kr-text)] flex items-center gap-3">
                   Resultados
-                  <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/10 bg-[#11131A] px-3 py-1 rounded-lg">{results.length}</span>
+                  <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/10 bg-[var(--kr-surface)] px-3 py-1 rounded-lg">{results.length}</span>
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -541,20 +541,20 @@ export const Search = () => {
                     aria-haspopup="listbox"
                     aria-expanded={showSortDropdown}
                     aria-controls={sortListboxId}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-[#11131A] border border-[#FF3B3B]/15 text-zinc-400 hover:text-zinc-200 hover:border-[#FF3B3B]/30 transition-all text-xs font-bold uppercase tracking-widest rounded-xl"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-[var(--kr-surface)] border border-[#FF3B3B]/15 text-zinc-400 hover:text-zinc-200 hover:border-[#FF3B3B]/30 transition-all text-xs font-bold uppercase tracking-widest rounded-xl"
                   >
                     <ArrowUpDown size={13} />
                     {currentSortLabel}
                   </button>
                   {showSortDropdown && (
-                    <div id={sortListboxId} role="listbox" className="absolute right-0 top-full mt-2 bg-[#0D0F15] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 min-w-44 rounded-xl overflow-hidden">
+                    <div id={sortListboxId} role="listbox" className="absolute right-0 top-full mt-2 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-50 min-w-44 rounded-xl overflow-hidden">
                       {SORT_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
                           role="option"
                           aria-selected={sortKey === opt.value}
                           onClick={() => { applySort(opt.value as SortKey); closeSortDropdown(); }}
-                          className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[#11131A] border-b border-[#FF3B3B]/[0.07] last:border-0 ${sortKey === opt.value ? 'text-[#FF3B3B] bg-[#11131A]/80' : 'text-zinc-400'}`}
+                          className={`w-full text-left px-4 py-3 text-xs font-bold transition-colors hover:bg-[var(--kr-surface)] border-b border-[#FF3B3B]/[0.07] last:border-0 ${sortKey === opt.value ? 'text-[#FF3B3B] bg-[var(--kr-glass-2)]' : 'text-zinc-400'}`}
                         >
                           {opt.label}
                         </button>
@@ -562,7 +562,7 @@ export const Search = () => {
                     </div>
                   )}
                 </div>
-                <button onClick={clearFilters} className="flex items-center gap-2 px-4 py-2.5 bg-[#11131A] border border-[#FF3B3B]/10 text-zinc-500 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/30 transition-all text-xs font-bold uppercase tracking-widest rounded-xl">
+                <button onClick={clearFilters} className="flex items-center gap-2 px-4 py-2.5 bg-[var(--kr-surface)] border border-[#FF3B3B]/10 text-zinc-500 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/30 transition-all text-xs font-bold uppercase tracking-widest rounded-xl">
                   <FilterX size={13} /> Limpiar
                 </button>
               </div>
@@ -575,7 +575,7 @@ export const Search = () => {
             {hasNextPage && (
               <div className="flex justify-center mt-12">
                 <button onClick={() => executeAdvancedSearch(searchParams, page + 1)} disabled={loadingMore}
-                  className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[#11131A] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-white hover:border-[#FF3B3B] transition-all disabled:opacity-40 rounded-xl">
+                  className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[var(--kr-surface)] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all disabled:opacity-40 rounded-xl">
                   {loadingMore ? <><Loader2 size={14} className="animate-spin" /> Cargando...</> : <><Plus size={14} /> Cargar más</>}
                 </button>
               </div>
@@ -589,19 +589,19 @@ export const Search = () => {
 
         {isDiscoverMode && (
           <div className="flex flex-col gap-8 animate-in fade-in duration-700">
-            <div className="bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+            <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6 md:p-8 relative overflow-hidden">
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent" />
               <div className="flex flex-col md:flex-row items-stretch">
                 <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-4 md:py-8">
                   <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3 flex items-center justify-center gap-2">
                     <Dices size={13} className="text-[#FF3B3B]/50" /> Descubrimiento
                   </p>
-                  <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tight">¿No sabes qué ver?</h2>
+                  <h2 className="text-3xl md:text-4xl font-black text-[var(--kr-text)] mb-4 tracking-tight">¿No sabes qué ver?</h2>
                   <p className="text-zinc-400 text-md leading-relaxed mb-8 max-w-xs">
                     Deja que el destino elija tu próxima aventura. Kiroku elegirá una serie o película al azar para ti.
                   </p>
                   <button onClick={handlePickRandomAnime} disabled={loadingRandom}
-                    className="inline-flex items-center gap-3 px-6 py-3 bg-[#FF3B3B] text-white font-black tracking-widest text-xs uppercase hover:bg-[#FF5555] transition-colors disabled:opacity-60 rounded-xl">
+                    className="inline-flex items-center gap-3 px-6 py-3 bg-[#FF3B3B] text-[var(--kr-text)] font-black tracking-widest text-xs uppercase hover:bg-[#FF5555] transition-colors disabled:opacity-60 rounded-xl">
                     {loadingRandom ? <Loader2 size={16} className="animate-spin" /> : <Dices size={16} />}
                     {loadingRandom ? 'Calculando...' : 'Generar al Azar'}
                   </button>
@@ -616,13 +616,13 @@ export const Search = () => {
                       <AnimeCard anime={randomAnime} />
                     ) : (
                       <div>
-                        <div className="aspect-[3/4] bg-[#0D0F15] border border-[#FF3B3B]/10 rounded-xl flex flex-col items-center justify-center gap-3 text-zinc-700">
+                        <div className="aspect-[3/4] bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10 rounded-xl flex flex-col items-center justify-center gap-3 text-zinc-700">
                           <Dices size={36} className="opacity-40" />
                           <span className="text-xs font-bold uppercase tracking-widest">Esperando</span>
                         </div>
                         <div className="pt-3 flex flex-col gap-2">
-                          <div className="h-3.5 bg-[#0D0F15] rounded w-4/5" />
-                          <div className="h-2.5 bg-[#0D0F15] rounded w-2/5" />
+                          <div className="h-3.5 bg-[var(--kr-surface-sunken)] rounded w-4/5" />
+                          <div className="h-2.5 bg-[var(--kr-surface-sunken)] rounded w-2/5" />
                         </div>
                       </div>
                     )}
@@ -631,7 +631,7 @@ export const Search = () => {
               </div>
             </div>
 
-            <div className="bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6 md:p-8 relative">
+            <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6 md:p-8 relative">
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent" />
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -639,7 +639,7 @@ export const Search = () => {
                     <Star size={13} className="text-[#FF3B3B]/50" />
                     {recsPersonalized ? 'Según tu lista' : 'Selección'}
                   </p>
-                  <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                  <h2 className="text-2xl md:text-3xl font-black text-[var(--kr-text)] tracking-tight">
                     {recsPersonalized ? 'Para vos' : 'Recomendados'}
                   </h2>
                   {recsPersonalized && myTopGenres.length > 0 && (
@@ -649,7 +649,7 @@ export const Search = () => {
                   )}
                 </div>
                 <button onClick={handleLoadRecommendations} disabled={loadingRecs}
-                  className="flex items-center gap-2 px-4 py-2.5 border border-[#FF3B3B]/10 bg-[#0D0F15] text-zinc-500 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/30 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-40 rounded-xl">
+                  className="flex items-center gap-2 px-4 py-2.5 border border-[#FF3B3B]/10 bg-[var(--kr-surface-sunken)] text-zinc-500 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/30 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-40 rounded-xl">
                   <RefreshCw size={13} className={loadingRecs ? 'animate-spin' : ''} /> Actualizar
                 </button>
               </div>
@@ -657,10 +657,10 @@ export const Search = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {[...Array(6)].map((_, i) => (
                     <div key={i}>
-                      <div className="aspect-[3/4] bg-[#0D0F15] border border-[#FF3B3B]/[0.07] animate-pulse rounded-xl" />
+                      <div className="aspect-[3/4] bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.07] animate-pulse rounded-xl" />
                       <div className="pt-3 flex flex-col gap-2">
-                        <div className="h-3.5 bg-[#0D0F15] rounded animate-pulse w-4/5" />
-                        <div className="h-2.5 bg-[#0D0F15] rounded animate-pulse w-2/5" />
+                        <div className="h-3.5 bg-[var(--kr-surface-sunken)] rounded animate-pulse w-4/5" />
+                        <div className="h-2.5 bg-[var(--kr-surface-sunken)] rounded animate-pulse w-2/5" />
                       </div>
                     </div>
                   ))}

@@ -304,17 +304,17 @@ export const AnimeDetails = () => {
   if (loading) return <AnimeDetailsSkeleton />;
 
   if (notFound) return (
-    <div className="flex justify-center items-center h-screen bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest">
+    <div className="flex justify-center items-center h-screen bg-[var(--kr-surface-sunken)] text-zinc-400 font-bold uppercase tracking-widest">
       Registro no encontrado.
     </div>
   );
 
   if (loadError || !anime) return (
-    <div className="flex flex-col items-center justify-center gap-4 h-screen bg-[#0D0F15] text-zinc-400 font-bold uppercase tracking-widest text-center px-4">
+    <div className="flex flex-col items-center justify-center gap-4 h-screen bg-[var(--kr-surface-sunken)] text-zinc-400 font-bold uppercase tracking-widest text-center px-4">
       <p>Error al cargar el anime. Intenta de nuevo.</p>
       <button
         onClick={() => setRetryToken(t => t + 1)}
-        className="px-6 py-2.5 border border-[#FF3B3B]/30 text-[#FF3B3B] hover:bg-[#FF3B3B] hover:text-white transition-all rounded-xl text-[11px] tracking-widest"
+        className="px-6 py-2.5 border border-[#FF3B3B]/30 text-[#FF3B3B] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] transition-all rounded-xl text-[11px] tracking-widest"
       >
         Reintentar
       </button>
@@ -330,7 +330,7 @@ export const AnimeDetails = () => {
   const displayYear = anime.year || (anime.aired?.from ? anime.aired.from.substring(0, 4) : 'TBA');
 
   return (
-    <div className="relative min-h-screen bg-[#0D0F15] font-sans overflow-hidden">
+    <div className="relative min-h-screen bg-[var(--kr-surface-sunken)] font-sans overflow-hidden">
       <div className="relative z-10 container mx-auto p-4 md:p-8 pt-32 md:pt-36 max-w-[1350px]">
 
         <AnimeHeroPanel

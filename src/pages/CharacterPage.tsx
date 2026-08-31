@@ -73,7 +73,7 @@ export const CharacterPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#080A0F] flex justify-center items-center">
+      <div className="min-h-screen bg-[var(--kr-bg)] flex justify-center items-center">
         <Loader2 className="animate-spin text-[#FF3B3B]" size={28} />
       </div>
     );
@@ -81,14 +81,14 @@ export const CharacterPage = () => {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#080A0F] flex flex-col items-center justify-center gap-6 px-4 text-center">
-        <h1 className="text-2xl font-black text-white">Personaje no encontrado</h1>
+      <div className="min-h-screen bg-[var(--kr-bg)] flex flex-col items-center justify-center gap-6 px-4 text-center">
+        <h1 className="text-2xl font-black text-[var(--kr-text)]">Personaje no encontrado</h1>
         <p className="text-zinc-500 text-sm max-w-sm">
           Puede que el enlace esté mal o que MyAnimeList ya no tenga esta ficha.
         </p>
         <Link
           to="/search"
-          className="flex items-center gap-2 px-6 py-3 bg-[#FF3B3B] text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#FF6B6B] transition-colors"
+          className="flex items-center gap-2 px-6 py-3 bg-[#FF3B3B] text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#FF6B6B] transition-colors"
         >
           <ArrowLeft size={14} /> Buscar animes
         </Link>
@@ -101,7 +101,7 @@ export const CharacterPage = () => {
   const canFavorite = !!session && !!animeId;
 
   return (
-    <div className="min-h-screen bg-[#080A0F] font-sans pt-28 md:pt-32 pb-24">
+    <div className="min-h-screen bg-[var(--kr-bg)] font-sans pt-28 md:pt-32 pb-24">
       <div className="container mx-auto px-4 md:px-8 max-w-4xl">
         {animeId ? (
           <Link
@@ -122,7 +122,7 @@ export const CharacterPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-8">
           {/* Retrato + galería */}
           <div className="flex flex-col gap-4">
-            <div className="aspect-[3/4] w-full rounded-2xl overflow-hidden bg-[#11131A] border border-[#FF3B3B]/15">
+            <div className="aspect-[3/4] w-full rounded-2xl overflow-hidden bg-[var(--kr-surface)] border border-[#FF3B3B]/15">
               {shown
                 ? <img src={shown} alt={profile.name} className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-5xl font-black text-zinc-700">
@@ -176,13 +176,13 @@ export const CharacterPage = () => {
 
           {/* Ficha */}
           <div>
-            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight leading-none mb-3">
+            <h1 className="text-4xl md:text-5xl font-black text-[var(--kr-text)] tracking-tight leading-none mb-3">
               {profile.name}
             </h1>
 
             <div className="flex flex-wrap items-center gap-3 mb-6">
               {profile.favorites !== null && (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 bg-[#11131A] border border-[#FF3B3B]/10 px-3 py-1.5 rounded-lg">
+                <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 bg-[var(--kr-surface)] border border-[#FF3B3B]/10 px-3 py-1.5 rounded-lg">
                   <Heart size={12} className="text-[#FF3B3B]/60" />
                   {profile.favorites.toLocaleString('es-ES')} favoritos en MyAnimeList
                 </span>
@@ -190,7 +190,7 @@ export const CharacterPage = () => {
               {animeTitle && (
                 <Link
                   to={`/anime/${animeId}`}
-                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[#FF3B3B] bg-[#11131A] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 px-3 py-1.5 rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[#FF3B3B] bg-[var(--kr-surface)] border border-[#FF3B3B]/10 hover:border-[#FF3B3B]/30 px-3 py-1.5 rounded-lg transition-colors"
                 >
                   <Users size={12} className="text-[#FF3B3B]/60" /> {animeTitle}
                 </Link>
@@ -204,7 +204,7 @@ export const CharacterPage = () => {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {profile.nicknames.map(n => (
-                    <span key={n} className="text-xs font-bold text-zinc-400 bg-[#11131A] border border-[#FF3B3B]/10 px-2.5 py-1 rounded-md">
+                    <span key={n} className="text-xs font-bold text-zinc-400 bg-[var(--kr-surface)] border border-[#FF3B3B]/10 px-2.5 py-1 rounded-md">
                       {n}
                     </span>
                   ))}
@@ -212,7 +212,7 @@ export const CharacterPage = () => {
               </div>
             )}
 
-            <div className="bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-6">
+            <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-6">
               <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-3">
                 Biografía
               </p>

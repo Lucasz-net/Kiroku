@@ -18,7 +18,7 @@ export const Top10Section = ({ entries, username, isOwner, onEditClick, metrics 
   const top3 = entries.filter(e => e.rank <= 3);
 
   return (
-    <div className="profile-section relative bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl p-3 md:p-4 overflow-hidden">
+    <div className="profile-section relative bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-3 md:p-4 overflow-hidden">
       <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-56 h-56 bg-[#FF3B3B]/10 blur-[80px] rounded-full pointer-events-none" />
 
       <div className={`relative z-10 grid grid-cols-1 ${showTop10Column ? 'lg:grid-cols-12 lg:gap-6' : ''} gap-4`}>
@@ -35,7 +35,7 @@ export const Top10Section = ({ entries, username, isOwner, onEditClick, metrics 
               {isOwner && (
                 <button
                   onClick={onEditClick}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-[#0D0F15] border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-zinc-400 hover:text-[#FF3B3B] font-black text-[10px] uppercase tracking-widest rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-zinc-400 hover:text-[#FF3B3B] font-black text-[10px] uppercase tracking-widest rounded-lg transition-colors"
                 >
                   {hasAny ? <><Pencil size={12} /> Editar</> : <><Plus size={12} /> Crear mi Top 10</>}
                 </button>

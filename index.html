@@ -7,6 +7,17 @@
     <meta name="theme-color" content="#FF3B3B" />
     <meta name="description" content="Tu tracker personal de anime" />
 
+    <script>
+      // Pone el tema guardado ANTES del primer paint — si esto se hiciera
+      // desde React (ThemeProvider) habría un flash oscuro→claro en cada
+      // carga para quien eligió modo claro.
+      try {
+        if (localStorage.getItem('kiroku-theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch {}
+    </script>
+
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

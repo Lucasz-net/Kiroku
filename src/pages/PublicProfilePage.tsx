@@ -30,17 +30,17 @@ import { useFavoriteCharacters } from '../hooks/useFavoriteCharacters';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const NotFound = ({ username }: { username?: string }) => (
-  <div className="min-h-screen bg-[#080A0F] flex flex-col items-center justify-center gap-6 px-4">
-    <div className="w-20 h-20 rounded-2xl bg-[#11131A] border border-[#FF3B3B]/20 flex items-center justify-center text-4xl font-black text-zinc-700">
+  <div className="min-h-screen bg-[var(--kr-bg)] flex flex-col items-center justify-center gap-6 px-4">
+    <div className="w-20 h-20 rounded-2xl bg-[var(--kr-surface)] border border-[#FF3B3B]/20 flex items-center justify-center text-4xl font-black text-zinc-700">
       ?
     </div>
     <div className="text-center">
-      <h1 className="text-2xl font-black text-white mb-2">Perfil no encontrado</h1>
+      <h1 className="text-2xl font-black text-[var(--kr-text)] mb-2">Perfil no encontrado</h1>
       <p className="text-zinc-500 text-sm">@{username} no existe o no tiene perfil público.</p>
     </div>
     <Link
       to="/search"
-      className="flex items-center gap-2 px-6 py-3 bg-[#FF3B3B] text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#FF6B6B] transition-colors"
+      className="flex items-center gap-2 px-6 py-3 bg-[#FF3B3B] text-[var(--kr-text)] font-black text-xs uppercase tracking-widest rounded-xl hover:bg-[#FF6B6B] transition-colors"
     >
       <ArrowLeft size={14} /> Volver al inicio
     </Link>
@@ -157,7 +157,7 @@ export const PublicProfilePage = () => {
   }, { scope: pageRef, dependencies: [loading] });
 
   if (!ownerChecked || loading) return (
-    <div className="flex justify-center items-center h-screen bg-[#080A0F]">
+    <div className="flex justify-center items-center h-screen bg-[var(--kr-bg)]">
       <Loader2 className="animate-spin text-[#FF3B3B]" size={28} />
     </div>
   );
@@ -170,7 +170,7 @@ export const PublicProfilePage = () => {
   const isLocked = !!profile.is_private && !social.loading && !social.isFollowing;
 
   return (
-    <div ref={pageRef} className="min-h-screen bg-[#080A0F] font-sans">
+    <div ref={pageRef} className="min-h-screen bg-[var(--kr-bg)] font-sans">
       <div className="container mx-auto px-4 md:px-8 pt-32 md:pt-36 pb-24 max-w-[1400px]">
 
         {/* Back link */}
@@ -186,11 +186,11 @@ export const PublicProfilePage = () => {
           {profile.banner_url && (
             <img src={profile.banner_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
           )}
-          <div className={`absolute inset-0 ${profile.banner_url ? 'bg-[#0D0F15]/70 backdrop-blur-[2px]' : 'bg-[#11131A]/90'}`} />
+          <div className={`absolute inset-0 ${profile.banner_url ? 'bg-[var(--kr-glass-3)] backdrop-blur-[2px]' : 'bg-[var(--kr-glass-1)]'}`} />
 
           <div className="relative z-10 p-8 flex flex-col md:flex-row items-center md:items-start gap-8">
             {/* Avatar */}
-            <div className="shrink-0 w-36 h-36 md:w-48 md:h-48 bg-[#11131A] flex items-center justify-center text-6xl font-black text-white rounded-xl border-4 border-[#0D0F15]/60 overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.7)]">
+            <div className="shrink-0 w-36 h-36 md:w-48 md:h-48 bg-[var(--kr-surface)] flex items-center justify-center text-6xl font-black text-[var(--kr-text)] rounded-xl border-4 border-[var(--kr-surface-sunken)]/60 overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.7)]">
               {profile.avatar_url
                 ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 : profile.username?.charAt(0).toUpperCase()}
@@ -202,11 +202,11 @@ export const PublicProfilePage = () => {
                 {profile.is_private ? <Lock size={11} /> : <Activity size={11} />}
                 {profile.is_private ? 'Perfil privado' : 'Perfil público'}
               </p>
-              <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight">
+              <h1 className="text-4xl md:text-5xl font-black text-[var(--kr-text)] mb-4 tracking-tight">
                 {profile.username}
               </h1>
               {!isLocked && profile.bio && (
-                <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl bg-[#0D0F15]/60 backdrop-blur-sm p-4 rounded-lg border-l-2 border-[#FF3B3B]/30 mb-4">
+                <p className="text-zinc-400 text-sm leading-relaxed max-w-2xl bg-[var(--kr-glass-3)] backdrop-blur-sm p-4 rounded-lg border-l-2 border-[#FF3B3B]/30 mb-4">
                   {profile.bio}
                 </p>
               )}
@@ -216,25 +216,25 @@ export const PublicProfilePage = () => {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:items-center sm:gap-4 justify-center md:justify-start">
                   <button
                     onClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors"
                   >
                     <Users size={13} className="text-[#FF3B3B]/40" />
-                    <span className="text-white font-black">{social.followersCount}</span>
+                    <span className="text-[var(--kr-text)] font-black">{social.followersCount}</span>
                     Seguidores
                   </button>
                   <span className="hidden sm:inline text-zinc-700">·</span>
                   <button
                     onClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors"
                   >
                     <UserCheck size={13} className="text-[#FF3B3B]/40" />
-                    <span className="text-white font-black">{social.followingCount}</span>
+                    <span className="text-[var(--kr-text)] font-black">{social.followingCount}</span>
                     Siguiendo
                   </button>
                   <span className="hidden sm:inline text-zinc-700">·</span>
                   <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500">
                     <Heart size={13} className="text-[#FF3B3B]/40" />
-                    <span className="text-white font-black">{social.likesCount}</span>
+                    <span className="text-[var(--kr-text)] font-black">{social.likesCount}</span>
                     Me gustas
                   </span>
                 </div>
@@ -246,12 +246,12 @@ export const PublicProfilePage = () => {
               {/* Quick totals */}
               {!isLocked && (
                 <>
-                  <div className="bg-[#0D0F15]/80 border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
-                    <span className="block text-2xl font-black text-white tabular-nums">{animes.length}</span>
+                  <div className="bg-[var(--kr-glass-2)] border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
+                    <span className="block text-2xl font-black text-[var(--kr-text)] tabular-nums">{animes.length}</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">en lista</span>
                   </div>
-                  <div className="bg-[#0D0F15]/80 border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
-                    <span className="block text-2xl font-black text-white tabular-nums">{unlockedAchievements.length}</span>
+                  <div className="bg-[var(--kr-glass-2)] border border-[#FF3B3B]/10 rounded-xl px-5 py-3 text-center">
+                    <span className="block text-2xl font-black text-[var(--kr-text)] tabular-nums">{unlockedAchievements.length}</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">logros</span>
                   </div>
                 </>
@@ -267,8 +267,8 @@ export const PublicProfilePage = () => {
                     social.followState === 'accepted'
                       ? 'bg-[#FF3B3B]/10 border border-[#FF3B3B]/30 text-[#FF3B3B] hover:bg-[#FF3B3B]/20'
                       : social.followState === 'pending'
-                        ? 'bg-[#0D0F15] border border-[#FF3B3B]/20 text-zinc-400 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/40'
-                        : 'bg-[#FF3B3B] text-white hover:bg-[#FF6B6B]'
+                        ? 'bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 text-zinc-400 hover:text-[#FF3B3B] hover:border-[#FF3B3B]/40'
+                        : 'bg-[#FF3B3B] text-[var(--kr-text)] hover:bg-[#FF6B6B]'
                   } disabled:opacity-50`}
                 >
                   {social.followState === 'accepted' ? (
@@ -301,12 +301,12 @@ export const PublicProfilePage = () => {
         </div>
 
         {isLocked ? (
-          <div className="profile-section bg-[#11131A] border border-[#FF3B3B]/10 rounded-2xl px-8 py-16 flex flex-col items-center text-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-[#0D0F15] border border-[#FF3B3B]/20 flex items-center justify-center">
+          <div className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl px-8 py-16 flex flex-col items-center text-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/20 flex items-center justify-center">
               <Lock size={22} className="text-[#FF3B3B]/60" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white mb-1">Este perfil es privado</h2>
+              <h2 className="text-lg font-black text-[var(--kr-text)] mb-1">Este perfil es privado</h2>
               <p className="text-zinc-500 text-sm max-w-sm">
                 {social.followState === 'pending'
                   ? `Tu solicitud está esperando que @${profile.username} la acepte. Cuando lo haga vas a ver su actividad, estadísticas, listas y comentarios.`
@@ -321,7 +321,7 @@ export const PublicProfilePage = () => {
               {heroStats.map((stat, i) => (
                 <div
                   key={stat.label}
-                  className="relative bg-[#11131A] border border-[#FF3B3B]/10 rounded-xl px-5 py-4 overflow-hidden flex items-center gap-4"
+                  className="relative bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-xl px-5 py-4 overflow-hidden flex items-center gap-4"
                 >
                   <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/20 to-transparent" />
                   <stat.icon size={22} className="text-[#FF3B3B]/40 shrink-0" />
@@ -329,7 +329,7 @@ export const PublicProfilePage = () => {
                     <p className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-1 truncate">{stat.label}</p>
                     <span
                       ref={el => { counterRefs.current[i] = el; }}
-                      className="block text-3xl xl:text-4xl font-black text-white tracking-tight leading-none tabular-nums"
+                      className="block text-3xl xl:text-4xl font-black text-[var(--kr-text)] tracking-tight leading-none tabular-nums"
                     >
                       0
                     </span>

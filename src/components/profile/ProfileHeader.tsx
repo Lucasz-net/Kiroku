@@ -104,11 +104,11 @@ export const ProfileHeader = ({
       {profile.banner_url && (
         <img src={profile.banner_url} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
       )}
-      <div className={`absolute inset-0 rounded-2xl ${profile.banner_url ? 'bg-[#0D0F15]/70 backdrop-blur-[2px]' : 'bg-[#11131A]'}`} />
+      <div className={`absolute inset-0 rounded-2xl ${profile.banner_url ? 'bg-[var(--kr-glass-3)] backdrop-blur-[2px]' : 'bg-[var(--kr-surface)]'}`} />
 
       {/* Banner + configuración */}
       <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-        <label className="flex items-center gap-2 px-3 h-[34px] bg-[#0D0F15]/70 backdrop-blur-sm border border-white/10 text-zinc-300 hover:text-white hover:bg-[#0D0F15]/90 cursor-pointer transition-all rounded-lg text-xs font-bold uppercase tracking-widest">
+        <label className="flex items-center gap-2 px-3 h-[34px] bg-[var(--kr-glass-3)] backdrop-blur-sm border border-[var(--kr-text)]/10 text-zinc-300 hover:text-[var(--kr-text)] hover:bg-[var(--kr-glass-1)] cursor-pointer transition-all rounded-lg text-xs font-bold uppercase tracking-widest">
           {uploadingBanner ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
           <span className="hidden sm:inline">{uploadingBanner ? 'Subiendo...' : 'Cambiar banner'}</span>
           <input type="file" accept="image/*" className="hidden" onChange={onBannerUpload} disabled={uploadingBanner} />
@@ -129,14 +129,14 @@ export const ProfileHeader = ({
 
         {/* Avatar */}
         <div className="relative shrink-0">
-          <div className="w-32 h-32 md:w-44 md:h-44 bg-[#11131A] flex items-center justify-center text-5xl md:text-6xl font-black text-white rounded-xl border-4 border-[#0D0F15]/60 overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.7)]">
+          <div className="w-32 h-32 md:w-44 md:h-44 bg-[var(--kr-surface)] flex items-center justify-center text-5xl md:text-6xl font-black text-[var(--kr-text)] rounded-xl border-4 border-[var(--kr-surface-sunken)]/60 overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.7)]">
             {profile.avatar_url ? (
               <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               profile.username?.charAt(0).toUpperCase()
             )}
           </div>
-          <label className="absolute bottom-1 right-1 bg-[#FF3B3B] text-white p-2.5 cursor-pointer hover:bg-[#FF6B6B] transition-colors rounded-lg shadow-lg">
+          <label className="absolute bottom-1 right-1 bg-[#FF3B3B] text-[var(--kr-text)] p-2.5 cursor-pointer hover:bg-[#FF6B6B] transition-colors rounded-lg shadow-lg">
             {uploadingAvatar ? <Loader2 size={18} className="animate-spin" /> : <Camera size={18} />}
             <input type="file" accept="image/*" className="hidden" onChange={onAvatarUpload} disabled={uploadingAvatar} />
           </label>
@@ -159,18 +159,18 @@ export const ProfileHeader = ({
                       if (e.key === 'Escape') handleUsernameCancel();
                     }}
                     maxLength={20}
-                    className="bg-[#0D0F15] border border-[#FF3B3B]/30 focus:border-[#FF3B3B]/60 text-white rounded-xl pl-8 pr-3 py-2 text-2xl font-black outline-none w-52 tracking-tight"
+                    className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/30 focus:border-[#FF3B3B]/60 text-[var(--kr-text)] rounded-xl pl-8 pr-3 py-2 text-2xl font-black outline-none w-52 tracking-tight"
                   />
                 </div>
                 <div className="flex gap-1.5">
                   <button
                     onClick={handleUsernameSave}
                     disabled={savingUsername || (usernameCheck !== 'available' && newUsername !== profile.username)}
-                    className="p-2 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-30 text-white rounded-lg transition-colors"
+                    className="p-2 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-30 text-[var(--kr-text)] rounded-lg transition-colors"
                   >
                     {savingUsername ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
                   </button>
-                  <button onClick={handleUsernameCancel} className="p-2 text-zinc-500 hover:text-white bg-[#0D0F15] border border-[#FF3B3B]/15 rounded-lg transition-colors">
+                  <button onClick={handleUsernameCancel} className="p-2 text-zinc-500 hover:text-[var(--kr-text)] bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 rounded-lg transition-colors">
                     <X size={15} />
                   </button>
                 </div>
@@ -180,7 +180,7 @@ export const ProfileHeader = ({
               </div>
             ) : (
               <div className="group flex items-center gap-2">
-                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+                <h1 className="text-4xl md:text-5xl font-black text-[var(--kr-text)] tracking-tight">
                   {profile.username}
                 </h1>
                 <button
@@ -209,7 +209,7 @@ export const ProfileHeader = ({
             )}
           </div>
 
-          <div className="bg-[#0D0F15]/60 backdrop-blur-sm p-5 rounded-lg border-l-2 border-[#FF3B3B]/30 hover:border-[#FF3B3B]/70 transition-colors mb-4">
+          <div className="bg-[var(--kr-glass-3)] backdrop-blur-sm p-5 rounded-lg border-l-2 border-[#FF3B3B]/30 hover:border-[#FF3B3B]/70 transition-colors mb-4">
             {isEditingBio ? (
               <div>
                 <textarea
@@ -217,14 +217,14 @@ export const ProfileHeader = ({
                   value={newBio}
                   onChange={e => onBioChange(e.target.value)}
                   placeholder="Escribe algo sobre ti..."
-                  className="w-full bg-[#1A1C24] text-white p-3 focus:outline-none focus:ring-1 focus:ring-[#FF3B3B] border border-[#FF3B3B]/20 focus:border-[#FF3B3B] rounded-lg min-h-[80px] mb-3 text-xs md:text-sm placeholder:text-zinc-600"
+                  className="w-full bg-[var(--kr-surface-2)] text-[var(--kr-text)] p-3 focus:outline-none focus:ring-1 focus:ring-[#FF3B3B] border border-[#FF3B3B]/20 focus:border-[#FF3B3B] rounded-lg min-h-[80px] mb-3 text-xs md:text-sm placeholder:text-zinc-600"
                   maxLength={160}
                 />
                 <div className="flex justify-end gap-2">
-                  <button onClick={onBioCancel} className="p-2 text-zinc-500 hover:text-white transition-colors rounded-lg">
+                  <button onClick={onBioCancel} className="p-2 text-zinc-500 hover:text-[var(--kr-text)] transition-colors rounded-lg">
                     <X size={18} />
                   </button>
-                  <button onClick={onBioSave} className="px-4 py-2 bg-[#FF3B3B] text-white hover:bg-[#FF6B6B] font-bold text-xs uppercase tracking-wider transition-colors rounded-lg">
+                  <button onClick={onBioSave} className="px-4 py-2 bg-[#FF3B3B] text-[var(--kr-text)] hover:bg-[#FF6B6B] font-bold text-xs uppercase tracking-wider transition-colors rounded-lg">
                     Guardar
                   </button>
                 </div>
@@ -247,25 +247,25 @@ export const ProfileHeader = ({
             <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:items-center sm:gap-4 justify-center md:justify-start">
               <button
                 onClick={onFollowersClick}
-                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors"
               >
                 <Users size={13} className="text-[#FF3B3B]/40" />
-                <span className="text-white font-black">{socialCounts.followersCount}</span>
+                <span className="text-[var(--kr-text)] font-black">{socialCounts.followersCount}</span>
                 Seguidores
               </button>
               <span className="hidden sm:inline text-zinc-700">·</span>
               <button
                 onClick={onFollowingClick}
-                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors"
               >
                 <UserCheck size={13} className="text-[#FF3B3B]/40" />
-                <span className="text-white font-black">{socialCounts.followingCount}</span>
+                <span className="text-[var(--kr-text)] font-black">{socialCounts.followingCount}</span>
                 Siguiendo
               </button>
               <span className="hidden sm:inline text-zinc-700">·</span>
               <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500">
                 <Heart size={13} className="text-[#FF3B3B]/40" />
-                <span className="text-white font-black">{socialCounts.likesCount}</span>
+                <span className="text-[var(--kr-text)] font-black">{socialCounts.likesCount}</span>
                 Me gustas
               </span>
               {onSearchUsersClick && (
@@ -273,7 +273,7 @@ export const ProfileHeader = ({
                   <span className="hidden sm:inline text-zinc-700">·</span>
                   <button
                     onClick={onSearchUsersClick}
-                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors"
                     title="Buscar usuarios"
                   >
                     <Search size={13} className="text-[#FF3B3B]/40" />

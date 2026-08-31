@@ -115,7 +115,7 @@ export const QuickStartPicker = ({ userId, onSaved }: QuickStartPickerProps) => 
   if (options !== null && options.length === 0) return null;
 
   return (
-    <div className="bg-[#11131A] border border-[#FF3B3B]/25 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+    <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/25 rounded-2xl p-6 md:p-8 relative overflow-hidden">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#FF3B3B]/40 to-transparent" />
 
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
@@ -123,7 +123,7 @@ export const QuickStartPicker = ({ userId, onSaved }: QuickStartPickerProps) => 
           <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#FF3B3B] mb-2">
             <Sparkles size={12} /> Empezá en 10 segundos
           </p>
-          <h3 className="text-white font-black text-xl md:text-2xl mb-2 tracking-tight">
+          <h3 className="text-[var(--kr-text)] font-black text-xl md:text-2xl mb-2 tracking-tight">
             Marcá {TARGET} animes que ya viste
           </h3>
           <p className="text-zinc-500 text-sm leading-relaxed max-w-lg">
@@ -135,7 +135,7 @@ export const QuickStartPicker = ({ userId, onSaved }: QuickStartPickerProps) => 
         <button
           onClick={handleSave}
           disabled={picked.size === 0 || saving}
-          className="shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#FF3B3B] hover:bg-[#FF5555] disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors"
+          className="shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#FF3B3B] hover:bg-[#FF5555] disabled:opacity-30 disabled:cursor-not-allowed text-[var(--kr-text)] rounded-xl font-black text-xs uppercase tracking-widest transition-colors"
         >
           {saving && <Loader2 size={14} className="animate-spin" />}
           {picked.size === 0
@@ -177,14 +177,14 @@ export const QuickStartPicker = ({ userId, onSaved }: QuickStartPickerProps) => 
                       isPicked ? 'opacity-100' : 'opacity-60 group-hover:opacity-90'
                     }`}
                   />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0D0F15] to-transparent px-1.5 pt-4 pb-1.5">
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[var(--kr-surface-sunken)] to-transparent px-1.5 pt-4 pb-1.5">
                     <span className="block text-[9px] font-bold text-zinc-300 leading-tight line-clamp-2">
                       {a.title}
                     </span>
                   </div>
                   {isPicked && (
                     <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-[#FF3B3B] flex items-center justify-center">
-                      <Check size={12} className="text-white" />
+                      <Check size={12} className="text-[var(--kr-text)]" />
                     </span>
                   )}
                 </button>
@@ -200,7 +200,7 @@ export const QuickStartPicker = ({ userId, onSaved }: QuickStartPickerProps) => 
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors disabled:opacity-50"
               >
                 {loadingMore
                   ? <Loader2 size={12} className="animate-spin" />
@@ -211,7 +211,7 @@ export const QuickStartPicker = ({ userId, onSaved }: QuickStartPickerProps) => 
             {hasMore && <span aria-hidden className="text-zinc-700">·</span>}
             <Link
               to="/search"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-[var(--kr-text)] transition-colors"
             >
               ¿No viste ninguno? Buscá los tuyos
               <ArrowRight size={12} className="text-[#FF3B3B]/50" />

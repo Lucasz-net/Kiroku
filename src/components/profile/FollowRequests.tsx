@@ -81,7 +81,7 @@ export const FollowRequests = ({ profileId, onAccepted }: FollowRequestsProps) =
   if (loading || requests.length === 0) return null;
 
   return (
-    <section className="profile-section bg-[#11131A] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden">
+    <section className="profile-section bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden">
       <div className="px-6 py-5 border-b border-[#FF3B3B]/10 flex items-center gap-2">
         <UserPlus size={15} className="text-[#FF3B3B]/60" />
         <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">
@@ -95,7 +95,7 @@ export const FollowRequests = ({ profileId, onAccepted }: FollowRequestsProps) =
           <li key={id} className="px-6 py-4 flex items-center gap-4">
             <Link
               to={`/u/${follower.username}`}
-              className="w-10 h-10 rounded-xl bg-[#0D0F15] border border-[#FF3B3B]/10 overflow-hidden shrink-0 flex items-center justify-center font-black text-white text-sm hover:border-[#FF3B3B]/30 transition-colors"
+              className="w-10 h-10 rounded-xl bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/10 overflow-hidden shrink-0 flex items-center justify-center font-black text-[var(--kr-text)] text-sm hover:border-[#FF3B3B]/30 transition-colors"
             >
               {follower.avatar_url
                 ? <img src={follower.avatar_url} alt={follower.username} className="w-full h-full object-cover" />
@@ -104,7 +104,7 @@ export const FollowRequests = ({ profileId, onAccepted }: FollowRequestsProps) =
 
             <Link
               to={`/u/${follower.username}`}
-              className="flex-1 min-w-0 font-bold text-white text-sm truncate hover:text-[#FF3B3B] transition-colors"
+              className="flex-1 min-w-0 font-bold text-[var(--kr-text)] text-sm truncate hover:text-[#FF3B3B] transition-colors"
             >
               @{follower.username}
             </Link>
@@ -114,7 +114,7 @@ export const FollowRequests = ({ profileId, onAccepted }: FollowRequestsProps) =
                 onClick={() => respond(id, true)}
                 disabled={busyId === id}
                 title="Aceptar"
-                className="flex items-center gap-1.5 px-3 py-2 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-40 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 bg-[#FF3B3B] hover:bg-[#FF6B6B] disabled:opacity-40 text-[var(--kr-text)] rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors"
               >
                 {busyId === id ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                 Aceptar
@@ -123,7 +123,7 @@ export const FollowRequests = ({ profileId, onAccepted }: FollowRequestsProps) =
                 onClick={() => respond(id, false)}
                 disabled={busyId === id}
                 title="Rechazar"
-                className="p-2 bg-[#0D0F15] border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 text-zinc-500 hover:text-[#FF3B3B] disabled:opacity-40 rounded-lg transition-colors"
+                className="p-2 bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/15 hover:border-[#FF3B3B]/40 text-zinc-500 hover:text-[#FF3B3B] disabled:opacity-40 rounded-lg transition-colors"
               >
                 <X size={14} />
               </button>
