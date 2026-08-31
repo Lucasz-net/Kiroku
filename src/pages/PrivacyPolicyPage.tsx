@@ -41,7 +41,7 @@ export const PrivacyPolicyPage = () => {
         <Section title="3. Qué es público y qué no">
           <p>
             Tu nombre de usuario, avatar, banner, biografía y tu lista de anime son visibles públicamente
-            en tu perfil (<code className="text-zinc-300 bg-[#11131A] px-1.5 py-0.5 rounded text-xs">kiroku-anime.vercel.app/u/tu-usuario</code>),
+            en tu perfil (<code className="text-zinc-300 bg-[#11131A] px-1.5 py-0.5 rounded text-xs">kiroku.pro/u/tu-usuario</code>),
             incluso para visitantes sin cuenta. Tu email nunca se muestra públicamente ni se comparte con otros usuarios.
           </p>
           <p>

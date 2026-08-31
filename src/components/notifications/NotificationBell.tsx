@@ -58,7 +58,11 @@ export const NotificationBell = () => {
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 mt-3 w-[min(22rem,calc(100vw-2rem))] bg-[#11131A] border border-[#FF3B3B]/25 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-hidden z-50">
+        // En celular el botón no siempre está pegado al borde derecho de la
+        // pantalla (hay perfil/menú a su lado), así que anclar el panel con
+        // `right-0` lo hacía salirse por la izquierda. Se fija al viewport
+        // con márgenes parejos en mobile, y vuelve a anclarse al botón desde md.
+        <div className="fixed inset-x-4 top-[84px] z-50 md:absolute md:inset-x-auto md:top-full md:right-0 md:mt-3 md:w-[22rem] bg-[#11131A] border border-[#FF3B3B]/25 rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] overflow-hidden">
           <div className="px-4 py-3 border-b border-[#FF3B3B]/10 flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
               Notificaciones

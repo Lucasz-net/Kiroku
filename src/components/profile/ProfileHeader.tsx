@@ -241,9 +241,10 @@ export const ProfileHeader = ({
             )}
           </div>
 
-          {/* Social counts row */}
+          {/* Social counts row — en celular se parte en 2x2 (seguidores/siguiendo
+              arriba, el resto abajo) porque los 4 juntos no entran en la vista */}
           {socialCounts !== undefined && (
-            <div className="flex items-center gap-4 justify-center md:justify-start">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:items-center sm:gap-4 justify-center md:justify-start">
               <button
                 onClick={onFollowersClick}
                 className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
@@ -252,7 +253,7 @@ export const ProfileHeader = ({
                 <span className="text-white font-black">{socialCounts.followersCount}</span>
                 Seguidores
               </button>
-              <span className="text-zinc-700">·</span>
+              <span className="hidden sm:inline text-zinc-700">·</span>
               <button
                 onClick={onFollowingClick}
                 className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
@@ -261,7 +262,7 @@ export const ProfileHeader = ({
                 <span className="text-white font-black">{socialCounts.followingCount}</span>
                 Siguiendo
               </button>
-              <span className="text-zinc-700">·</span>
+              <span className="hidden sm:inline text-zinc-700">·</span>
               <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500">
                 <Heart size={13} className="text-[#FF3B3B]/40" />
                 <span className="text-white font-black">{socialCounts.likesCount}</span>
@@ -269,7 +270,7 @@ export const ProfileHeader = ({
               </span>
               {onSearchUsersClick && (
                 <>
-                  <span className="text-zinc-700">·</span>
+                  <span className="hidden sm:inline text-zinc-700">·</span>
                   <button
                     onClick={onSearchUsersClick}
                     className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"

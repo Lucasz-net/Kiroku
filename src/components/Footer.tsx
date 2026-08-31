@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom';
 
 export const Footer = () => {
   return (
-    <footer className="bg-[#0D0F15] border-t border-[#FF3B3B]/20 py-10 mt-auto relative z-10 font-sans">
+    // pb-28 en mobile deja lugar al BottomNav fijo (que si no, tapa el
+    // footer al llegar al final de la página); en md+ no hay BottomNav.
+    <footer className="bg-[#0D0F15] border-t border-[#FF3B3B]/20 pt-10 pb-28 md:py-10 mt-auto relative z-10 font-sans">
       <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
 
         <div className="flex flex-col items-center md:items-start gap-2">

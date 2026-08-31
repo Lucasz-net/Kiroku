@@ -213,7 +213,7 @@ export const PublicProfilePage = () => {
 
               {/* Social counts */}
               {!isLocked && (
-                <div className="flex items-center gap-4 justify-center md:justify-start">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:items-center sm:gap-4 justify-center md:justify-start">
                   <button
                     onClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
                     className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
@@ -222,7 +222,7 @@ export const PublicProfilePage = () => {
                     <span className="text-white font-black">{social.followersCount}</span>
                     Seguidores
                   </button>
-                  <span className="text-zinc-700">·</span>
+                  <span className="hidden sm:inline text-zinc-700">·</span>
                   <button
                     onClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
                     className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-white transition-colors"
@@ -231,7 +231,7 @@ export const PublicProfilePage = () => {
                     <span className="text-white font-black">{social.followingCount}</span>
                     Siguiendo
                   </button>
-                  <span className="text-zinc-700">·</span>
+                  <span className="hidden sm:inline text-zinc-700">·</span>
                   <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500">
                     <Heart size={13} className="text-[#FF3B3B]/40" />
                     <span className="text-white font-black">{social.likesCount}</span>

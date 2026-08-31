@@ -204,10 +204,13 @@ export const AnimeDetails = () => {
 
   useEffect(() => {
     if (!anime?.relations) return;
+    // El sitio solo maneja anime, así que las entradas de manga/novela ni
+    // siquiera se muestran (ver filteredRelations) — no tiene sentido
+    // pedirles imagen acá.
     const entries = anime.relations
       .filter(rel => rel.relation.toLowerCase() !== 'adaptation')
       .flatMap(rel => rel.entry)
-      .filter((e): e is typeof e & { type: 'anime' | 'manga' } => e.type === 'anime' || e.type === 'manga');
+      .filter((e): e is typeof e & { type: 'anime' } => e.type === 'anime');
     if (entries.length === 0) return;
     let cancelled = false;
 
@@ -318,7 +321,12 @@ export const AnimeDetails = () => {
     </div>
   );
 
-  const filteredRelations = anime.relations?.filter(rel => rel.relation.toLowerCase() !== 'adaptation') || [];
+  // Solo animes: se descarta manga/novela/etc. de cada grupo de relación, y
+  // el grupo entero si queda vacío (p. ej. "Adaptation" suele apuntar solo al manga).
+  const filteredRelations = (anime.relations ?? [])
+    .filter(rel => rel.relation.toLowerCase() !== 'adaptation')
+    .map(rel => ({ ...rel, entry: rel.entry.filter(e => e.type === 'anime') }))
+    .filter(rel => rel.entry.length > 0);
   const displayYear = anime.year || (anime.aired?.from ? anime.aired.from.substring(0, 4) : 'TBA');
 
   return (

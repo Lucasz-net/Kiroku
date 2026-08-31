@@ -186,7 +186,7 @@ export function siteUrl(req: AuthReq): string {
   const host = firstHeader(req, 'x-forwarded-host') ?? firstHeader(req, 'host');
   // Solo se llega acá si no hay ningún header de host, cosa que en Vercel no
   // pasa. Definí SITE_URL si algún día el sitio se muda de dominio.
-  if (!host) return 'https://kiroku-anime.vercel.app';
+  if (!host) return 'https://kiroku.pro';
   const proto = firstHeader(req, 'x-forwarded-proto')
     ?? (host.startsWith('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
   return `${proto}://${host}`;

@@ -23,7 +23,7 @@ interface OgRes {
   end(body?: string): void;
 }
 
-const SITE = () => (process.env.SITE_URL || 'https://kiroku-anime.vercel.app').replace(/\/$/, '');
+const SITE = () => (process.env.SITE_URL || 'https://kiroku.pro').replace(/\/$/, '');
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
