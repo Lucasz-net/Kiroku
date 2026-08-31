@@ -57,6 +57,15 @@ self.addEventListener('fetch', e => {
 
   if (url.includes('supabase.co')) return;
 
+  // Las portadas vienen de AniList/MAL y son cross-origin. La CSP las permite
+  // vía img-src (que acepta cualquier https:), pero el fetch() que hace este
+  // Service Worker para cachearlas se evalúa contra connect-src, que solo
+  // lista los hosts a los que la app llama por API — no los de imágenes. Sin
+  // este chequeo, cada portada nueva quedaba bloqueada por CSP (net::ERR_FAILED
+  // en el <img>, más un rechazo sin capturar acá) apenas la cache estaba vacía,
+  // como pasó al mudar de dominio y arrancar con la Cache Storage en blanco.
+  if (e.request.destination === 'image') return;
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
