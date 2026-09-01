@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import {
-  Tv, CheckCircle, Heart, Hourglass,
+  Tv, CheckCircle, Heart, Hourglass, Loader2,
 } from 'lucide-react';
 import type { UserProfile, UserStats } from '../types/profile';
 import { toWebP } from '../utils/imageUtils';
@@ -53,7 +53,7 @@ export const Profile = () => {
 
   // La lista de animes sale del contexto, que ya la mantiene sincronizada;
   // esta página repetía el mismo select más un getSession() propio.
-  const { savedAnimes, session, authReady, refreshSavedAnimes } = useUserData();
+  const { savedAnimes, session, authReady, refreshSavedAnimes, importEnrichment } = useUserData();
   const animes = useMemo(
     () => [...savedAnimes].sort((a, b) =>
       (b.created_at ?? '').localeCompare(a.created_at ?? '')),
@@ -382,6 +382,28 @@ export const Profile = () => {
           </div>
         )}
 
+        {/* Progreso de una importación de MAL completándose en segundo plano
+            (géneros, estudios, portadas) — ver startImportEnrichment en
+            UserDataContext. No bloquea nada: el usuario puede seguir
+            navegando mientras tanto. */}
+        {importEnrichment && (
+          <div className="bg-[var(--kr-surface)] border border-[#FF3B3B]/15 rounded-xl px-4 py-3 flex items-center gap-3 mb-6">
+            <Loader2 size={16} className="animate-spin text-[#FF3B3B] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-[var(--kr-text)]">
+                Completando datos de tu importación...{' '}
+                {Math.round((importEnrichment.done / importEnrichment.total) * 100)}%
+              </p>
+              <div className="h-1.5 bg-[var(--kr-surface-sunken)] rounded-full overflow-hidden mt-1.5">
+                <div
+                  className="h-full bg-gradient-to-r from-[#FF3B3B] to-[#FF6B6B] rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round((importEnrichment.done / importEnrichment.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── MAIN GRID ──────────────────────────────────────────────── */}
         <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${animes.length === 0 ? 'hidden' : ''}`}>
 
@@ -389,8 +411,8 @@ export const Profile = () => {
             <div className="profile-section">
               <FavoriteCharactersSection characters={favoriteCharacters.entries} />
             </div>
-            <GenrePieChart genres={stats.topGenres} />
-            <StudioBarChart studios={stats.topStudios} />
+            <GenrePieChart genres={stats.topGenres} awaitingImport={!!importEnrichment} />
+            <StudioBarChart studios={stats.topStudios} awaitingImport={!!importEnrichment} />
             <ActivityFeed animes={animes} />
             <div className="profile-section">
               <AchievementGallery unlockedAchievements={unlockedAchievements} />

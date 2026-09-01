@@ -30,9 +30,11 @@ function slicePath(outerR: number, innerR: number, startAngle: number, endAngle:
 
 interface Props {
   genres: { label: string; count: number }[];
+  /** Hay una importación de MAL completándose en segundo plano y todavía no trajo géneros. */
+  awaitingImport?: boolean;
 }
 
-export const GenrePieChart = ({ genres }: Props) => {
+export const GenrePieChart = ({ genres, awaitingImport = false }: Props) => {
   const [hoveredSlice, setHoveredSlice] = useState<number | null>(null);
   const [mounted,      setMounted]      = useState(false);
 
@@ -51,7 +53,9 @@ export const GenrePieChart = ({ genres }: Props) => {
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
           <Star size={14} className="text-[#FF3B3B]/60" /> Géneros Favoritos
         </p>
-        <p className="text-sm text-zinc-600 text-center py-3 italic">Sin datos suficientes.</p>
+        <p className="text-sm text-zinc-600 text-center py-3 italic">
+          {awaitingImport ? 'Esperando los datos de tu importación...' : 'Sin datos suficientes.'}
+        </p>
       </div>
     );
   }

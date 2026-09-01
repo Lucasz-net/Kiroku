@@ -4,11 +4,9 @@ import {
   Loader2, Tv, Play, Clock,
 } from 'lucide-react';
 import { parseMalXml, getMalStatusCounts, getReclassifiedCounts, readMalListFile, type MalAnimeEntry } from '../../utils/malXmlParser';
-import { getAnimeById } from '../../services/jikanApi';
-import { getAnimeFullByMalId, type AniListAnimeBundle } from '../../services/aniListApi';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import type { JikanFullResponse } from '../../types/anime';
+import { useUserData } from '../../contexts/UserDataContext';
 
 interface ImportXMLModalProps {
   userId: string;
@@ -17,7 +15,7 @@ interface ImportXMLModalProps {
   onImportComplete: () => void;
 }
 
-type Phase = 'pick' | 'preview' | 'importing' | 'enriching' | 'done';
+type Phase = 'pick' | 'parsing' | 'preview' | 'importing' | 'done';
 
 interface ImportResult {
   imported: number;
@@ -28,32 +26,20 @@ interface ImportResult {
 /** Filas por lote en el guardado inicial. */
 const INSERT_BATCH = 100;
 
-/**
- * Ritmo de la fase de completado. AniList limita a 30 peticiones por minuto
- * (comprobado en su cabecera X-RateLimit-Limit), o sea 2 s por consulta; se
- * deja un margen para no rozar el límite.
- */
-const ENRICH_DELAY_MS = 2100;
-
-async function delay(ms: number) {
-  return new Promise(r => setTimeout(r, ms));
-}
-
 export const ImportXMLModal = ({
   userId,
   existingAnimeIds,
   onClose,
   onImportComplete,
 }: ImportXMLModalProps) => {
+  const { startImportEnrichment } = useUserData();
   const [phase, setPhase] = useState<Phase>('pick');
   const [entries, setEntries] = useState<MalAnimeEntry[]>([]);
   const [toImport, setToImport] = useState<MalAnimeEntry[]>([]);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
-  const [enriched, setEnriched] = useState<number | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef(false);
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -64,6 +50,7 @@ export const ImportXMLModal = ({
       return;
     }
     setParseError(null);
+    setPhase('parsing');
     try {
       const text = await readMalListFile(file);
       const parsed = parseMalXml(text);
@@ -73,6 +60,7 @@ export const ImportXMLModal = ({
       setPhase('preview');
     } catch (err: unknown) {
       setParseError(err instanceof Error ? err.message : 'Error al leer el archivo.');
+      setPhase('pick');
     } finally {
       if (fileRef.current) fileRef.current.value = '';
     }
@@ -91,7 +79,6 @@ export const ImportXMLModal = ({
   // de los datos queda para la fase 2, opcional.
   const handleImport = async () => {
     setPhase('importing');
-    abortRef.current = false;
     let imported = 0;
     let failed = 0;
 
@@ -113,7 +100,6 @@ export const ImportXMLModal = ({
     }));
 
     for (let i = 0; i < rows.length; i += INSERT_BATCH) {
-      if (abortRef.current) break;
       const chunk = rows.slice(i, i + INSERT_BATCH);
       // `ignoreDuplicates` para que una fila ya existente no tire el lote
       // entero abajo (puede haberse agregado entre la vista previa y esto).
@@ -132,83 +118,23 @@ export const ImportXMLModal = ({
     if (imported > 0) {
       toast.success(`¡Listo! ${imported} anime${imported !== 1 ? 's' : ''} en tu lista.`);
       onImportComplete();
+      // Géneros, estudios y portadas se completan en segundo plano — el
+      // usuario ya puede cerrar este modal y seguir usando Kiroku mientras
+      // tanto; el progreso se ve en su perfil (ver UserDataContext).
+      startImportEnrichment(userId, toImport);
     }
-  };
-
-  // ── Fase 2 (opcional): completar géneros, estudios, año y duración ─────
-  // Son los datos que alimentan los gráficos y las horas vistas. Van uno por
-  // uno porque cada uno es una consulta a AniList, y el ritmo lo marca su
-  // límite real de 30/minuto. Se puede cortar en cualquier momento: lo que ya
-  // se completó queda guardado.
-  const handleEnrich = async () => {
-    setPhase('enriching');
-    abortRef.current = false;
-    let done = 0;
-
-    for (let i = 0; i < toImport.length; i++) {
-      if (abortRef.current) break;
-      const entry = toImport[i];
-
-      try {
-        let bundle: AniListAnimeBundle | null = null;
-        try { bundle = await getAnimeFullByMalId(entry.malId); } catch { bundle = null; }
-
-        let patch: Record<string, unknown> | null = null;
-
-        if (bundle) {
-          const { anime } = bundle;
-          patch = {
-            title: anime.title_english || anime.title,
-            image_url: anime.images.jpg.large_image_url || anime.images.jpg.image_url || '',
-            episodes_total: anime.episodes || entry.totalEpisodes || null,
-            score: anime.score ?? null,
-            year: anime.year ?? (anime.aired?.from ? new Date(anime.aired.from).getFullYear() : null),
-            genres: anime.genres?.map(g => g.name) ?? [],
-            studios: anime.studios?.map(s => s.name) ?? [],
-            duration: anime.duration || null,
-          };
-        } else {
-          // AniList no tiene mapeado ese id de MAL: se cae a Jikan, cuyo
-          // endpoint de detalle sí responde de forma fiable.
-          const { data } = await getAnimeById(String(entry.malId)) as JikanFullResponse;
-          patch = {
-            title: data.title_english || data.title,
-            image_url: data.images?.webp?.large_image_url || data.images?.jpg?.large_image_url || '',
-            episodes_total: data.episodes || entry.totalEpisodes || null,
-            score: data.score ?? null,
-            year: data.year ?? (data.aired?.from ? new Date(data.aired.from).getFullYear() : null),
-            genres: data.genres?.map(g => g.name) ?? [],
-            studios: data.studios?.map(s => s.name) ?? [],
-            duration: data.duration || null,
-          };
-        }
-
-        await supabase.from('saved_animes').update(patch)
-          .eq('user_id', userId).eq('anime_id', entry.malId);
-        done++;
-      } catch { /* se completará en otra pasada */ }
-
-      setProgress(Math.round(((i + 1) / toImport.length) * 100));
-      if (i < toImport.length - 1) await delay(ENRICH_DELAY_MS);
-    }
-
-    setEnriched(done);
-    setPhase('done');
-    onImportComplete();
   };
 
   const statusCounts = getMalStatusCounts(entries);
   const reclassified = getReclassifiedCounts(toImport);
   const reclassifiedTotal = Object.values(reclassified).reduce((a, b) => a + b, 0);
-  // Estimación honesta de la fase 2: el ritmo lo impone el límite de AniList.
-  const enrichMinutes = Math.max(1, Math.ceil((toImport.length * ENRICH_DELAY_MS) / 60000));
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={e => { if (e.target === e.currentTarget && phase !== 'importing' && phase !== 'enriching') onClose(); }}
+      onClick={e => { if (e.target === e.currentTarget && phase !== 'parsing' && phase !== 'importing') onClose(); }}
     >
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => phase !== 'importing' && phase !== 'enriching' && onClose()} />
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={() => phase !== 'parsing' && phase !== 'importing' && onClose()} />
 
       <div className="relative z-10 w-full max-w-lg bg-[var(--kr-surface)] border border-[#FF3B3B]/20 rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.85)]">
         {/* Header */}
@@ -217,7 +143,7 @@ export const ImportXMLModal = ({
             <h2 className="font-black text-[var(--kr-text)] text-lg leading-tight">Importar lista de anime</h2>
             <p className="text-xs text-zinc-600 font-bold mt-0.5">Compatible con MyAnimeList y otros exportadores XML</p>
           </div>
-          {phase !== 'importing' && phase !== 'enriching' && (
+          {phase !== 'parsing' && phase !== 'importing' && (
             <button
               onClick={onClose}
               className="p-2 text-zinc-500 hover:text-[var(--kr-text)] transition-colors rounded-lg hover:bg-[var(--kr-text)]/5"
@@ -267,6 +193,17 @@ export const ImportXMLModal = ({
                   <FileText size={12} /> ¿Cómo exportar desde MAL?
                 </p>
                 Ingresá a <span className="text-zinc-400">myanimelist.net</span> → Perfil → Lista de anime → Exportar → descargá el archivo (puede venir comprimido como .xml.gz, no hace falta descomprimirlo) y seleccionalo aquí.
+              </div>
+            </div>
+          )}
+
+          {/* ── PHASE: parsing ── */}
+          {phase === 'parsing' && (
+            <div className="flex flex-col items-center gap-4 py-10">
+              <Loader2 size={28} className="animate-spin text-[#FF3B3B]" />
+              <div className="text-center">
+                <p className="font-bold text-[var(--kr-text)] text-sm">Leyendo tu archivo...</p>
+                <p className="text-xs text-zinc-600 mt-1">Un momento, no cierres esta ventana.</p>
               </div>
             </div>
           )}
@@ -354,29 +291,15 @@ export const ImportXMLModal = ({
             </div>
           )}
 
-          {/* ── PHASE: importing / enriching ── */}
-          {(phase === 'importing' || phase === 'enriching') && (
+          {/* ── PHASE: importing ── */}
+          {phase === 'importing' && (
             <div className="flex flex-col gap-6 py-2">
               <div className="flex items-center gap-3">
                 <Loader2 size={20} className="animate-spin text-[#FF3B3B] shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-[var(--kr-text)] text-sm">
-                    {phase === 'importing' ? 'Guardando tu lista...' : 'Completando datos...'}
-                  </p>
-                  <p className="text-xs text-zinc-600 mt-0.5">
-                    {phase === 'importing'
-                      ? 'Un momento, no cierres esta ventana.'
-                      : 'Tu lista ya está guardada. Podés cortar cuando quieras.'}
-                  </p>
+                  <p className="font-bold text-[var(--kr-text)] text-sm">Guardando tu lista...</p>
+                  <p className="text-xs text-zinc-600 mt-0.5">Un momento, no cierres esta ventana.</p>
                 </div>
-                {phase === 'enriching' && (
-                  <button
-                    onClick={() => { abortRef.current = true; }}
-                    className="shrink-0 px-3 py-2 border border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 text-zinc-400 hover:text-[var(--kr-text)] text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors"
-                  >
-                    Detener
-                  </button>
-                )}
               </div>
 
               {/* Progress bar */}
@@ -430,33 +353,13 @@ export const ImportXMLModal = ({
                 </p>
               )}
 
-              {/* Los géneros, estudios y duración alimentan los gráficos y las
-                  horas vistas. Es opcional y lento por el límite de AniList, así
-                  que se ofrece aparte en vez de retener la importación entera. */}
-              {enriched === null && result.imported > 0 && (
-                <div className="bg-[var(--kr-surface-sunken)] border border-[#FF3B3B]/[0.07] rounded-xl p-4 flex flex-col gap-3">
-                  <div>
-                    <p className="text-sm font-bold text-[var(--kr-text)] mb-1">Completar géneros y estudios</p>
-                    <p className="text-xs text-zinc-600 leading-relaxed">
-                      Tu lista ya está guardada y se puede usar. Esto agrega los datos que
-                      alimentan los gráficos y las horas vistas. Tarda ~{enrichMinutes} minuto
-                      {enrichMinutes !== 1 ? 's' : ''} porque AniList permite 30 consultas por
-                      minuto; podés cortarlo cuando quieras y se guarda lo que haya avanzado.
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleEnrich}
-                    className="w-full py-2.5 border border-[#FF3B3B]/25 hover:border-[#FF3B3B]/50 text-zinc-300 hover:text-[var(--kr-text)] font-black text-[11px] uppercase tracking-widest rounded-lg transition-colors"
-                  >
-                    Completar datos
-                  </button>
-                </div>
-              )}
-
-              {enriched !== null && (
-                <p className="text-xs text-zinc-500 leading-relaxed">
-                  Datos completados en {enriched} de {toImport.length} animes.
-                  {enriched < toImport.length && ' Podés volver a importar el mismo archivo más tarde para terminar el resto.'}
+              {/* Géneros, estudios y portadas se completan solos en segundo
+                  plano (ver UserDataContext) — no hace falta esperar acá. */}
+              {result.imported > 0 && (
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Los géneros, estudios y portadas se están completando en segundo plano.
+                  Podés cerrar esta ventana y seguir usando Kiroku — vas a ver el progreso
+                  en tu perfil.
                 </p>
               )}
 

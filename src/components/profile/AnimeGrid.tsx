@@ -85,7 +85,7 @@ const EmptyGridState = ({ tab }: { tab: string }) => (
 );
 
 export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps) => {
-  const [activeTab, setActiveTab] = useState('Favoritos');
+  const [activeTab, setActiveTab] = useState('Todos');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>(() => (isOwner ? loadStoredSort() : 'date_desc'));
   const [showSortDropdown, setShowSortDropdown] = useState(false);

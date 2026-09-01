@@ -615,3 +615,93 @@ export const getAnimeFullByMalId = (malId: number): Promise<AniListAnimeBundle |
     30 * 60 * 1000,
     true,
   );
+
+// ── Resumen en lote para completar importaciones de MAL ────────────────────
+// El "completar datos" de una lista importada llamaba a getAnimeFullByMalId
+// una vez por anime (una consulta GraphQL cada una), respetando la pausa de
+// 2.1 s que exige el límite de AniList — con una lista de 500 animes eso son
+// más de 17 minutos, así que casi nadie lo terminaba y géneros/estudios
+// quedaban vacíos para siempre. `Page.media(idMal_in: ...)` devuelve hasta 50
+// animes en una sola consulta, así que la misma lista se resuelve en ~10
+// consultas en vez de 500: la portada, el género y el estudio se completan
+// en segundos y ya no dependen de que el usuario espere minutos sin cortar.
+export interface AniListImportSummary {
+  title: string;
+  imageUrl: string;
+  episodes: number | null;
+  score: number | null;
+  year: number | null;
+  genres: string[];
+  studios: string[];
+  duration: string | null;
+}
+
+interface AniListBatchMedia {
+  idMal: number | null;
+  title: { romaji: string | null; english: string | null };
+  episodes: number | null;
+  duration: number | null;
+  averageScore: number | null;
+  seasonYear: number | null;
+  startDate: { year: number | null } | null;
+  genres: string[] | null;
+  studios: { nodes: { name: string }[] } | null;
+  coverImage: { large: string | null; extraLarge: string | null } | null;
+}
+
+interface AniListBatchResponse {
+  data: {
+    Page: { media: AniListBatchMedia[] };
+  };
+}
+
+const BATCH_SUMMARY_QUERY = `
+  query ($ids: [Int]) {
+    Page(page: 1, perPage: 50) {
+      media(idMal_in: $ids, type: ANIME) {
+        idMal
+        title { romaji english }
+        episodes
+        duration
+        averageScore
+        seasonYear
+        startDate { year }
+        genres
+        studios(isMain: true) { nodes { name } }
+        coverImage { large extraLarge }
+      }
+    }
+  }
+`;
+
+/** Hasta 50 ids de MAL por consulta — el mismo tope que usa `Page` en el resto de la app. */
+export const getAnimeSummariesByMalIds = async (
+  malIds: number[],
+): Promise<Map<number, AniListImportSummary>> => {
+  const result = new Map<number, AniListImportSummary>();
+  if (malIds.length === 0) return result;
+
+  const response = await fetch(ANILIST_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({ query: BATCH_SUMMARY_QUERY, variables: { ids: malIds } }),
+  });
+  if (!response.ok) throw new Error('Error fetching from AniList');
+
+  const json = (await response.json()) as AniListBatchResponse;
+  (json.data?.Page?.media ?? []).forEach(m => {
+    if (!m.idMal) return;
+    result.set(m.idMal, {
+      title: m.title.english || m.title.romaji || '',
+      imageUrl: m.coverImage?.extraLarge || m.coverImage?.large || '',
+      episodes: m.episodes,
+      score: m.averageScore ? m.averageScore / 10 : null,
+      year: m.seasonYear ?? m.startDate?.year ?? null,
+      genres: m.genres ?? [],
+      studios: (m.studios?.nodes || []).map(s => s.name),
+      duration: m.duration ? `${m.duration} min per ep` : null,
+    });
+  });
+
+  return result;
+};

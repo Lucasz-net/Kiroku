@@ -18,9 +18,11 @@ const SNAPPY = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
 interface Props {
   studios: { label: string; count: number }[];
+  /** Hay una importación de MAL completándose en segundo plano y todavía no trajo estudios. */
+  awaitingImport?: boolean;
 }
 
-export const StudioBarChart = ({ studios }: Props) => {
+export const StudioBarChart = ({ studios, awaitingImport = false }: Props) => {
   const [mounted, setMounted] = useState(false);
 
   // RAF para disparar scaleX en el primer frame pintado
@@ -38,7 +40,9 @@ export const StudioBarChart = ({ studios }: Props) => {
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-5 flex items-center gap-2">
           <Clapperboard size={14} className="text-[#FF3B3B]/60" /> Estudios Favoritos
         </p>
-        <p className="text-sm text-zinc-600 text-center py-3 italic">Sin datos suficientes.</p>
+        <p className="text-sm text-zinc-600 text-center py-3 italic">
+          {awaitingImport ? 'Esperando los datos de tu importación...' : 'Sin datos suficientes.'}
+        </p>
       </div>
     );
   }
