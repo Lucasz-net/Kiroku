@@ -1,13 +1,16 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { SavedAnimeCover } from '../SavedAnimeCover';
 import { Link } from 'react-router-dom';
 import { Heart, Trash2, ChevronLeft, ChevronRight, Search, Star, BookmarkCheck, Eye, Clock, ArrowUpDown } from 'lucide-react';
-import type { SavedAnime } from '../../types/profile';
+import { supabase } from '../../lib/supabase';
+import { reportError } from '../../lib/monitoring';
+import type { AnimeSortKey as SortKey, SavedAnime } from '../../types/profile';
 import { PROFILE_TABS } from '../../constants/profile';
 
 const ITEMS_PER_PAGE = 28;
 
-type SortKey = 'date_desc' | 'date_asc' | 'name_asc' | 'name_desc' | 'rating_desc' | 'rating_asc';
+const DEFAULT_SORT: SortKey = 'date_desc';
 
 const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'date_desc',   label: 'Agregados recientemente' },
@@ -18,16 +21,21 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'rating_asc',  label: 'Mi puntuación (menor a mayor)' },
 ];
 
-// Preferencia solo de UI — no hay columna de orden en la base de datos,
-// así que se guarda en localStorage y persiste entre visitas al perfil.
+// Antes la preferencia vivía solo acá. Ahora se guarda en `profiles.anime_sort`
+// para que el perfil público respete el orden que eligió el dueño; el
+// localStorage queda únicamente como puente para quien ya había elegido uno
+// antes de que existiera la columna (se sube a la base en el primer render).
 const SORT_STORAGE_KEY = 'kiroku:profile-anime-sort';
 
-const loadStoredSort = (): SortKey => {
+const isSortKey = (value: unknown): value is SortKey =>
+  SORT_OPTIONS.some(o => o.value === value);
+
+const loadStoredSort = (): SortKey | null => {
   try {
     const stored = localStorage.getItem(SORT_STORAGE_KEY);
-    if (SORT_OPTIONS.some(o => o.value === stored)) return stored as SortKey;
+    if (isSortKey(stored)) return stored;
   } catch { /* localStorage no disponible (modo privado, etc.) */ }
-  return 'date_desc';
+  return null;
 };
 
 // Sin puntuación propia siempre queda al final, sin importar la dirección.
@@ -54,6 +62,12 @@ interface AnimeGridProps {
   animes: SavedAnime[];
   onRemove?: (id: string) => void;
   isOwner?: boolean;
+  /** Dueño de la lista. Necesario para guardar el orden que elige. */
+  profileId?: string;
+  /** Orden guardado del dueño (`profiles.anime_sort`). */
+  sortPreference?: SortKey | null;
+  /** Avisa al padre para que su copia del perfil quede en sincronía. */
+  onSortPreferenceChange?: (key: SortKey | null) => void;
 }
 
 // Empty state ilustrado (#15)
@@ -84,14 +98,28 @@ const EmptyGridState = ({ tab }: { tab: string }) => (
   </div>
 );
 
-export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps) => {
+export const AnimeGrid = ({
+  animes,
+  onRemove,
+  isOwner = false,
+  profileId,
+  sortPreference = null,
+  onSortPreferenceChange,
+}: AnimeGridProps) => {
   const [activeTab, setActiveTab] = useState('Todos');
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortKey, setSortKey] = useState<SortKey>(() => (isOwner ? loadStoredSort() : 'date_desc'));
+  // Sin preferencia guardada, el dueño cae a su elección vieja de localStorage
+  // y el visitante al orden por defecto.
+  const resolveSort = (pref: SortKey | null | undefined): SortKey =>
+    pref ?? (isOwner ? loadStoredSort() ?? DEFAULT_SORT : DEFAULT_SORT);
+
+  const resolvedSort = resolveSort(sortPreference);
+  const [sortKey, setSortKey] = useState<SortKey>(resolvedSort);
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
   const sortTriggerRef = useRef<HTMLButtonElement>(null);
   const sortListboxId = useId();
+  const migratedRef = useRef(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -101,17 +129,52 @@ export const AnimeGrid = ({ animes, onRemove, isOwner = false }: AnimeGridProps)
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // El perfil puede llegar después del primer render, y al pasar de /u/a a
+  // /u/b react-router reusa este componente: sin esto el visitante seguiría
+  // viendo el orden del perfil anterior.
+  useEffect(() => { setSortKey(resolvedSort); }, [resolvedSort]);
+
+  // Puente para quien ya había elegido un orden en localStorage antes de que
+  // existiera la columna: se sube una sola vez, así su perfil público arranca
+  // mostrando el mismo orden que él ya venía viendo.
+  useEffect(() => {
+    if (migratedRef.current || !isOwner || !profileId || sortPreference) return;
+    const stored = loadStoredSort();
+    if (!stored || stored === DEFAULT_SORT) return;
+    migratedRef.current = true;
+    onSortPreferenceChange?.(stored);
+    void supabase.from('profiles').update({ anime_sort: stored }).eq('id', profileId)
+      .then(({ error }) => { if (error) reportError(error, { migrateSort: stored }); });
+  }, [isOwner, profileId, sortPreference, onSortPreferenceChange]);
+
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
     setCurrentPage(1);
   };
 
-  const handleSortChange = (key: SortKey) => {
+  // Se aplica en pantalla y después se guarda: esperar al round-trip para
+  // reordenar la grilla se siente roto. Si el guardado falla se revierte y se
+  // avisa — callarse dejaría al dueño creyendo que su perfil público quedó
+  // ordenado como eligió cuando en la base no cambió nada.
+  const handleSortChange = async (key: SortKey) => {
+    const previous = sortPreference;
     setSortKey(key);
     setCurrentPage(1);
     setShowSortDropdown(false);
     sortTriggerRef.current?.focus();
-    try { localStorage.setItem(SORT_STORAGE_KEY, key); } catch { /* localStorage no disponible */ }
+
+    if (!profileId) return;
+    onSortPreferenceChange?.(key);
+
+    const { error } = await supabase
+      .from('profiles').update({ anime_sort: key }).eq('id', profileId);
+
+    if (error) {
+      onSortPreferenceChange?.(previous);
+      setSortKey(resolveSort(previous));
+      toast.error('No se pudo guardar el orden. Revisá tu conexión e intentá de nuevo.');
+      reportError(error, { anime_sort: key });
+    }
   };
 
   const filteredAnimes = animes.filter(a => {

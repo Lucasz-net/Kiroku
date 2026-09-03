@@ -1,5 +1,11 @@
 import type { ElementType } from 'react';
 
+/** Orden elegido para la grilla de animes del perfil. */
+export type AnimeSortKey =
+  | 'date_desc' | 'date_asc'
+  | 'name_asc' | 'name_desc'
+  | 'rating_desc' | 'rating_asc';
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -10,6 +16,12 @@ export interface UserProfile {
   is_private?: boolean;
   /** Ausente o true = cualquiera puede comentar. False = solo lectura. */
   comments_enabled?: boolean;
+  /**
+   * Orden de la grilla que eligió el dueño. Vive en la base y no solo en
+   * localStorage para que su perfil público se vea igual que como lo ve él.
+   * `null` = nunca eligió; se cae al orden por defecto.
+   */
+  anime_sort?: AnimeSortKey | null;
 }
 
 export interface SavedAnime {

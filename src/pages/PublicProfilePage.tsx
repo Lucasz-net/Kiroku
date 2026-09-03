@@ -359,7 +359,7 @@ export const PublicProfilePage = () => {
               </div>
 
               <div className="profile-section lg:col-span-8">
-                <AnimeGrid animes={animes} />
+                <AnimeGrid animes={animes} sortPreference={profile.anime_sort ?? null} />
               </div>
             </div>
 

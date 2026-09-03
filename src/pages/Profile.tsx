@@ -424,7 +424,14 @@ export const Profile = () => {
           </div>
 
           <div className="profile-section lg:col-span-8">
-            <AnimeGrid animes={animes} onRemove={handleRemove} isOwner />
+            <AnimeGrid
+              animes={animes}
+              onRemove={handleRemove}
+              isOwner
+              profileId={profile.id}
+              sortPreference={profile.anime_sort ?? null}
+              onSortPreferenceChange={key => setProfile(prev => prev ? { ...prev, anime_sort: key } : prev)}
+            />
           </div>
         </div>
 
