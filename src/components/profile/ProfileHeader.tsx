@@ -29,6 +29,7 @@ interface ProfileHeaderProps {
   onFollowersClick?: () => void;
   onFollowingClick?: () => void;
   onImportClick?: () => void;
+  onAniListImportClick?: () => void;
   onExport?: (format: 'xml' | 'json') => void;
   onPrivacyToggle?: (isPrivate: boolean) => void;
   onCommentsToggle?: (enabled: boolean) => void;
@@ -41,7 +42,7 @@ export const ProfileHeader = ({
   onBioChange, onEditBio, onBioSave, onBioCancel,
   onAvatarUpload, onBannerUpload, onSignOut,
   onUsernameUpdate,
-  onFollowersClick, onFollowingClick, onImportClick, onExport, onPrivacyToggle, onCommentsToggle,
+  onFollowersClick, onFollowingClick, onImportClick, onAniListImportClick, onExport, onPrivacyToggle, onCommentsToggle,
   onSearchUsersClick,
 }: ProfileHeaderProps) => {
   const [copied, setCopied] = useState(false);
@@ -117,6 +118,7 @@ export const ProfileHeader = ({
         <ProfileSettingsMenu
           profile={profile}
           onImportClick={onImportClick}
+          onAniListImportClick={onAniListImportClick}
           onExport={onExport}
           onPrivacyToggle={onPrivacyToggle}
           onCommentsToggle={onCommentsToggle}

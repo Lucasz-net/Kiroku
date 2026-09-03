@@ -20,6 +20,16 @@ const ENRICH_DELAY_MS = 2100;
 /** Tope de `Page.media(idMal_in: ...)` en AniList — 50 animes por consulta. */
 const ENRICH_BATCH_SIZE = 50;
 
+/**
+ * Cuántos animes incompletos se rellenan por sesión (ver
+ * `backfillSavedMetadata`). Es un trabajo de fondo que nadie está esperando,
+ * así que no tiene sentido que una lista enorme se pase minutos consultando
+ * AniList en cada arranque: se cubre una tanda acotada por sesión y el resto
+ * queda para la próxima, hasta que converge. Lo que el usuario esté mirando
+ * en pantalla igual se resuelve al instante por su cuenta (SavedAnimeCover).
+ */
+const BACKFILL_LIMIT = 300;
+
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
 export interface ImportEnrichmentState {
@@ -38,6 +48,17 @@ interface UserDataContextType {
   isFavorited: (animeId: number) => boolean;
   getUserScore: (animeId: number) => number | null;
   refreshSavedAnimes: () => Promise<void>;
+  /**
+   * Actualiza una fila ya cargada sin volver a consultar la base.
+   *
+   * `refreshSavedAnimes` relee la lista entera —que en una cuenta con
+   * historial importado son más de mil filas— y hasta ahora eso pasaba
+   * también al puntuar con las estrellas: un clic, mil filas de vuelta. Para
+   * los cambios donde ya se sabe exactamente qué cambió y en qué fila,
+   * conviene esto. Alta o baja de un anime sí siguen releyendo, porque ahí
+   * hace falta el id que genera la base.
+   */
+  patchSavedAnime: (animeId: number, patch: Partial<SavedAnime>) => void;
   refreshUsername: () => Promise<void>;
   applyUsername: (newUsername: string) => void;
   /**
@@ -70,6 +91,7 @@ const UserDataContext = createContext<UserDataContextType>({
   isFavorited: () => false,
   getUserScore: () => null,
   refreshSavedAnimes: async () => {},
+  patchSavedAnime: () => {},
   refreshUsername: async () => {},
   applyUsername: () => {},
   importEnrichment: null,
@@ -92,16 +114,19 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [importEnrichment, setImportEnrichment] = useState<ImportEnrichmentState | null>(null);
   const enrichRunningRef = useRef(false);
+  const backfillDoneRef = useRef(false);
 
   const openLogin = useCallback(() => setIsLoginOpen(true), []);
   const closeLogin = useCallback(() => setIsLoginOpen(false), []);
 
-  const fetchSaved = useCallback(async (userId: string) => {
+  const fetchSaved = useCallback(async (userId: string): Promise<SavedAnime[]> => {
     const { data } = await supabase
       .from('saved_animes')
       .select('anime_id, status, is_favorite, user_score, id, title, image_url, episodes_total, score, year, genres, studios, duration, progress, created_at')
       .eq('user_id', userId);
-    if (data) setSavedAnimes(data as SavedAnime[]);
+    if (!data) return [];
+    setSavedAnimes(data as SavedAnime[]);
+    return data as SavedAnime[];
   }, []);
 
   const fetchProfile = useCallback(async (userId: string) => {
@@ -196,37 +221,116 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
     })();
   }, [fetchSaved]);
 
+  /**
+   * Relleno de las filas que quedaron incompletas en `saved_animes`.
+   *
+   * La tabla ES el caché de la lista del usuario: es permanente, va por
+   * cuenta y no por navegador, y no tiene el techo de ~5 MB de localStorage.
+   * El problema era que solo se llenaba de a pedazos — la importación de XML
+   * inserta las filas sin portada a propósito (para que la lista aparezca en
+   * segundos) y `SavedAnimeCover` resuelve únicamente las tarjetas que llegan
+   * a verse. Todo lo que el usuario nunca scrolleó se volvía a pedir afuera
+   * en cada visita, para siempre.
+   *
+   * Acá se completan en lotes de 50 por consulta a AniList (`idMal_in`), en
+   * segundo plano y una sola vez por sesión, escribiendo el resultado en la
+   * fila. A partir de la segunda visita al perfil no hay ninguna petición
+   * externa: la portada, los géneros y los estudios ya están en la base.
+   *
+   * Solo se tocan campos vacíos. Nada de pisar el título ni ningún dato que
+   * haya puesto la persona.
+   */
+  const backfillSavedMetadata = useCallback(async (userId: string, rows: SavedAnime[]) => {
+    // El enriquecimiento de una importación recién hecha cubre exactamente
+    // las mismas filas: si está corriendo, este pase sobra.
+    if (backfillDoneRef.current || enrichRunningRef.current) return;
+
+    const incomplete = rows
+      .filter(row => !row.image_url || !row.genres || row.genres.length === 0)
+      .slice(0, BACKFILL_LIMIT);
+    if (incomplete.length === 0) {
+      backfillDoneRef.current = true;
+      return;
+    }
+
+    backfillDoneRef.current = true;
+    let patched = 0;
+
+    for (let i = 0; i < incomplete.length; i += ENRICH_BATCH_SIZE) {
+      const batch = incomplete.slice(i, i + ENRICH_BATCH_SIZE);
+
+      let summaries: Map<number, AniListImportSummary>;
+      try {
+        summaries = await getAnimeSummariesByMalIds(batch.map(r => r.anime_id));
+      } catch {
+        // AniList caído o rate-limited: se corta y se reintenta en la próxima
+        // sesión. Insistir acá sería competir con las peticiones que el
+        // usuario sí está esperando.
+        break;
+      }
+
+      for (const row of batch) {
+        const summary = summaries.get(row.anime_id);
+        if (!summary) continue;
+
+        const patch: Record<string, unknown> = {};
+        if (!row.image_url && summary.imageUrl) patch.image_url = summary.imageUrl;
+        if ((!row.genres || row.genres.length === 0) && summary.genres.length > 0) patch.genres = summary.genres;
+        if ((!row.studios || row.studios.length === 0) && summary.studios.length > 0) patch.studios = summary.studios;
+        if (row.year == null && summary.year != null) patch.year = summary.year;
+        if (row.duration == null && summary.duration) patch.duration = summary.duration;
+        if (row.episodes_total == null && summary.episodes != null) patch.episodes_total = summary.episodes;
+        if (row.score == null && summary.score != null) patch.score = summary.score;
+        if (Object.keys(patch).length === 0) continue;
+
+        await supabase.from('saved_animes').update(patch).eq('id', row.id);
+        patched++;
+      }
+
+      if (i + ENRICH_BATCH_SIZE < incomplete.length) await delay(ENRICH_DELAY_MS);
+    }
+
+    if (patched > 0) await fetchSaved(userId);
+  }, [fetchSaved]);
+
   // Los errores quedan asociados al id del usuario (solo el id) para poder
   // responderle si escribe. Ver src/lib/monitoring.ts.
   useEffect(() => { setMonitoringUser(session?.user?.id ?? null); }, [session]);
 
   useEffect(() => {
+    // El relleno arranca detrás de la lista ya renderizada, nunca antes:
+    // `fetchSaved` pinta lo que hay en la base y recién después se completa
+    // lo que falte. `backfillDoneRef` lo deja en una sola corrida por sesión,
+    // así que los refrescos posteriores (guardar un anime, puntuar) no lo
+    // vuelven a disparar.
+    const loadUserData = (userId: string) => {
+      fetchSaved(userId).then(rows => backfillSavedMetadata(userId, rows));
+      fetchProfile(userId);
+    };
+
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
-      if (s) {
-        fetchSaved(s.user.id);
-        fetchProfile(s.user.id);
-      } else {
-        setAuthReady(true);
-      }
+      if (s) loadUserData(s.user.id);
+      else setAuthReady(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       if (s) {
-        fetchSaved(s.user.id);
-        fetchProfile(s.user.id);
+        loadUserData(s.user.id);
       } else {
         setSavedAnimes([]);
         setUsername(null);
         setAvatarUrl(null);
         setNeedsUsernameSetup(false);
         setAuthReady(true);
+        // Otra cuenta en el mismo tab necesita su propio pase de relleno.
+        backfillDoneRef.current = false;
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [fetchSaved, fetchProfile]);
+  }, [fetchSaved, fetchProfile, backfillSavedMetadata]);
 
   const getSavedStatus = useCallback(
     (animeId: number) => savedAnimes.find(a => a.anime_id === animeId)?.status ?? null,
@@ -247,6 +351,10 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
     if (session) await fetchSaved(session.user.id);
   }, [session, fetchSaved]);
 
+  const patchSavedAnime = useCallback((animeId: number, patch: Partial<SavedAnime>) => {
+    setSavedAnimes(prev => prev.map(a => (a.anime_id === animeId ? { ...a, ...patch } : a)));
+  }, []);
+
   const refreshUsername = useCallback(async () => {
     if (session) await fetchProfile(session.user.id);
   }, [session, fetchProfile]);
@@ -261,7 +369,7 @@ export const UserDataProvider = ({ children }: { children: React.ReactNode }) =>
     <UserDataContext.Provider value={{
       session, username, avatarUrl, authReady, needsUsernameSetup,
       savedAnimes, getSavedStatus, isFavorited, getUserScore,
-      refreshSavedAnimes, refreshUsername, applyUsername,
+      refreshSavedAnimes, patchSavedAnime, refreshUsername, applyUsername,
       importEnrichment, startImportEnrichment,
       isLoginOpen, openLogin, closeLogin,
     }}>

@@ -2,10 +2,109 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#FF3B3B" />
-    <meta name="description" content="Tu tracker personal de anime" />
+
+    <!--
+      Título y descripción: esto es literalmente lo que Google muestra.
+      Decía solo "Kiroku" con "Tu tracker personal de anime", así que el
+      resultado en el buscador no explicaba nada de lo que hace la app.
+      Google recomienda un título descriptivo con la marca separada por un
+      delimitador, y recorta según el ancho del dispositivo — de ahí que se
+      apunte a ~60 caracteres y ~155 en la descripción.
+    -->
+    <title>Kiroku — Tu tracker de anime: lista, progreso y estadísticas</title>
+    <meta
+      name="description"
+      content="Organizá tu anime en un solo lugar: seguí lo que estás viendo, llevá tu progreso, armá tu Top 10 y mirá tus estadísticas. Gratis y en español."
+    />
+    <link rel="canonical" href="https://kiroku.pro/" />
+    <!-- max-image-preview:large habilita miniaturas grandes en los resultados. -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+    <!--
+      Iconos. El favicon anterior era `logo.png`: arte de línea BLANCO sobre
+      fondo transparente. Google dibuja los favicons sobre fondo claro, así
+      que quedaba invisible. Los `icon-*.png` son ese mismo logo aplanado
+      sobre el fondo oscuro de la app (ver el script que los generó).
+
+      `favicon.ico` además existe como archivo de verdad: sin él, la
+      reescritura de vercel.json mandaba /favicon.ico a index.html y quien lo
+      pidiera —navegadores y rastreadores lo piden por convención— recibía
+      HTML con 200 en vez de una imagen.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!--
+      Open Graph / Twitter para las vistas previas al compartir el inicio.
+      Existían y se perdieron en algún cambio; las de /anime/:id y /u/:usuario
+      las genera api/og.ts, pero la portada no pasa por ahí. Las URLs son
+      absolutas a propósito: los rastreadores no resuelven rutas relativas.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kiroku" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:title" content="Kiroku — Tu tracker de anime" />
+    <meta
+      property="og:description"
+      content="Seguí lo que estás viendo, llevá tu progreso, armá tu Top 10 y mirá tus estadísticas."
+    />
+    <meta property="og:image" content="https://kiroku.pro/icon-512.png" />
+    <meta property="og:url" content="https://kiroku.pro/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Kiroku — Tu tracker de anime" />
+    <meta
+      name="twitter:description"
+      content="Seguí lo que estás viendo, llevá tu progreso, armá tu Top 10 y mirá tus estadísticas."
+    />
+    <meta name="twitter:image" content="https://kiroku.pro/icon-512.png" />
+
+    <!--
+      Datos estructurados. `WebSite` es de donde Google toma el nombre del
+      sitio para mostrarlo arriba del resultado, y `SearchAction` es lo que
+      puede habilitar el buscador propio dentro del resultado. `Organization`
+      asocia el logo a la marca.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://kiroku.pro/#website",
+            "url": "https://kiroku.pro/",
+            "name": "Kiroku",
+            "description": "Tracker de anime: lista personal, progreso, Top 10 y estadísticas.",
+            "inLanguage": "es",
+            "publisher": { "@id": "https://kiroku.pro/#organization" },
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "https://kiroku.pro/search?q={search_term_string}"
+              },
+              "query-input": "required name=search_term_string"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://kiroku.pro/#organization",
+            "name": "Kiroku",
+            "url": "https://kiroku.pro/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://kiroku.pro/icon-512.png",
+              "width": 512,
+              "height": 512
+            }
+          }
+        ]
+      }
+    </script>
 
     <script>
       // Pone el tema guardado ANTES del primer paint — si esto se hiciera
@@ -22,9 +121,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Kiroku" />
-    <link rel="apple-touch-icon" href="/logo.png" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Kiroku</title>
   </head>
   <body>
     <div id="root"></div>

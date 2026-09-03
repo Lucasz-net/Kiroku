@@ -53,23 +53,38 @@ const Synopsis = ({ text }: { text: string }) => {
 };
 
 // Widget de puntuación de usuario corregido (Método Hitboxes Invisibles)
+//
+// No se puede puntuar lo que está en "Pendiente": es un anime que todavía no
+// se vio, así que la nota no significa nada y ensucia el promedio y las
+// estadísticas del perfil. Sí se puede en "Mirando", y no es un detalle
+// menor: un anime en emisión no admite el estado "Completado" (ver
+// getAvailableStatuses en AnimeDetails), así que atar la puntuación a
+// "Completado" dejaría toda la temporada actual sin poder puntuarse, además
+// de las series largas que alguien mira durante años.
+//
+// La nota ya guardada NO se borra al pasar a "Pendiente", solo se deja de
+// mostrar el widget: si la persona retoma el anime, la recupera intacta.
 const UserScoreWidget = ({ animeId, savedStatus }: { animeId: number; savedStatus: string | null }) => {
-  const { getUserScore, session, refreshSavedAnimes } = useUserData();
+  const { getUserScore, session, patchSavedAnime } = useUserData();
   const currentScore = getUserScore(animeId);
   const [hover, setHover] = useState<number>(0);
   const [saving, setSaving] = useState(false);
 
-  if (!savedStatus || !session) return null;
+  if (!savedStatus || savedStatus === 'Pendiente' || !session) return null;
 
   const handleRate = async (score: number) => {
     setSaving(true);
     try {
-      await supabase
+      const { error } = await supabase
         .from('saved_animes')
         .update({ user_score: score })
         .eq('user_id', session.user.id)
         .eq('anime_id', animeId);
-      await refreshSavedAnimes();
+      if (error) throw error;
+      // Se parchea la fila en memoria en vez de releer la lista completa:
+      // ya sabemos qué cambió y en cuál. En una cuenta con historial
+      // importado, cada estrella disparaba una consulta de más de mil filas.
+      patchSavedAnime(animeId, { user_score: score });
     } catch (e) { console.error(e); }
     finally { setSaving(false); }
   };

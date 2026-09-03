@@ -1,4 +1,9 @@
-const CACHE = 'kiroku-v2';
+// Subir esta versión cada vez que cambie index.html: el Service Worker
+// responde primero desde la caché, así que sin este cambio quien ya visitó el
+// sitio seguiría recibiendo el HTML viejo —con el título y los iconos
+// anteriores— para siempre. Al cambiar el nombre, 'activate' borra la caché
+// anterior y vuelve a precachear '/'.
+const CACHE = 'kiroku-v3';
 const JIKAN_CACHE = 'kiroku-jikan-v1';
 const JIKAN_CACHE_LIMIT = 150;
 const PRECACHE = ['/', '/logo.png', '/manifest.json'];

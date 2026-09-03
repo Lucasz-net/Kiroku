@@ -22,22 +22,22 @@ export default async function handler(req: MalReq, res: MalRes) {
   const animeId = url.searchParams.get('anime_id');
   const characterId = url.searchParams.get('id');
 
+  // Una semana en el CDN: el reparto de un anime es de las cosas más
+  // estables que hay, y el cliente ya no guarda estas listas en localStorage
+  // (pesan demasiado — ver getAnimeCharactersMal en src/services/malApi.ts),
+  // así que este caché es lo único que separa cada recarga de página de una
+  // petición nueva a MAL. `stale-while-revalidate` deja que la primera
+  // visita después del vencimiento igual se sirva al instante.
+  const CACHE = 'public, s-maxage=604800, stale-while-revalidate=86400';
+
   if (animeId && /^\d+$/.test(animeId)) {
     const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 100, 1), 500);
-    await proxyJson(
-      res,
-      `/anime/${animeId}/characters?limit=${limit}&fields=${LIST_FIELDS}`,
-      'public, s-maxage=1800, stale-while-revalidate=3600',
-    );
+    await proxyJson(res, `/anime/${animeId}/characters?limit=${limit}&fields=${LIST_FIELDS}`, CACHE);
     return;
   }
 
   if (characterId && /^\d+$/.test(characterId)) {
-    await proxyJson(
-      res,
-      `/characters/${characterId}?fields=${DETAIL_FIELDS}`,
-      'public, s-maxage=1800, stale-while-revalidate=3600',
-    );
+    await proxyJson(res, `/characters/${characterId}?fields=${DETAIL_FIELDS}`, CACHE);
     return;
   }
 

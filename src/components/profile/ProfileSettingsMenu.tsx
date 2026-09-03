@@ -11,7 +11,10 @@ import type { UserProfile } from '../../types/profile';
 
 interface ProfileSettingsMenuProps {
   profile: UserProfile;
+  /** Importar desde un archivo exportado de MyAnimeList. */
   onImportClick?: () => void;
+  /** Importar desde una cuenta de AniList, por nombre de usuario. */
+  onAniListImportClick?: () => void;
   onExport?: (format: 'xml' | 'json') => void;
   onPrivacyToggle?: (isPrivate: boolean) => void;
   onCommentsToggle?: (enabled: boolean) => void;
@@ -104,7 +107,7 @@ const SECTION_LABEL =
  * tener que leer el texto) y las acciones son filas.
  */
 export const ProfileSettingsMenu = ({
-  profile, onImportClick, onExport, onPrivacyToggle, onCommentsToggle, onSignOut,
+  profile, onImportClick, onAniListImportClick, onExport, onPrivacyToggle, onCommentsToggle, onSignOut,
 }: ProfileSettingsMenuProps) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -186,14 +189,33 @@ export const ProfileSettingsMenu = ({
               : 'Nadie puede escribirte comentarios nuevos. Los que ya están siguen visibles.'}
           />
 
-          {(onImportClick || onExport) && (
+          {(onImportClick || onAniListImportClick || onExport) && (
             <>
               <div className="border-t border-[#FF3B3B]/10" />
               <p className={SECTION_LABEL}>Tu lista</p>
               {onImportClick && (
-                <button onClick={runAndClose(onImportClick)} className={ACTION_ROW}>
-                  <Upload size={15} className="shrink-0 text-zinc-600" />
-                  <span className="text-xs font-black text-[var(--kr-text)]">Importar lista</span>
+                <button onClick={runAndClose(onImportClick)} className={`${ACTION_ROW} items-start`}>
+                  <Upload size={15} className="shrink-0 mt-0.5 text-zinc-600" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-xs font-black text-[var(--kr-text)]">Importar desde MyAnimeList</span>
+                    <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">
+                      Con el archivo .xml que exportás de MAL
+                    </span>
+                  </span>
+                </button>
+              )}
+              {/* AniList no necesita archivo: alcanza el nombre de usuario,
+                  porque su API publica la lista de cualquier perfil público.
+                  Ver src/services/aniListImport.ts. */}
+              {onAniListImportClick && (
+                <button onClick={runAndClose(onAniListImportClick)} className={`${ACTION_ROW} items-start`}>
+                  <Download size={15} className="shrink-0 mt-0.5 text-[#02A9FF]/70" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-xs font-black text-[var(--kr-text)]">Importar desde AniList</span>
+                    <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">
+                      Solo con tu usuario, sin archivos
+                    </span>
+                  </span>
                 </button>
               )}
               {onExport && (

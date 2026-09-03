@@ -22,6 +22,7 @@ import { GenrePieChart } from '../components/profile/GenrePieChart';
 import { StudioBarChart } from '../components/profile/StudioBarChart';
 import { ProfileComments } from '../components/profile/ProfileComments';
 import { ImportXMLModal } from '../components/profile/ImportXMLModal';
+import { ImportAniListModal } from '../components/profile/ImportAniListModal';
 import { FollowersModal } from '../components/profile/FollowersModal';
 import { FollowRequests } from '../components/profile/FollowRequests';
 import { UserSearchModal } from '../components/profile/UserSearchModal';
@@ -67,6 +68,7 @@ export const Profile = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAniListModal, setShowAniListModal] = useState(false);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [showUserSearch, setShowUserSearch] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -309,6 +311,7 @@ export const Profile = () => {
             onFollowersClick={() => { setFollowersInitialTab('followers'); setShowFollowersModal(true); }}
             onFollowingClick={() => { setFollowersInitialTab('following'); setShowFollowersModal(true); }}
             onImportClick={() => setShowImportModal(true)}
+            onAniListImportClick={() => setShowAniListModal(true)}
             onExport={handleExport}
             onSearchUsersClick={() => setShowUserSearch(true)}
           />
@@ -364,6 +367,7 @@ export const Profile = () => {
               username={profile.username}
               userId={profile.id}
               onImportClick={() => setShowImportModal(true)}
+              onAniListImportClick={() => setShowAniListModal(true)}
               onQuickStart={refreshSavedAnimes}
             />
           </div>
@@ -455,6 +459,15 @@ export const Profile = () => {
           userId={profile.id}
           existingAnimeIds={existingAnimeIds}
           onClose={() => setShowImportModal(false)}
+          onImportComplete={handleImportComplete}
+        />
+      )}
+
+      {showAniListModal && (
+        <ImportAniListModal
+          userId={profile.id}
+          existingAnimeIds={existingAnimeIds}
+          onClose={() => setShowAniListModal(false)}
           onImportComplete={handleImportComplete}
         />
       )}

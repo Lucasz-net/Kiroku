@@ -133,6 +133,13 @@ interface MalCharacterListResponse {
 const malCharacterName = (node: MalCharacterNode) =>
   [node.first_name, node.last_name].filter(Boolean).join(' ').trim();
 
+// Ojo con el `persist: false` del final: es la única lista del proyecto que
+// NO se guarda en localStorage. Una lista de personajes pesa entre 10 y 40 KB
+// y la cuota total de localStorage es ~5 MB, así que persistirlas es la forma
+// más rápida de llenarlo y, peor, de alargar el arranque de la app (el
+// pre-warm de queryCache.ts lee todo el almacenamiento de forma síncrona).
+// Se cachean en memoria para la sesión, y entre recargas las sirve el CDN
+// desde api/mal/characters.ts, que para el usuario es igual de instantáneo.
 export const getAnimeCharactersMal = (malId: number): Promise<Character[]> =>
   cachedFetch(
     `mal:chars:${malId}`,
@@ -154,8 +161,8 @@ export const getAnimeCharactersMal = (malId: number): Promise<Character[]> =>
         };
       });
     },
-    30 * 60 * 1000,
-    true,
+    60 * 60 * 1000,
+    false,
   );
 
 export const getCharacterDetailMal = (characterId: number): Promise<CharacterDetail | null> =>
@@ -177,7 +184,7 @@ export const getCharacterDetailMal = (characterId: number): Promise<CharacterDet
           .filter(url => url && url !== portrait),
       };
     },
-    30 * 60 * 1000,
+    7 * 24 * 60 * 60 * 1000,
     true,
   );
 
@@ -215,7 +222,7 @@ export const getCharacterProfileMal = (characterId: number): Promise<CharacterPr
           .filter(url => url && url !== portrait),
       };
     },
-    30 * 60 * 1000,
+    7 * 24 * 60 * 60 * 1000,
     true,
   );
 

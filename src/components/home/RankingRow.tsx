@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Anime } from '../../types/anime';
 import { getHighResImageUrl } from '../../utils/animeUtils';
-import { useJikanCover } from '../../hooks/useJikanCover';
 import { translateGenre } from '../../utils/translations';
 
 const getRankStyle = (index: number) => {
@@ -13,9 +12,15 @@ const getRankStyle = (index: number) => {
   }
 };
 
+// Estas filas siempre vienen del ranking de la API oficial de MAL, cuyo
+// payload ya trae `main_picture` — una URL de cdn.myanimelist.net, o sea la
+// misma portada con el logo del título que se buscaba pedirle a Jikan, y que
+// getHighResImageUrl ya sube a la variante grande. Pedirla de nuevo
+// devolvía exactamente el mismo string: eran 20 peticiones a Jikan en cada
+// carga de Home (10 por ranking, y sin siquiera esperar a que la fila fuera
+// visible) que no cambiaban un solo pixel.
 export const RankingRow = ({ anime, index }: { anime: Anime; index: number }) => {
-  const baseImage = getHighResImageUrl(anime.images.jpg.large_image_url || anime.images.jpg.image_url);
-  const displayImage = useJikanCover(anime.mal_id, baseImage);
+  const displayImage = getHighResImageUrl(anime.images.jpg.large_image_url || anime.images.jpg.image_url);
 
   return (
   <Link

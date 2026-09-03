@@ -17,9 +17,9 @@ const inflight = new Map<string, Promise<unknown>>();
 // Subir este número deja huérfanas todas las entradas previas de una, sin
 // tener que acordarse de invalidar clave por clave. HAY QUE SUBIRLO cada vez
 // que cambie la forma de algo que se cachea con `persist: true`.
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const LS_PREFIX = `kiroku_c${SCHEMA_VERSION}_`;
-const LEGACY_PREFIXES = ['kiroku_c_'];
+const LEGACY_PREFIXES = ['kiroku_c_', 'kiroku_c2_'];
 
 // Pre-warm memory cache from localStorage at import time so getCachedSync works immediately
 try {
@@ -80,11 +80,6 @@ export async function cachedFetch<T>(
 
   inflight.set(key, promise);
   return promise;
-}
-
-export function invalidateCache(key: string) {
-  store.delete(key);
-  try { localStorage.removeItem(LS_PREFIX + key); } catch { /* noop */ }
 }
 
 export function invalidateCachePrefix(prefix: string) {

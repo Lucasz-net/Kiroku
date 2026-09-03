@@ -1,19 +1,17 @@
 import { useEffect, useState } from 'react';
-import { getMediaImage } from '../services/jikanApi';
-import { getHighResImageUrl } from '../utils/animeUtils';
+import { getCoverUrl } from '../services/jikanApi';
 
 // MAL/Jikan cover art usually has the title logo baked into the key visual;
-// AniList's covers are typically clean crops without it. We prefer Jikan's
+// AniList's covers are typically clean crops without it. We prefer MAL's
 // image for that reason, but never block rendering on it — the caller's
 // `fallbackUrl` (AniList, or whatever was already available) shows immediately
-// and this silently upgrades the src if/when Jikan's request succeeds.
+// and this silently upgrades the src if/when the request succeeds.
 /**
  * @param enabled Poner en false mientras la tarjeta no esté a la vista.
- *   Cada llamada es una petición a Jikan y todas comparten una única cola
- *   serializada de ~380 ms: una búsqueda de 40 resultados encolaba unos 15
- *   segundos de peticiones solo para mejorar portadas, compitiendo con las
- *   que sí importan. Gatearlo por visibilidad deja ese costo en las pocas
- *   tarjetas que la persona realmente mira.
+ *   Sigue valiendo la pena aunque las portadas ahora salgan del proxy propio
+ *   con caché de CDN (ver getCoverUrl): una petición que no se hace es más
+ *   barata que una que acierta en caché, y no tiene sentido resolver la
+ *   portada de una tarjeta que la persona nunca va a ver.
  */
 export function useJikanCover(malId: number, fallbackUrl: string, enabled = true): string {
   const [state, setState] = useState({ malId, url: fallbackUrl });
@@ -28,13 +26,10 @@ export function useJikanCover(malId: number, fallbackUrl: string, enabled = true
     if (!malId || !enabled) return;
     let cancelled = false;
 
-    getMediaImage('anime', malId)
-      .then(res => {
-        if (cancelled) return;
-        const jikanUrl = getHighResImageUrl(
-          res.data?.images?.jpg?.large_image_url || res.data?.images?.jpg?.image_url,
-        );
-        if (jikanUrl) setState(s => (s.malId === malId ? { malId, url: jikanUrl } : s));
+    getCoverUrl('anime', malId)
+      .then(coverUrl => {
+        if (cancelled || !coverUrl) return;
+        setState(s => (s.malId === malId ? { malId, url: coverUrl } : s));
       })
       .catch(() => { /* keep fallbackUrl */ });
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useState, useMemo, useRef } from 'react';
 import { prefersReducedMotion } from '../utils/motion';
 import { useSearchParams, Link } from 'react-router-dom';
-import { getRandomAnime, getRecommendedAnimes, searchAniList, searchByStudio, type AniListFilters } from '../services/aniListApi';
+import { getRandomAnime, getRecommendedAnimes, searchAniList, searchByStudio, type AniListFilters, type AniListSearchResult } from '../services/aniListApi';
 import type { Anime } from '../types/anime';
 import { AnimeCard } from '../components/AnimeCard';
 import debounce from 'lodash.debounce';
@@ -145,6 +145,8 @@ export const Search = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
+  /** Total de coincidencias que informa AniList; null cuando no se puede saber. */
+  const [totalResults, setTotalResults] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const { savedAnimes } = useUserData();
   const [recommendations, setRecommendations] = useState<Anime[]>([]);
@@ -185,20 +187,41 @@ export const Search = () => {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([g]) => g);
   }, [savedAnimes]);
 
+  /**
+   * Clave estable para las recomendaciones: solo los tres géneros que
+   * `getRecommendedAnimes` realmente usa, como string, para que la identidad
+   * del array no dispare consultas de más. Guardar un anime que no mueve el
+   * podio de géneros no cambia esta clave y por lo tanto no pide nada.
+   */
+  const recsKey = useMemo(() => myTopGenres.slice(0, 3).join(','), [myTopGenres]);
+  const recsGenres = useMemo(() => (recsKey ? recsKey.split(',') : []), [recsKey]);
+
+  // La lista guardada se lee por referencia y no como dependencia: se usa
+  // para excluir lo que la persona ya tiene, pero no tiene por qué provocar
+  // una consulta nueva. Ver el comentario del efecto de abajo.
+  const savedAnimesRef = useRef(savedAnimes);
+  savedAnimesRef.current = savedAnimes;
+
   const handleLoadRecommendations = useCallback(async () => {
     setLoadingRecs(true);
     try {
       const response = await getRecommendedAnimes({
-        genres: myTopGenres,
-        excludeMalIds: savedAnimes.map(a => a.anime_id),
+        genres: recsGenres,
+        excludeMalIds: savedAnimesRef.current.map(a => a.anime_id),
       });
       setRecommendations(response.data);
       setRecsPersonalized(response.personalized);
     } catch (error) { console.error(error); } finally { setLoadingRecs(false); }
-  }, [myTopGenres, savedAnimes]);
+  }, [recsGenres]);
 
-  // Se recalculan cuando cambia la lista del usuario: si acaba de guardar algo,
-  // la próxima tanda ya lo tiene en cuenta.
+  // Se recalculan solo cuando cambian los géneros que mandan en la lista.
+  //
+  // Antes esto dependía del array `savedAnimes` entero, así que **cada vez
+  // que se guardaba un anime** —o que cualquier cosa refrescaba la lista— se
+  // pedían recomendaciones nuevas a AniList. Guardar tres animes seguidos
+  // eran tres consultas, todas para un resultado prácticamente idéntico.
+  // `recsGenres` solo cambia cuando cambian de verdad los tres géneros
+  // principales, que es lo único que altera la respuesta.
   useEffect(() => { handleLoadRecommendations(); }, [handleLoadRecommendations]);
 
   const handlePickRandomAnime = async () => {
@@ -207,28 +230,56 @@ export const Search = () => {
     catch (error) { console.error(error); } finally { setLoadingRandom(false); }
   };
 
+  // Sugerencias del buscador.
+  //
+  // Antes: 300 ms de debounce, sin mínimo de caracteres y sin cancelar nada.
+  // Escribir "shingeki" despacio disparaba varias consultas que quedaban
+  // compitiendo entre sí, y ganaba la que llegara última — no la última que
+  // se tipeó, que es distinto: bastaba una respuesta lenta de una palabra a
+  // medias para pisar el resultado bueno. Además, una sola letra devuelve
+  // basura para cualquier buscador.
+  //
+  // Ahora: 400 ms, mínimo 2 caracteres, y cada consulta nueva aborta la
+  // anterior — así AniList recibe una consulta por búsqueda real en vez de
+  // una por pausa al teclear.
+  const instantAbortRef = useRef<AbortController | null>(null);
+
   const debouncedFetchInstantResults = useMemo(() =>
     debounce(async (searchTerm: string) => {
-      if (searchTerm.trim()) {
-        try {
-          const response = await searchAniList({ q: searchTerm, perPage: 5 });
-          setInstantResults(response.data);
-        } catch (error) { console.error(error); }
-      } else { setInstantResults([]); }
-    }, 300), []);
+      instantAbortRef.current?.abort();
 
-  useEffect(() => { return () => debouncedFetchInstantResults.cancel(); }, [debouncedFetchInstantResults]);
+      const term = searchTerm.trim();
+      if (term.length < 2) { setInstantResults([]); return; }
+
+      const controller = new AbortController();
+      instantAbortRef.current = controller;
+
+      try {
+        const response = await searchAniList({ q: term, perPage: 5 }, controller.signal);
+        setInstantResults(response.data);
+      } catch (error) {
+        // Abortar es el camino esperado cuando alguien sigue escribiendo:
+        // no es un error que haya que reportar ni loguear.
+        if ((error as Error)?.name !== 'AbortError') console.error(error);
+      }
+    }, 400), []);
+
+  useEffect(() => () => {
+    debouncedFetchInstantResults.cancel();
+    instantAbortRef.current?.abort();
+  }, [debouncedFetchInstantResults]);
 
   // Solo usa setters de estado, que son estables — de ahí las dependencias
   // vacías. Estar memoizadas es lo que permite que el efecto de arriba las
   // liste como dependencia en vez de silenciar la regla.
-  const applyResults = useCallback((data: Anime[], hasNext: boolean, pageNumber: number) => {
-    if (pageNumber === 1) setResults(data);
+  const applyResults = useCallback((res: AniListSearchResult, pageNumber: number) => {
+    if (pageNumber === 1) setResults(res.data);
     else setResults(prev => {
       const existingIds = new Set(prev.map(a => a.mal_id));
-      return [...prev, ...data.filter((a: Anime) => !existingIds.has(a.mal_id))];
+      return [...prev, ...res.data.filter((a: Anime) => !existingIds.has(a.mal_id))];
     });
-    setHasNextPage(hasNext);
+    setHasNextPage(res.hasNextPage);
+    setTotalResults(res.total);
     setPage(pageNumber);
   }, []);
 
@@ -253,7 +304,7 @@ export const Search = () => {
             year: year ? parseInt(year, 10) : undefined,
           },
         );
-        applyResults(res.data, res.hasNextPage, pageNumber);
+        applyResults(res, pageNumber);
         return;
       }
 
@@ -280,7 +331,7 @@ export const Search = () => {
       if (seasonParam) aniFilters.season = seasonParam;
 
       const response = await searchAniList(aniFilters);
-      applyResults(response.data, response.hasNextPage, pageNumber);
+      applyResults(response, pageNumber);
     } catch (error) { console.error(error); } finally { setLoading(false); setLoadingMore(false); }
   }, [applyResults]);
 
@@ -300,7 +351,7 @@ export const Search = () => {
       genres: searchParams.get('genres') ? searchParams.get('genres')!.split(',') : []
     });
     if (Array.from(searchParams.keys()).length > 0) executeAdvancedSearch(searchParams, 1);
-    else { setResults([]); setHasNextPage(false); }
+    else { setResults([]); setHasNextPage(false); setTotalResults(null); }
   }, [searchParams, executeAdvancedSearch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -526,7 +577,20 @@ export const Search = () => {
                 <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">Búsqueda</p>
                 <h2 className="text-2xl font-black text-[var(--kr-text)] flex items-center gap-3">
                   Resultados
-                  <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/10 bg-[var(--kr-surface)] px-3 py-1 rounded-lg">{results.length}</span>
+                  {/* El badge mostraba `results.length` a secas, o sea 40 — y
+                      40 es el tamaño de página, así que toda búsqueda con más
+                      de 40 coincidencias parecía tener exactamente 40.
+                      Cuando AniList sí da un total real se muestra "40 de N";
+                      cuando no lo da (ver ANILIST_TOTAL_SENTINEL) se dice
+                      "cargados", que es la verdad, en vez de inventar un
+                      número. Sin más páginas, lo cargado ES el total. */}
+                  <span className="text-sm font-bold text-zinc-500 border border-[#FF3B3B]/10 bg-[var(--kr-surface)] px-3 py-1 rounded-lg tabular-nums">
+                    {totalResults != null && totalResults > results.length
+                      ? `${results.length} de ${totalResults}`
+                      : hasNextPage
+                        ? `${results.length} cargados`
+                        : results.length}
+                  </span>
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -573,11 +637,16 @@ export const Search = () => {
             </div>
 
             {hasNextPage && (
-              <div className="flex justify-center mt-12">
+              <div className="flex flex-col items-center gap-3 mt-12">
                 <button onClick={() => executeAdvancedSearch(searchParams, page + 1)} disabled={loadingMore}
                   className="flex items-center gap-2 px-6 py-2.5 border border-[#FF3B3B]/20 bg-[var(--kr-surface)] text-zinc-400 font-bold uppercase tracking-widest text-[11px] hover:bg-[#FF3B3B] hover:text-[var(--kr-text)] hover:border-[#FF3B3B] transition-all disabled:opacity-40 rounded-xl">
                   {loadingMore ? <><Loader2 size={14} className="animate-spin" /> Cargando...</> : <><Plus size={14} /> Cargar más</>}
                 </button>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-600 tabular-nums">
+                  {totalResults != null
+                    ? `Mostrando ${results.length} de ${totalResults}`
+                    : `Mostrando ${results.length} · hay más resultados`}
+                </p>
               </div>
             )}
           </div>

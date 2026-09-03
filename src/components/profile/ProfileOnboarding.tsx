@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, Trophy, CalendarDays, BookOpen, ArrowRight, Upload, Sparkles } from 'lucide-react';
+import { Search, Trophy, CalendarDays, BookOpen, ArrowRight, Upload, Sparkles, Download, ShieldCheck } from 'lucide-react';
 import { QuickStartPicker } from './QuickStartPicker';
 
 const steps = [
@@ -67,10 +67,13 @@ interface ProfileOnboardingProps {
   /** Necesario para el selector rápido, que guarda directo en la lista. */
   userId: string;
   onImportClick?: () => void;
+  onAniListImportClick?: () => void;
   onQuickStart: () => void | Promise<void>;
 }
 
-export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStart }: ProfileOnboardingProps) => (
+export const ProfileOnboarding = ({
+  username, userId, onImportClick, onAniListImportClick, onQuickStart,
+}: ProfileOnboardingProps) => (
   <div className="flex flex-col gap-6">
 
     {/* Bienvenida */}
@@ -114,6 +117,38 @@ export const ProfileOnboarding = ({ username, userId, onImportClick, onQuickStar
           className="relative shrink-0 inline-flex items-center gap-2 px-6 py-3.5 bg-[#FF3B3B] hover:bg-[#FF5555] text-[var(--kr-text)] rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-[0_8px_30px_rgba(255,59,59,0.25)]"
         >
           <Upload size={15} /> Importar mi lista
+        </button>
+      </div>
+    )}
+
+    {/* Importar desde AniList — mismo peso visual que el de MAL, en el celeste
+        de AniList para que se distingan de un vistazo. Va debajo y no arriba
+        porque el de MAL es el caso más común, pero este pide menos: no hay
+        que exportar ni subir nada, solo escribir el usuario. */}
+    {onAniListImportClick && (
+      <div className="bg-gradient-to-br from-[#02A9FF]/15 via-[var(--kr-surface)] to-[var(--kr-surface)] border border-[#02A9FF]/40 rounded-2xl p-8 md:p-10 relative overflow-hidden flex flex-col md:flex-row items-center gap-6 md:gap-10 justify-between">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#02A9FF]/50 to-transparent" />
+        <div className="absolute -left-20 -bottom-20 w-72 h-72 rounded-full bg-[#02A9FF]/[0.08] blur-3xl pointer-events-none" />
+        <div className="relative flex items-start gap-4">
+          <div className="w-12 h-12 shrink-0 rounded-xl bg-[#02A9FF]/15 border border-[#02A9FF]/30 flex items-center justify-center">
+            <Download size={20} className="text-[#02A9FF]" />
+          </div>
+          <div>
+            <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#02A9FF] mb-2">
+              <ShieldCheck size={12} /> Sin archivos ni contraseñas
+            </p>
+            <h3 className="text-[var(--kr-text)] font-black text-xl mb-2">¿Tu lista está en AniList?</h3>
+            <p className="text-zinc-400 text-sm leading-relaxed max-w-md">
+              Escribí tu nombre de usuario y traemos tu lista pública tal cual está — con portadas,
+              géneros y estudios incluidos. No hace falta exportar nada.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onAniListImportClick}
+          className="relative shrink-0 inline-flex items-center gap-2 px-6 py-3.5 bg-[#02A9FF] hover:bg-[#3BBDFF] text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-[0_8px_30px_rgba(2,169,255,0.25)]"
+        >
+          <Download size={15} /> Traer de AniList
         </button>
       </div>
     )}

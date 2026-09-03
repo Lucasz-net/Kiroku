@@ -2,11 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { scrollBehavior } from '../utils/motion';
 import { toast } from 'sonner';
 import { useParams } from 'react-router-dom';
-import { getAnimeById, getAnimeStreaming, getMediaImage, JikanError } from '../services/jikanApi';
+import { getAnimeById, getAnimeStreaming, getCoverUrl, JikanError } from '../services/jikanApi';
 import { getAnimeRanking, getAnimeCharactersMal } from '../services/malApi';
 import { getAnimeFullByMalId } from '../services/aniListApi';
 import { translateToSpanish } from '../services/translateApi';
-import { getHighResImageUrl, buildSavedAnimePayload } from '../utils/animeUtils';
+import { buildSavedAnimePayload } from '../utils/animeUtils';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import type { AnimeFull, Character } from '../types/anime';
 import { supabase } from '../lib/supabase';
@@ -129,14 +129,12 @@ export const AnimeDetails = () => {
         translateSynopsisInBackground(bundle.anime.synopsis);
 
         // MAL/Jikan cover art usually has the title logo baked in; AniList's
-        // doesn't. Try to upgrade the poster to Jikan's version in the
-        // background — if Jikan is unavailable for this title, the AniList
-        // cover we already rendered just stays as-is.
-        getMediaImage('anime', malId)
-          .then(res => {
-            if (cancelled) return;
-            const url = getHighResImageUrl(res.data?.images?.jpg?.large_image_url || res.data?.images?.jpg?.image_url);
-            if (!url) return;
+        // doesn't. Try to upgrade the poster in the background — if the cover
+        // can't be resolved for this title, the AniList one we already
+        // rendered just stays as-is.
+        getCoverUrl('anime', malId)
+          .then(url => {
+            if (cancelled || !url) return;
             setAnime(prev => prev ? { ...prev, images: { jpg: { image_url: url, large_image_url: url } } } : prev);
           })
           .catch(() => { /* keep the AniList cover */ });
@@ -214,14 +212,12 @@ export const AnimeDetails = () => {
     if (entries.length === 0) return;
     let cancelled = false;
 
-    // Fired in parallel, but getMediaImage funnels every request through the
-    // shared Jikan queue (throttled + cached), so this no longer needs its
-    // own manual pacing/backoff.
+    // Fired in parallel: getCoverUrl hits our own edge-cached proxy and
+    // deduplicates in-flight requests, so this needs no manual pacing.
     entries.forEach(entry => {
-      getMediaImage(entry.type, entry.mal_id)
-        .then(res => {
+      getCoverUrl(entry.type, entry.mal_id)
+        .then(url => {
           if (cancelled) return;
-          const url = getHighResImageUrl(res.data?.images?.jpg?.large_image_url || res.data?.images?.jpg?.image_url);
           setRelatedImages(prev => ({ ...prev, [entry.mal_id]: url || null }));
         })
         .catch(() => {

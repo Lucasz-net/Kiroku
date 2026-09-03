@@ -2,7 +2,9 @@
 import { cachedFetch } from '../utils/queryCache';
 import type { Anime, AnimeFull, AnimeRelationEntry } from '../types/anime';
 
-const ANILIST_URL = 'https://graphql.anilist.co';
+// Exportado para `aniListImport.ts`, que consulta el mismo endpoint pero es
+// un flujo aparte (la lista de un usuario, no el catálogo).
+export const ANILIST_URL = 'https://graphql.anilist.co';
 
 export interface AniListFilters {
   q?: string;
@@ -54,13 +56,60 @@ interface AniListResponse {
     Page: {
       pageInfo: {
         hasNextPage: boolean;
+        total: number | null;
       };
       media: AniListMedia[];
     };
   };
 }
 
-export const searchAniList = async (filters: AniListFilters) => {
+/**
+ * AniList deja de contar en 5000.
+ *
+ * `pageInfo.total` parece la solución obvia para mostrar cuántos resultados
+ * tiene una búsqueda, pero **solo es un número real cuando todo entra en una
+ * página**. En cuanto hay más de una, devuelve siempre exactamente 5000, con
+ * `lastPage` = 5000/perPage. Comprobado contra la API en vivo (2026-09-03):
+ *
+ *   buscar "naruto"        → total 9…26, hasNextPage false   ← real
+ *   año 2002 + terror      → total 7                          ← real
+ *   año 2002               → total 5000, lastPage 125         ← centinela
+ *   año 2002 + solo TV     → total 5000                       ← el mismo, y
+ *                                                               filtrar más
+ *                                                               debería dar
+ *                                                               menos
+ *   buscar "school"        → total 5000 con perPage 5, 40…    ← centinela
+ *
+ * Peor todavía: pidiendo una página vacía lejana, `total` pasa a valer
+ * `(página-1) × perPage` — o sea que el número cambia según qué página pidas.
+ * No es un total, es relleno.
+ *
+ * Por eso el centinela se traduce a `null` acá: la UI prefiere no mostrar
+ * número antes que mostrar uno inventado. NO reemplazar esto por
+ * `pageInfo.total` a secas por más razonable que suene.
+ */
+const ANILIST_TOTAL_SENTINEL = 5000;
+
+/**
+ * Resultado de una búsqueda paginada.
+ *
+ * `total` es la cantidad real de coincidencias, o `null` cuando AniList no la
+ * sabe (ver arriba) o cuando el camino usado no puede saberla (ver
+ * `searchByStudio`, que filtra del lado del cliente). Existe porque la
+ * pantalla mostraba "Resultados 40" —que es cuántos se cargaron, no cuántos
+ * hay— y un usuario filtró por 2002, vio 40 y escribió que era imposible que
+ * ese año hubieran salido exactamente 40 series. Tenía razón.
+ */
+export interface AniListSearchResult {
+  data: Anime[];
+  hasNextPage: boolean;
+  total: number | null;
+}
+
+export const searchAniList = async (
+  filters: AniListFilters,
+  signal?: AbortSignal,
+): Promise<AniListSearchResult> => {
   const query = `
     query (
       $page: Int,
@@ -76,6 +125,7 @@ export const searchAniList = async (filters: AniListFilters) => {
       Page(page: $page, perPage: $perPage) {
         pageInfo {
           hasNextPage
+          total
         }
         media(
           search: $search,
@@ -135,6 +185,9 @@ export const searchAniList = async (filters: AniListFilters) => {
       'Accept': 'application/json',
     },
     body: JSON.stringify({ query, variables }),
+    // Lo usa el buscador instantáneo para cancelar la consulta anterior
+    // cuando la persona sigue tecleando. Ver Search.tsx.
+    signal,
   });
 
   if (!response.ok) throw new Error('Error fetching from AniList');
@@ -145,6 +198,13 @@ export const searchAniList = async (filters: AniListFilters) => {
   return {
     data: mapAniListMedia(pageData.media),
     hasNextPage: pageData.pageInfo.hasNextPage,
+    // El centinela 5000 significa "no lo sé" (ver ANILIST_TOTAL_SENTINEL).
+    // Cuando sí es real, es el total de coincidencias de AniList y no la
+    // cantidad exacta de tarjetas que se dibujan: mapAniListMedia descarta
+    // algunas (sin id de MAL, videos musicales, terminados sin nota).
+    total: pageData.pageInfo.total != null && pageData.pageInfo.total < ANILIST_TOTAL_SENTINEL
+      ? pageData.pageInfo.total
+      : null,
   };
 };
 
@@ -260,7 +320,7 @@ export const searchByStudio = async (
   page = 1,
   sort: string[] = ['POPULARITY_DESC'],
   filters: StudioClientFilters = {},
-): Promise<{ data: Anime[]; hasNextPage: boolean }> => {
+): Promise<AniListSearchResult> => {
   const response = await fetch(ANILIST_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -275,7 +335,7 @@ export const searchByStudio = async (
 
   const json = (await response.json()) as AniListStudioResponse;
   const media = json.data?.Studio?.media;
-  if (!media) return { data: [], hasNextPage: false };
+  if (!media) return { data: [], hasNextPage: false, total: null };
 
   const wantedStatus = filters.status ? STATUS_FILTER[filters.status] : undefined;
 
@@ -293,6 +353,11 @@ export const searchByStudio = async (
   return {
     data: mapAniListMedia(filtered),
     hasNextPage: media.pageInfo.hasNextPage,
+    // Sin total a propósito: género, formato, estado y año se filtran acá
+    // arriba, sobre lo que ya vino, así que cualquier número que devolviera
+    // AniList sería el del estudio entero y no el de la búsqueda que la
+    // persona hizo. Mejor no mostrar total que mostrar uno falso.
+    total: null,
   };
 };
 
@@ -612,7 +677,10 @@ export const getAnimeFullByMalId = (malId: number): Promise<AniListAnimeBundle |
       const media = json.data?.Media;
       return media ? mapAniListFull(media) : null;
     },
-    30 * 60 * 1000,
+    // Una semana en disco. La ficha de un anime terminado no cambia, y hasta
+    // ahora vivía 30 minutos: volver a abrir el mismo anime al día siguiente
+    // era una consulta nueva a AniList por cada visita.
+    7 * 24 * 60 * 60 * 1000,
     true,
   );
 

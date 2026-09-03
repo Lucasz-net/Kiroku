@@ -116,9 +116,45 @@ describe('ProfileSettingsMenu', () => {
     await user.click(privacySwitch());
     expect(privacySwitch()).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Importar lista' }));
+    await user.click(screen.getByRole('button', { name: /Importar desde MyAnimeList/ }));
     expect(onImportClick).toHaveBeenCalledOnce();
     expect(screen.queryByRole('switch', { name: /Perfil privado/ })).not.toBeInTheDocument();
+  });
+
+  // Las dos importaciones son filas distintas y tienen que poder convivir:
+  // la de MAL pide un archivo y la de AniList solo el nombre de usuario.
+  it('ofrece las dos importaciones por separado', async () => {
+    const onImportClick = vi.fn();
+    const onAniListImportClick = vi.fn();
+
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <ProfileSettingsMenu
+          profile={BASE}
+          onImportClick={onImportClick}
+          onAniListImportClick={onAniListImportClick}
+          onSignOut={() => {}}
+        />
+      </ThemeProvider>,
+    );
+    await openMenu(user);
+
+    await user.click(screen.getByRole('button', { name: /Importar desde AniList/ }));
+    expect(onAniListImportClick).toHaveBeenCalledOnce();
+    expect(onImportClick).not.toHaveBeenCalled();
+  });
+
+  it('no muestra la fila de AniList si no le pasan la acción', async () => {
+    const user = userEvent.setup();
+    render(
+      <ThemeProvider>
+        <ProfileSettingsMenu profile={BASE} onImportClick={vi.fn()} onSignOut={() => {}} />
+      </ThemeProvider>,
+    );
+    await openMenu(user);
+
+    expect(screen.queryByRole('button', { name: /Importar desde AniList/ })).not.toBeInTheDocument();
   });
 
   it('cierra con Escape', async () => {
