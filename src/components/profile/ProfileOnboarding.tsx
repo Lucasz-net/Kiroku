@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Search, Trophy, CalendarDays, BookOpen, ArrowRight, Upload, Sparkles, Download, ShieldCheck } from 'lucide-react';
+import { Search, Trophy, CalendarDays, BookOpen, ArrowRight, Sparkles, Download, ShieldCheck } from 'lucide-react';
 import { QuickStartPicker } from './QuickStartPicker';
 
 const steps = [
@@ -100,7 +100,7 @@ export const ProfileOnboarding = ({
         <div className="absolute -left-20 -bottom-20 w-72 h-72 rounded-full bg-[#FF3B3B]/[0.08] blur-3xl pointer-events-none" />
         <div className="relative flex items-start gap-4">
           <div className="w-12 h-12 shrink-0 rounded-xl bg-[#FF3B3B]/15 border border-[#FF3B3B]/30 flex items-center justify-center">
-            <Upload size={20} className="text-[#FF3B3B]" />
+            <Download size={20} className="text-[#FF3B3B]" />
           </div>
           <div>
             <p className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#FF3B3B] mb-2">
@@ -116,7 +116,7 @@ export const ProfileOnboarding = ({
           onClick={onImportClick}
           className="relative shrink-0 inline-flex items-center gap-2 px-6 py-3.5 bg-[#FF3B3B] hover:bg-[#FF5555] text-[var(--kr-text)] rounded-xl font-black text-xs uppercase tracking-widest transition-colors shadow-[0_8px_30px_rgba(255,59,59,0.25)]"
         >
-          <Upload size={15} /> Importar mi lista
+          <Download size={15} /> Importar mi lista
         </button>
       </div>
     )}

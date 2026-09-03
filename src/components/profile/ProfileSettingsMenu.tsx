@@ -195,7 +195,7 @@ export const ProfileSettingsMenu = ({
               <p className={SECTION_LABEL}>Tu lista</p>
               {onImportClick && (
                 <button onClick={runAndClose(onImportClick)} className={`${ACTION_ROW} items-start`}>
-                  <Upload size={15} className="shrink-0 mt-0.5 text-zinc-600" />
+                  <Download size={15} className="shrink-0 mt-0.5 text-zinc-600" />
                   <span className="flex-1 min-w-0">
                     <span className="block text-xs font-black text-[var(--kr-text)]">Importar desde MyAnimeList</span>
                     <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">
@@ -209,7 +209,7 @@ export const ProfileSettingsMenu = ({
                   Ver src/services/aniListImport.ts. */}
               {onAniListImportClick && (
                 <button onClick={runAndClose(onAniListImportClick)} className={`${ACTION_ROW} items-start`}>
-                  <Download size={15} className="shrink-0 mt-0.5 text-[#02A9FF]/70" />
+                  <Download size={15} className="shrink-0 mt-0.5 text-zinc-600" />
                   <span className="flex-1 min-w-0">
                     <span className="block text-xs font-black text-[var(--kr-text)]">Importar desde AniList</span>
                     <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">
@@ -221,7 +221,7 @@ export const ProfileSettingsMenu = ({
               {onExport && (
                 <>
                   <button onClick={runAndClose(() => onExport('xml'))} className={`${ACTION_ROW} items-start`}>
-                    <Download size={15} className="shrink-0 mt-0.5 text-zinc-600" />
+                    <Upload size={15} className="shrink-0 mt-0.5 text-zinc-600" />
                     <span className="flex-1 min-w-0">
                       <span className="block text-xs font-black text-[var(--kr-text)]">Exportar XML de MyAnimeList</span>
                       <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">
@@ -230,7 +230,7 @@ export const ProfileSettingsMenu = ({
                     </span>
                   </button>
                   <button onClick={runAndClose(() => onExport('json'))} className={`${ACTION_ROW} items-start`}>
-                    <Download size={15} className="shrink-0 mt-0.5 text-zinc-600" />
+                    <Upload size={15} className="shrink-0 mt-0.5 text-zinc-600" />
                     <span className="flex-1 min-w-0">
                       <span className="block text-xs font-black text-[var(--kr-text)]">Exportar JSON completo</span>
                       <span className="block text-[11px] text-zinc-500 leading-snug mt-0.5">

@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import {
-  X, Upload, FileText, CheckCircle2, AlertCircle,
+  X, Download, FileText, CheckCircle2, AlertCircle,
   Loader2, Tv, Play, Clock,
 } from 'lucide-react';
 import { parseMalXml, getMalStatusCounts, getReclassifiedCounts, readMalListFile, type MalAnimeEntry } from '../../utils/malXmlParser';
@@ -163,7 +163,7 @@ export const ImportXMLModal = ({
                 className="border-2 border-dashed border-[#FF3B3B]/20 hover:border-[#FF3B3B]/50 rounded-xl p-10 flex flex-col items-center gap-3 cursor-pointer transition-colors group"
               >
                 <div className="w-14 h-14 rounded-2xl bg-[#FF3B3B]/10 flex items-center justify-center group-hover:bg-[#FF3B3B]/20 transition-colors">
-                  <Upload size={24} className="text-[#FF3B3B]" />
+                  <Download size={24} className="text-[#FF3B3B]" />
                 </div>
                 <p className="text-[var(--kr-text)] font-bold text-sm text-center">
                   Seleccioná tu archivo XML o XML.GZ
@@ -222,7 +222,7 @@ export const ImportXMLModal = ({
                     { label: 'Mirando', value: statusCounts['Mirando'] || 0, icon: Play },
                     { label: 'Pendientes', value: statusCounts['Pendiente'] || 0, icon: Clock },
                     { label: 'Ya guardados', value: entries.length - toImport.length, icon: Tv },
-                    { label: 'A importar', value: toImport.length, icon: Upload },
+                    { label: 'A importar', value: toImport.length, icon: Download },
                   ].map(({ label, value, icon: Icon }) => (
                     <div key={label} className="bg-[var(--kr-surface)] border border-[#FF3B3B]/[0.07] rounded-lg p-3">
                       <Icon size={13} className="text-[#FF3B3B]/40 mb-2" />
