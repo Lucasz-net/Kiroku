@@ -22,21 +22,9 @@
     <!-- max-image-preview:large habilita miniaturas grandes en los resultados. -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 
-    <!--
-      Iconos. El favicon anterior era `logo.png`: arte de línea BLANCO sobre
-      fondo transparente. Google dibuja los favicons sobre fondo claro, así
-      que quedaba invisible. Los `icon-*.png` son ese mismo logo aplanado
-      sobre el fondo oscuro de la app (ver el script que los generó).
-
-      `favicon.ico` además existe como archivo de verdad: sin él, la
-      reescritura de vercel.json mandaba /favicon.ico a index.html y quien lo
-      pidiera —navegadores y rastreadores lo piden por convención— recibía
-      HTML con 200 en vez de una imagen.
-    -->
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Iconos: logo.png, arte de línea sobre fondo transparente. -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
     <link rel="manifest" href="/manifest.json" />
 
     <!--
