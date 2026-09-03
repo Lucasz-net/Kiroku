@@ -15,7 +15,7 @@ interface Top10SectionProps {
 export const Top10Section = ({ entries, username, isOwner, onEditClick, metrics }: Top10SectionProps) => {
   const hasAny = entries.length > 0;
   const showTop10Column = hasAny || isOwner;
-  const top3 = entries.filter(e => e.rank <= 3);
+  const top5 = entries.filter(e => e.rank <= 5);
 
   return (
     <div className="profile-section relative bg-[var(--kr-surface)] border border-[#FF3B3B]/10 rounded-2xl p-3 md:p-4 overflow-hidden">
@@ -53,7 +53,7 @@ export const Top10Section = ({ entries, username, isOwner, onEditClick, metrics 
               </div>
             ) : (
               <div>
-                <Top10Podium entries={top3} />
+                <Top10Podium entries={top5} />
                 <Link
                   to={`/top10/${username}`}
                   className="mt-2 flex items-center justify-center gap-1.5 text-[#FF3B3B] hover:text-[#FF6B6B] font-black text-xs uppercase tracking-widest transition-colors"

@@ -13,34 +13,36 @@ type PodiumCfg = Record<number, {
   numberColor: string; glow: string; numberSize: string;
 }>;
 
-// "compact": la sección resumen del perfil (top 3 con nombre, 4-5 solo como
-// relleno visual del podio, sin texto — así no compite con el resto de
-// tarjetas del perfil). "large": la página dedicada /top10/:username, con
-// más espacio disponible — portadas más grandes y nombre en los 5 puestos.
+// "compact": la sección resumen del perfil (top 5: los puestos 1-3 con nombre y
+// los 4-5 como tarjetas laterales más chicas sin texto, así no compiten con el
+// resto de tarjetas del perfil). Los anchos van en % del contenedor + aspect
+// ratio fijo: el podio se adapta al ancho de la columna sin agrandar el panel
+// ni desbordarlo en pantallas chicas. "large": la página dedicada
+// /top10/:username, con más espacio — portadas más grandes y nombre en los 5.
 const COMPACT_CFG: PodiumCfg = {
   4: {
-    order: 'order-1', colWidth: 'w-14 sm:w-16 md:w-20', imgSize: 'w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28',
-    barHeight: 'h-8 sm:h-9 md:h-11', barFrom: 'from-[#160F0F]', barTo: 'to-[#1D1414]',
+    order: 'order-1', colWidth: 'w-[14.5%]', imgSize: 'w-full aspect-[8/11]',
+    barHeight: 'h-[22px] sm:h-[22px] md:h-[26px]', barFrom: 'from-[#160F0F]', barTo: 'to-[#1D1414]',
     borderColor: 'border-zinc-700/40', numberColor: 'text-zinc-500', glow: '', numberSize: 'text-base md:text-lg',
   },
   2: {
-    order: 'order-2', colWidth: 'w-20 sm:w-24 md:w-28', imgSize: 'w-20 h-32 sm:w-24 sm:h-36 md:w-28 md:h-40',
+    order: 'order-2', colWidth: 'w-[21%]', imgSize: 'w-full aspect-[8/11]',
     barHeight: 'h-7 sm:h-8 md:h-9', barFrom: 'from-[#2A1414]', barTo: 'to-[#3A1F1F]',
     borderColor: 'border-zinc-400/40', numberColor: 'text-zinc-300', glow: '', numberSize: 'text-lg md:text-xl',
   },
   1: {
-    order: 'order-3', colWidth: 'w-24 sm:w-28 md:w-32', imgSize: 'w-24 h-36 sm:w-28 sm:h-40 md:w-32 md:h-44',
+    order: 'order-3', colWidth: 'w-[22%]', imgSize: 'w-full aspect-[8/11]',
     barHeight: 'h-9 sm:h-10 md:h-12', barFrom: 'from-[#4A0A0A]', barTo: 'to-[#FF3B3B]/40',
     borderColor: 'border-[#FF3B3B]/70', numberColor: 'text-[var(--kr-text)]', glow: 'shadow-[0_0_30px_rgba(255,59,59,0.35)]', numberSize: 'text-lg md:text-xl',
   },
   3: {
-    order: 'order-4', colWidth: 'w-20 sm:w-24 md:w-28', imgSize: 'w-20 h-32 sm:w-24 sm:h-36 md:w-28 md:h-40',
-    barHeight: 'h-5 sm:h-5 md:h-6', barFrom: 'from-[#1E1111]', barTo: 'to-[#2A1414]',
+    order: 'order-4', colWidth: 'w-[21%]', imgSize: 'w-full aspect-[8/11]',
+    barHeight: 'h-[22px] sm:h-[22px] md:h-[26px]', barFrom: 'from-[#1E1111]', barTo: 'to-[#2A1414]',
     borderColor: 'border-[#FF3B3B]/25', numberColor: 'text-[#FF6B6B]/70', glow: '', numberSize: 'text-lg md:text-xl',
   },
   5: {
-    order: 'order-5', colWidth: 'w-14 sm:w-16 md:w-20', imgSize: 'w-14 h-20 sm:w-16 sm:h-24 md:w-20 md:h-28',
-    barHeight: 'h-8 sm:h-9 md:h-11', barFrom: 'from-[#160F0F]', barTo: 'to-[#1D1414]',
+    order: 'order-5', colWidth: 'w-[14.5%]', imgSize: 'w-full aspect-[8/11]',
+    barHeight: 'h-[22px] sm:h-[22px] md:h-[26px]', barFrom: 'from-[#160F0F]', barTo: 'to-[#1D1414]',
     borderColor: 'border-zinc-700/40', numberColor: 'text-zinc-500', glow: '', numberSize: 'text-base md:text-lg',
   },
 };
@@ -78,7 +80,7 @@ export const Top10Podium = ({ entries, size = 'compact' }: Top10PodiumProps) => 
   const cfgMap = size === 'large' ? LARGE_CFG : COMPACT_CFG;
 
   return (
-    <div className={`flex items-end justify-center ${size === 'large' ? 'gap-3 sm:gap-4 md:gap-6' : 'gap-2 sm:gap-3 md:gap-4'}`}>
+    <div className={`flex items-end justify-center ${size === 'large' ? 'gap-3 sm:gap-4 md:gap-6' : 'gap-[1.5%] w-full max-w-[560px] mx-auto'}`}>
       {[1, 2, 3, 4, 5].map(rank => {
         const entry = byRank(rank);
         const cfg = cfgMap[rank];
